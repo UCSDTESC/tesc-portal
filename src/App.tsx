@@ -1,35 +1,89 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-
+import { FormEvent, useState } from "react";
+import supabase from "./supabase/supabase";
+import { useNavigate } from "react-router";
 function App() {
-  const [count, setCount] = useState(0)
-
+  const [register, setRegister] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    setError("");
+    if (register) {
+      const { data, error } = await supabase.auth.signUp({
+        email: event.target[0].value,
+        password: event.target[1].value
+      });
+      if (data) {
+        await supabase
+          .from("Users")
+          .insert({ UID: data.user?.id, Email: data.user?.email })
+          .then(
+            () => {
+              setError("");
+              navigate("/User");
+            },
+            (error) => {
+              console.log(error);
+            }
+          );
+      }
+      if (error) {
+        setError(error.message);
+      }
+    } else {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: event.target[0].value,
+        password: event.target[1].value
+      });
+      if (data.user) {
+        console.log(data);
+        setError("");
+        navigate("/User");
+      }
+      if (error) {
+        setError(error.message);
+      }
+    }
+  };
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+      <div className="w-screen h-screen flex flex-col justify-center items-center">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit(e);
+          }}
+          className="border border-black flex items-center gap-5 flex-col w-1/3 h-1/2"
+        >
+          <input
+            type="text"
+            placeholder="email"
+            className="border border-black rounded-lg w-3/4 mt-[20%] "
+          />
+          <input
+            type="password"
+            placeholder="password"
+            className="border border-black rounded-lg w-3/4 "
+          />
+          {error && <div className="">Error: {error}</div>}
+          <button
+            type="submit"
+            className="cursor-pointer rounded-lg border-black border py-2 px-5 "
+          >
+            {register ? "Register" : "Log in"}
+          </button>
+          <button
+            type="button"
+            className="text-red-600 cursor-pointer"
+            onClick={() => {
+              setRegister(!register);
+            }}
+          >
+            {register ? "Already a user? Log in" : "Register a new account"}
+          </button>
+        </form>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
