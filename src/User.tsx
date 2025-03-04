@@ -2,10 +2,12 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import supabase from "./supabase/supabase";
 import { useNavigate } from "react-router";
 import DataTable from "./DataTable";
-
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 export default function User() {
   const [user, setUser] = useState("");
   const form = useRef<HTMLFormElement>(null);
+  const [startDate, setStartDate] = useState(new Date());
   const navigate = useNavigate();
   useEffect(() => {
     const fetchUser = async () => {
@@ -36,7 +38,9 @@ export default function User() {
       .insert({
         UID: user,
         Title: event.target[0].value,
-        Content: event.target[1].value
+        Date: event.target[1].value,
+        location: event.target[2].value,
+        Content: event.target[3].value
       })
       .then(
         () => {
@@ -69,6 +73,7 @@ export default function User() {
               e.preventDefault();
               handleSubmit(e);
               form.current?.reset();
+              setStartDate(new Date());
             }}
           >
             <input
@@ -77,12 +82,33 @@ export default function User() {
               className="border-black border rounded-lg px-3 h-12"
               autoFocus
             ></input>
+            <div className="border-black border rounded-lg px-3 h-12">
+              <DatePicker
+                name="date"
+                selected={startDate}
+                onChange={(date) => {
+                  if (date) {
+                    setStartDate(date);
+                  }
+                }}
+                showTimeSelect
+                dateFormat="Pp"
+              />
+            </div>
+
+            <input
+              name="Location"
+              placeholder="Location"
+              className="border-black border rounded-lg h-fit  overflow-y-auto p-3"
+              autoFocus
+            ></input>
             <textarea
               name="content"
               placeholder="content"
               className="border-black border rounded-lg min-h-1/3 overflow-y-auto p-3"
               autoFocus
             ></textarea>
+
             <button
               type="submit"
               className="border border-black bg-red-400 hover:bg-red-500 w-fit rounded-lg px-5 cursor-pointer"
