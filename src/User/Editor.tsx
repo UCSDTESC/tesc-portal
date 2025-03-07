@@ -1,4 +1,4 @@
-import "./styles.css";
+import "./editor-styles.css";
 import BulletList from "@tiptap/extension-bullet-list";
 import { Color } from "@tiptap/extension-color";
 import ListItem from "@tiptap/extension-list-item";
@@ -17,6 +17,57 @@ import {
   UndoOutlined
 } from "@ant-design/icons";
 import { useCallback } from "react";
+
+export default function Editor({
+  setEditorContent
+}: {
+  setEditorContent: (content: string) => void;
+}) {
+  const extensions = [
+    Color.configure({ types: [TextStyle.name, ListItem.name] }),
+    TextStyle.configure(),
+    TextAlign.configure({
+      types: ["heading", "paragraph"]
+    }),
+    StarterKit,
+    Image.configure({
+      HTMLAttributes: {
+        class: "w-1/2 aspect-square object-contain ml-2"
+      },
+      inline: true
+    }),
+    Placeholder,
+
+    BulletList.configure({
+      HTMLAttributes: {
+        class: "list-disc"
+      }
+    }),
+    OrderedList.configure({
+      HTMLAttributes: {
+        class: "list-decimal"
+      }
+    }),
+    ListItem
+  ];
+  return (
+    <EditorProvider
+      onUpdate={(e) => {
+        setEditorContent(e.editor.getHTML());
+      }}
+      slotBefore={<MenuBar />}
+      extensions={extensions}
+      content={`<p><img class="w-1/2 aspect-square object-contain ml-2" src="https://codesandbox.io/api/v1/sandboxes/3cz9r6/screenshot.png"></p>`}
+      editorProps={{
+        attributes: {
+          class:
+            "border-black border rounded-lg p-3 min-h-[40vh] focus:outline-none max-h-[70vh] overflow-y-scroll"
+        }
+      }}
+    ></EditorProvider>
+  );
+}
+
 const MenuBar = () => {
   const { editor } = useCurrentEditor();
   if (!editor) {
@@ -182,69 +233,7 @@ const MenuBar = () => {
         <button type="button" onClick={addImage}>
           Set image
         </button>
-        <button
-          type="button"
-          onClick={() => {
-            console.log(editor.getHTML());
-          }}
-        >
-          HTML
-        </button>
       </div>
     </div>
   );
 };
-
-const extensions = [
-  Color.configure({ types: [TextStyle.name, ListItem.name] }),
-  TextStyle.configure(),
-  TextAlign.configure({
-    types: ["heading", "paragraph"]
-  }),
-  StarterKit,
-  Image.configure({
-    HTMLAttributes: {
-      class: "w-1/2 aspect-square object-contain ml-2"
-    },
-    inline: true
-  }),
-  Placeholder,
-
-  BulletList.configure({
-    HTMLAttributes: {
-      class: "list-disc"
-    }
-  }),
-  OrderedList.configure({
-    HTMLAttributes: {
-      class: "list-decimal"
-    }
-  }),
-  ListItem
-];
-
-const content = `
-`;
-
-export default function Editor({
-  setEditorContent
-}: {
-  setEditorContent: (content: string) => void;
-}) {
-  return (
-    <EditorProvider
-      onUpdate={(e) => {
-        setEditorContent(e.editor.getHTML());
-      }}
-      slotBefore={<MenuBar />}
-      extensions={extensions}
-      content={content}
-      editorProps={{
-        attributes: {
-          class:
-            "border-black border rounded-lg p-3 min-h-[40vh] focus:outline-none max-h-[70vh] overflow-y-scroll"
-        }
-      }}
-    ></EditorProvider>
-  );
-}

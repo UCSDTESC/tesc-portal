@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import supabase from "./supabase/supabase";
-import { Outlet, useNavigate } from "react-router";
-import UserContext from "./UserContext";
+import supabase from "../supabase/supabase";
+import { Outlet, useNavigate, NavLink } from "react-router";
+import UserContext from "../UserContext";
 export default function User() {
   const [User, setUser] = useState("");
   const navigate = useNavigate();
@@ -38,6 +38,9 @@ export default function User() {
           {/* header */}
           <span className="w-full h-[10vh] bg-green-200 text-[3vh] flex justify-between items-center px-10 absolute top-0">
             Logged in: {User}
+            <NavLink to="/User/">Home</NavLink>
+            <NavLink to="/User/Form">Form</NavLink>
+            <NavLink to="/User/Data">Data</NavLink>
             <button
               className="rounded-lg border border-black px-5 cursor-pointer h-1/2 right-10 bg-red-400 hover:bg-red-500"
               onClick={handleSignOut}

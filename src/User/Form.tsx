@@ -3,10 +3,12 @@ import "react-datepicker/dist/react-datepicker.css";
 import GoogleMap, { PlaceAutocomplete } from "./Map";
 import { APIProvider } from "@vis.gl/react-google-maps";
 import { FormEvent, useRef, useState } from "react";
-import supabase from "./supabase/supabase";
+import supabase from "../supabase/supabase";
 import { useContext } from "react";
-import UserContext from "./UserContext";
+import UserContext from "../UserContext";
 import Editor from "./Editor";
+import { useNavigate } from "react-router";
+
 export default function Form() {
   const form = useRef<HTMLFormElement>(null);
   const [selectedPlace, setSelectedPlace] =
@@ -14,16 +16,16 @@ export default function Form() {
   const [startDate, setStartDate] = useState(new Date());
   const [editorContent, setEditorContent] = useState("");
   const { User } = useContext(UserContext);
+  const navigate = useNavigate();
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     const formData = new FormData(event.currentTarget);
     const data = Object.fromEntries(formData.entries());
-    console.log(data);
-    console.log();
     const location = [
       selectedPlace?.geometry?.location?.lat(),
       selectedPlace?.geometry?.location?.lng()
     ];
-    console.log(editorContent);
+
     const { error } = await supabase.from("Events").insert({
       UID: User,
       Title: data.title,
@@ -35,6 +37,7 @@ export default function Form() {
     if (error) {
       console.log(error);
     }
+    navigate("/User/");
   };
 
   return (

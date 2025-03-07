@@ -7,10 +7,12 @@ function App() {
   const navigate = useNavigate();
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     setError("");
+    const formData = new FormData(event.currentTarget);
+    const ObjectFormdata = Object.fromEntries(formData.entries());
     if (register) {
       const { data, error } = await supabase.auth.signUp({
-        email: event.target[0].value,
-        password: event.target[1].value
+        email: ObjectFormdata.email.toString(),
+        password: ObjectFormdata.password.toString()
       });
       if (data) {
         await supabase
@@ -31,8 +33,8 @@ function App() {
       }
     } else {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: event.target[0].value,
-        password: event.target[1].value
+        email: ObjectFormdata.email.toString(),
+        password: ObjectFormdata.password.toString()
       });
       if (data.user) {
         console.log(data);
@@ -55,11 +57,13 @@ function App() {
           className="border border-black flex items-center gap-5 flex-col w-1/3 h-1/2"
         >
           <input
+            name="email"
             type="text"
             placeholder="email"
             className="border border-black rounded-lg w-3/4 mt-[20%] "
           />
           <input
+            name="password"
             type="password"
             placeholder="password"
             className="border border-black rounded-lg w-3/4 "
