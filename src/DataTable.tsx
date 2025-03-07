@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import supabase from "./supabase/supabase";
+import UserContext from "./UserContext";
 
-export default function DataTable({ userID }: { userID: string }) {
+export default function DataTable() {
+  const { User } = useContext(UserContext);
   const [data, setData] = useState<
     | {
         id: number;
@@ -10,27 +12,27 @@ export default function DataTable({ userID }: { userID: string }) {
         Title: string;
         Content: string;
         Date: string;
-        location: string;
+        Location_Str: string;
       }[]
     | null
   >(null);
+
   useEffect(() => {
     const fetchData = async () => {
-      await supabase
+      console.log(User);
+      const { data, error } = await supabase
         .from("Events")
         .select()
-        .eq("UID", userID)
-        .then(
-          (data) => {
-            setData(data.data);
-          },
-          (error) => {
-            console.log(error);
-          }
-        );
+        .eq("UID", User.toString());
+      if (data) {
+        setData(data);
+      }
+      if (error) {
+        console.log(error);
+      }
     };
     fetchData();
-  });
+  }, [User]);
 
   const handleDelete = async (id: number) => {
     const { error } = await supabase.from("Events").delete().eq("id", id);
@@ -41,7 +43,7 @@ export default function DataTable({ userID }: { userID: string }) {
   return (
     <>
       {data && (
-        <div className="grid w-1/2 mt-10 gap-2">
+        <div className="grid w-1/2 mt-[10vh] gap-2">
           {data.map((daton) => {
             return (
               <span
@@ -65,7 +67,7 @@ export default function DataTable({ userID }: { userID: string }) {
                   {new Date(Date.parse(daton.Date)).toString()}
                 </div>
                 <label htmlFor="">Location</label>
-                <div className=" whitespace-pre-line">{daton.location}</div>
+                <div className=" whitespace-pre-line">{daton.Location_Str}</div>
                 <label htmlFor="">content</label>
                 <div className=" whitespace-pre-line"> {daton.Content}</div>
               </span>
