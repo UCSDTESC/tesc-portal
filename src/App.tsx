@@ -12,9 +12,9 @@ function App() {
     if (register) {
       const { data, error } = await supabase.auth.signUp({
         email: ObjectFormdata.email.toString(),
-        password: ObjectFormdata.password.toString()
+        password: ObjectFormdata.password.toString(),
       });
-      if (data) {
+      if (data.user) {
         await supabase
           .from("Users")
           .insert({ UID: data.user?.id, Email: data.user?.email })
@@ -34,7 +34,7 @@ function App() {
     } else {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: ObjectFormdata.email.toString(),
-        password: ObjectFormdata.password.toString()
+        password: ObjectFormdata.password.toString(),
       });
       if (data.user) {
         console.log(data);
