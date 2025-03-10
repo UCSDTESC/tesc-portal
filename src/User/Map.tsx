@@ -95,6 +95,7 @@ export const PlaceAutocomplete = ({
         name="location"
         placeholder="Location"
         className="px-3 h-12 w-full rounded-lg"
+        required
       />
     </div>
   );

@@ -57,7 +57,7 @@ export default function Editor({
       }}
       slotBefore={<MenuBar />}
       extensions={extensions}
-      content={`<p><img class="w-1/2 aspect-square object-contain ml-2" src="https://codesandbox.io/api/v1/sandboxes/3cz9r6/screenshot.png"></p>`}
+      content={``}
       editorProps={{
         attributes: {
           class:

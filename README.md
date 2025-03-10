@@ -1,5 +1,3 @@
-# React + Typescript + Vite
-
-# Supabase
+# React + Typescript + Vite + Supabase
 
 Log in portal for TESC @ UCSD

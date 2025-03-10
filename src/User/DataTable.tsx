@@ -49,7 +49,8 @@ export default function DataTable() {
         UID: string;
         Title: string;
         Content: string;
-        Date: string;
+        Start_Date: string;
+        End_Date: string;
         Location_Str: string;
       }[]
     | null
@@ -102,9 +103,13 @@ export default function DataTable() {
                   <div className=""> {daton.Title}</div>
                   <label className="">Time Stamp</label>
                   <div className=""> {daton.created_at}</div>
-                  <label htmlFor="">Date</label>
+                  <label htmlFor="">Start Date</label>
                   <div className=" whitespace-pre-line">
-                    {new Date(Date.parse(daton.Date)).toString()}
+                    {new Date(Date.parse(daton.Start_Date)).toString()}
+                  </div>
+                  <label htmlFor="">End Date</label>
+                  <div className=" whitespace-pre-line">
+                    {new Date(Date.parse(daton.End_Date)).toString()}
                   </div>
                   <label htmlFor="">Location</label>
                   <div className=" whitespace-pre-line">

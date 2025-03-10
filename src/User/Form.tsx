@@ -1,5 +1,3 @@
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import GoogleMap, { PlaceAutocomplete } from "./Map";
 import { APIProvider } from "@vis.gl/react-google-maps";
 import { FormEvent, useRef, useState } from "react";
@@ -8,16 +6,28 @@ import { useContext } from "react";
 import UserContext from "../UserContext";
 import Editor from "./Editor";
 import { useNavigate } from "react-router";
-
+console.log(
+  new Date(
+    new Date()
+      .toLocaleString("en-US", { timeZone: "America/Los_Angeles" })
+      .toString()
+  ).toISOString()
+);
+const currTime = new Date(Date.now())
+  .toISOString()
+  .split(":")
+  .slice(0, 2)
+  .toString()
+  .replace(",", ":");
 export default function Form() {
   const form = useRef<HTMLFormElement>(null);
   const [selectedPlace, setSelectedPlace] =
     useState<google.maps.places.PlaceResult | null>(null);
-  const [startDate, setStartDate] = useState(new Date());
   const [editorContent, setEditorContent] = useState("");
   const { User } = useContext(UserContext);
   const navigate = useNavigate();
-
+  const [StartDate, setStartDate] = useState(currTime);
+  const [EndDate, setEndDate] = useState(currTime);
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     const formData = new FormData(event.currentTarget);
     const data = Object.fromEntries(formData.entries());
@@ -29,7 +39,8 @@ export default function Form() {
     const { error } = await supabase.from("Events").insert({
       UID: User,
       Title: data.title,
-      Date: data.date,
+      Start_Date: data.StartTime,
+      End_Date: data.EndTime,
       Location: location,
       Location_Str: data.location,
       Content: editorContent
@@ -43,35 +54,55 @@ export default function Form() {
   return (
     <div className="w-1/2 flex mt-[15vh] ">
       <form
-        className="border border-black p-5 flex flex-col gap-5 w-full h-min"
+        className="border border-black p-5 flex flex-col gap-2 w-full h-min"
         ref={form}
         onSubmit={(e) => {
           e.preventDefault();
           handleSubmit(e);
           form.current?.reset();
-          setStartDate(new Date());
         }}
       >
+        <label htmlFor="title">Title: </label>
         <input
           name="title"
-          placeholder="title"
+          placeholder="Title"
           className="border-black border rounded-lg px-3 h-12"
           autoFocus
+          required
         ></input>
+        <label htmlFor="StartTime">Start Time (date and time):</label>
         <div className="border-black border rounded-lg px-3 h-12 flex items-center">
-          <DatePicker
-            className="focus:outline-none "
-            name="date"
-            selected={startDate}
-            onChange={(date) => {
-              if (date) {
-                setStartDate(date);
+          <input
+            type="datetime-local"
+            name="StartTime"
+            min={currTime}
+            value={StartDate}
+            required
+            onChange={(e) => {
+              setStartDate(e.target.value);
+              setEndDate(e.target.value);
+            }}
+          ></input>
+        </div>
+        <label htmlFor="EndTime">End Time (date and time): </label>
+        <div className="border-black border rounded-lg px-3 h-12 flex items-center scroll-smooth">
+          <input
+            type="datetime-local"
+            name="EndTime"
+            required
+            min={StartDate}
+            value={EndDate}
+            onChange={(e) => {
+              if (e.target.value < StartDate) {
+                return;
+              } else {
+                setEndDate(e.target.value);
               }
             }}
-            showTimeSelect
-            dateFormat="Pp"
-          />
+          ></input>
         </div>
+
+        <label>Location: </label>
         <APIProvider
           apiKey={import.meta.env.VITE_MAPS_API}
           solutionChannel="GMP_devsite_samples_v3_rgmautocomplete"
@@ -88,7 +119,6 @@ export default function Form() {
           Submit
         </button>
       </form>
-      <form className=" flex "></form>
     </div>
   );
 }
