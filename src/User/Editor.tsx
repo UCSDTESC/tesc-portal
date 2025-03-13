@@ -1,7 +1,7 @@
 import "./editor-styles.css";
 import BulletList from "@tiptap/extension-bullet-list";
-import { Color } from "@tiptap/extension-color";
-import ListItem from "@tiptap/extension-list-item";
+// import { Color } from "@tiptap/extension-color";
+// import ListItem from "@tiptap/extension-list-item";
 import OrderedList from "@tiptap/extension-ordered-list";
 import TextStyle from "@tiptap/extension-text-style";
 import { EditorProvider, useCurrentEditor } from "@tiptap/react";
@@ -24,7 +24,6 @@ export default function Editor({
   setEditorContent: (content: string) => void;
 }) {
   const extensions = [
-    Color.configure({ types: [TextStyle.name, ListItem.name] }),
     TextStyle.configure(),
     TextAlign.configure({
       types: ["heading", "paragraph"]
@@ -47,8 +46,7 @@ export default function Editor({
       HTMLAttributes: {
         class: "list-decimal"
       }
-    }),
-    ListItem
+    })
   ];
   return (
     <EditorProvider

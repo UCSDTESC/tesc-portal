@@ -28,6 +28,7 @@ export default function Form() {
   const navigate = useNavigate();
   const [StartDate, setStartDate] = useState(currTime);
   const [EndDate, setEndDate] = useState(currTime);
+  const [error, setError] = useState("");
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     const formData = new FormData(event.currentTarget);
     const data = Object.fromEntries(formData.entries());
@@ -46,9 +47,10 @@ export default function Form() {
       Content: editorContent
     });
     if (error) {
-      console.log(error);
+      setError(error.message);
+    } else {
+      navigate("/User/");
     }
-    navigate("/User/");
   };
 
   return (
@@ -62,6 +64,8 @@ export default function Form() {
           form.current?.reset();
         }}
       >
+        <p className="text-red-500">{error}</p>
+
         <label htmlFor="title">Title: </label>
         <input
           name="title"
