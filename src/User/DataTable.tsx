@@ -47,11 +47,12 @@ export default function DataTable() {
         id: number;
         created_at: string;
         UID: string;
-        Title: string;
-        Content: string;
-        Start_Date: string;
-        End_Date: string;
-        Location_Str: string;
+        title: string;
+        content: string;
+        start_date: string;
+        end_date: string;
+        location_str: string;
+        rsvp: string;
       }[]
     | null
   >(null);
@@ -84,7 +85,7 @@ export default function DataTable() {
       {data && (
         <div className="grid w-1/2 mt-[10vh] gap-2">
           {data.map((daton) => {
-            console.log(daton.Content);
+            console.log(daton.content);
             return (
               <span
                 className="border-black border rounded-lg w-full p-5  relative"
@@ -100,26 +101,28 @@ export default function DataTable() {
                 </button>
                 <div className="w-full grid grid-cols-[auto_1fr] gap-x-2">
                   <label className="">Tile</label>
-                  <div className=""> {daton.Title}</div>
+                  <div className=""> {daton.title}</div>
                   <label className="">Time Stamp</label>
                   <div className=""> {daton.created_at}</div>
                   <label htmlFor="">Start Date</label>
                   <div className=" whitespace-pre-line">
-                    {new Date(Date.parse(daton.Start_Date)).toString()}
+                    {new Date(Date.parse(daton.start_date)).toString()}
                   </div>
                   <label htmlFor="">End Date</label>
                   <div className=" whitespace-pre-line">
-                    {new Date(Date.parse(daton.End_Date)).toString()}
+                    {new Date(Date.parse(daton.end_date)).toString()}
                   </div>
                   <label htmlFor="">Location</label>
                   <div className=" whitespace-pre-line">
-                    {daton.Location_Str}
+                    {daton.location_str}
                   </div>
+                  <label htmlFor="">rsvp: </label>
+                  <div className=" whitespace-pre-line">{daton.rsvp}</div>
                 </div>
 
                 <EditorProvider
                   extensions={extensions}
-                  content={daton.Content}
+                  content={daton.content}
                   editable={false}
                   editorProps={{
                     attributes: {

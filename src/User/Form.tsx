@@ -39,16 +39,17 @@ export default function Form() {
 
     const { error } = await supabase.from("Events").insert({
       UID: User,
-      Title: data.title,
-      Start_Date: data.StartTime,
-      End_Date: data.EndTime,
-      Location: location,
-      Location_Str: data.location,
-      Content: editorContent
+      title: data.title,
+      start_date: data.StartTime,
+      end_date: data.EndTime,
+      location: location,
+      location_str: data.location,
+      content: editorContent
     });
     if (error) {
       setError(error.message);
     } else {
+      form.current?.reset();
       navigate("/User/");
     }
   };
@@ -61,7 +62,6 @@ export default function Form() {
         onSubmit={(e) => {
           e.preventDefault();
           handleSubmit(e);
-          form.current?.reset();
         }}
       >
         <p className="text-red-500">{error}</p>
