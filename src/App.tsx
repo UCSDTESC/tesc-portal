@@ -17,7 +17,7 @@ function App() {
       if (data.user) {
         await supabase
           .from("Users")
-          .insert({ UID: data.user?.id, Email: data.user?.email })
+          .insert({ uuid: data.user?.id, email: data.user?.email })
           .then(
             () => {
               setError("");
