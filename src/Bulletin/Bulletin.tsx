@@ -9,6 +9,7 @@ export default function Bulletin() {
     {
       id: number;
       UID: string;
+      password: string;
       created_at: string;
       title: string;
       content: string;
@@ -16,6 +17,8 @@ export default function Bulletin() {
       location_str: string;
       start_date: string;
       end_date: string;
+      attendance: number;
+      rsvp: number;
     }[]
   >();
   const postId = useParams();
@@ -94,6 +97,43 @@ export default function Bulletin() {
             console.log(error);
           } else {
             setRSVP(currRSVP);
+          }
+        }
+        if (error) {
+          console.log(error);
+        }
+      }
+    }
+  };
+  const handleAttendance = async () => {
+    const userInput = prompt("Please enter password:", "password");
+    const filtered = data?.filter((daton) => daton.id === selection)[0];
+    if (!filtered) {
+      console.log("empty");
+      return;
+    }
+    console.log(filtered);
+    if (userInput === filtered.password) {
+      const { error } = await supabase
+        .from("Events")
+        .update({ attendance: filtered.attendance + 1 })
+        .eq("id", filtered.id);
+      if (error) {
+        console.log(error);
+      } else {
+        const { data, error } = await supabase
+          .from("Users")
+          .select("points")
+          .eq("email", User?.email);
+        if (data) {
+          const { error } = await supabase
+            .from("Users")
+            .update({ points: data[0].points + 1 })
+            .eq("email", User?.email);
+          if (error) {
+            console.log(error);
+          } else {
+            return;
           }
         }
         if (error) {
@@ -210,7 +250,10 @@ export default function Bulletin() {
                           )}
                         {new Date() >= new Date(daton.start_date) &&
                           new Date() <= new Date(daton.end_date) && (
-                            <button className="border px-4 py-2 rounded-lg cursor-pointer">
+                            <button
+                              className="border px-4 py-2 rounded-lg cursor-pointer"
+                              onClick={handleAttendance}
+                            >
                               Mark attendance
                             </button>
                           )}

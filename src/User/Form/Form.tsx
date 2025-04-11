@@ -24,6 +24,7 @@ export interface formdata {
   location: number[];
   location_str: string;
   content: string;
+  password: string;
 }
 
 export default function Form({
@@ -47,6 +48,7 @@ export default function Form({
       ? formdata
       : {
           title: "",
+          password: "",
           start_date: currTime,
           end_date: currTime,
           location: [0, 0],
@@ -62,6 +64,7 @@ export default function Form({
         .update({
           UID: User?.id,
           title: formData.title,
+          password: formData.password,
           start_date: formData.start_date,
           end_date: formData.end_date,
           location: formData.location,
@@ -78,6 +81,7 @@ export default function Form({
       const { error } = await supabase.from("Events").insert({
         UID: User?.id,
         title: formData.title,
+        password: formData.password,
         start_date: formData.start_date,
         end_date: formData.end_date,
         location: formData.location,
@@ -90,6 +94,7 @@ export default function Form({
         form.current?.reset();
         setFormData({
           title: "",
+          password: "",
           start_date: currTime,
           end_date: currTime,
           location: [0, 0],
@@ -125,12 +130,24 @@ export default function Form({
           autoFocus
           required
         />
+        <label htmlFor="Password">Password: </label>
+        <input
+          name="Password"
+          placeholder="Password"
+          className="border-black border rounded-lg px-3 h-12"
+          value={formData.password}
+          onChange={(e) => {
+            setFormData({ ...formData, ["password"]: e.target.value });
+          }}
+          autoFocus
+          required
+        />
         <label htmlFor="StartTime">Start Time (date and time):</label>
         <div className="border-black border rounded-lg px-3 h-12 flex items-center">
           <input
             type="datetime-local"
             name="StartTime"
-            min={currTime}
+            min={formdata ? "" : currTime}
             value={formData.start_date}
             required
             onChange={(e) => {

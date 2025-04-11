@@ -11,6 +11,7 @@ export default function DataTable() {
   const [data, setData] = useState<
     | {
         id: number;
+        password: string;
         created_at: string;
         UID: string;
         title: string;
@@ -26,6 +27,7 @@ export default function DataTable() {
   const [curID, setCurrID] = useState(0);
   const [currEdit, setCurrEdit] = useState<formdata>({
     title: "",
+    password: "",
     start_date: "",
     end_date: "",
     location: [],
@@ -103,6 +105,7 @@ export default function DataTable() {
                     setCurrID(daton.id);
                     setCurrEdit({
                       title: daton.title,
+                      password: daton.password,
                       start_date: daton.start_date.substring(
                         0,
                         ((daton.start_date.indexOf("T") | 0) + 6) | 0
@@ -119,9 +122,11 @@ export default function DataTable() {
                 >
                   edit
                 </button>
-                <div className="w-full grid grid-cols-[auto_1fr] gap-x-2">
-                  <label className="">Tile</label>
+                <div className="w-full grid grid-cols-[auto_1fr] gap-x-2 ">
+                  <label className="">Title</label>
                   <div className=""> {daton.title}</div>
+                  <label className="">Password</label>
+                  <div className=""> {daton.password}</div>
                   <label className="">Time Stamp</label>
                   <div className=""> {DateParser(daton.created_at)}</div>
                   <label htmlFor="">Start Date</label>
@@ -157,9 +162,9 @@ export default function DataTable() {
       )}
       {showEditModal &&
         createPortal(
-          <div className="w-screen min-h-screen fixed top-0 flex justify-center items-center z-100">
+          <div className="w-screen h-screen fixed top-0 flex justify-center items-center z-100 overflow-scroll">
             <div
-              className="absolute top-0 w-full h-full bg-black opacity-35 cursor-pointer"
+              className="fixed top-0 w-full h-full bg-black opacity-35 cursor-pointer"
               onClick={() => {
                 setShowEditModal(false);
               }}
