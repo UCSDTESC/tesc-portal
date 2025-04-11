@@ -1,11 +1,12 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import { BrowserRouter, Routes, Route } from "react-router";
-import Form from "./User/Form.tsx";
-import DataTable from "./User/DataTable.tsx";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router";
+import Form from "./User/Form/Form.tsx";
+import DataTable from "./User/Data/DataTable.tsx";
 import Home from "./User/Home.tsx";
 import Page from "./Page/Page.tsx";
+import Bulletin from "./Bulletin/Bulletin.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
@@ -15,6 +16,10 @@ createRoot(document.getElementById("root")!).render(
           <Route path="form" element={<Form />} />
           <Route path="data" element={<DataTable />} />
           <Route path="" element={<Page />} />
+          <Route path="bulletin">
+            <Route path=":postId" element={<Bulletin />} />
+            <Route path="" element={<Navigate to="-1" />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>

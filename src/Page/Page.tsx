@@ -7,6 +7,7 @@ import { Outlet, useNavigate } from "react-router";
 export default function Page() {
   const [User, setUser] = useState<User>({ id: "", email: "" });
   const [Error, setError] = useState("");
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const navigate = useNavigate();
   const handleSignIn = async (
     { email, password }: UserCredentials,
@@ -14,7 +15,7 @@ export default function Page() {
   ) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email,
-      password: password,
+      password: password
     });
     if (data.user && data.user?.email) {
       console.log(data);
@@ -33,7 +34,7 @@ export default function Page() {
   ) => {
     const { data, error } = await supabase.auth.signUp({
       email: email,
-      password: password,
+      password: password
     });
     if (data.user) {
       const { error } = await supabase
@@ -54,7 +55,7 @@ export default function Page() {
   useEffect(() => {
     const getUser = async () => {
       const {
-        data: { user },
+        data: { user }
       } = await supabase.auth.getUser();
       if (user && user.email) {
         console.log(user);
@@ -79,14 +80,18 @@ export default function Page() {
         value={{
           User,
           Error,
+          showLoginModal,
+          setShowLoginModal,
           setError,
           handleSignIn,
           handleSignOut,
-          handleSignUp,
+          handleSignUp
         }}
       >
         <Navbar />
-        <Outlet />
+        <div className="pt-[15vh]">
+          <Outlet />
+        </div>
       </UserContext.Provider>
     </main>
   );

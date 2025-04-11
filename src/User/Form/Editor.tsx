@@ -1,55 +1,23 @@
 import "./editor-styles.css";
-import BulletList from "@tiptap/extension-bullet-list";
-// import { Color } from "@tiptap/extension-color";
-// import ListItem from "@tiptap/extension-list-item";
-import OrderedList from "@tiptap/extension-ordered-list";
-import TextStyle from "@tiptap/extension-text-style";
 import { EditorProvider, useCurrentEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import TextAlign from "@tiptap/extension-text-align";
-import Placeholder from "@tiptap/extension-placeholder";
-import Image from "@tiptap/extension-image";
+
 import {
   AlignCenterOutlined,
   AlignLeftOutlined,
   AlignRightOutlined,
   RedoOutlined,
-  UndoOutlined,
+  UndoOutlined
 } from "@ant-design/icons";
 import { useCallback } from "react";
+import { extensions } from "./EditorExtensions";
 
 export default function Editor({
   content,
-  setEditorContent,
+  setEditorContent
 }: {
   content: string;
   setEditorContent: (content: string) => void;
 }) {
-  const extensions = [
-    TextStyle.configure(),
-    TextAlign.configure({
-      types: ["heading", "paragraph"],
-    }),
-    StarterKit,
-    Image.configure({
-      HTMLAttributes: {
-        class: "w-1/2 aspect-square object-contain ml-2",
-      },
-      inline: true,
-    }),
-    Placeholder,
-
-    BulletList.configure({
-      HTMLAttributes: {
-        class: "list-disc",
-      },
-    }),
-    OrderedList.configure({
-      HTMLAttributes: {
-        class: "list-decimal",
-      },
-    }),
-  ];
   return (
     <EditorProvider
       onUpdate={(e) => {
@@ -61,8 +29,8 @@ export default function Editor({
       editorProps={{
         attributes: {
           class:
-            "border-black border rounded-lg p-3 min-h-[40vh] focus:outline-none max-h-[70vh] overflow-y-scroll",
-        },
+            "border-black border rounded-lg p-3 min-h-[40vh] focus:outline-none max-h-[70vh] overflow-y-scroll"
+        }
       }}
     ></EditorProvider>
   );

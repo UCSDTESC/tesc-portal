@@ -1,9 +1,9 @@
 // import GoogleMap, { PlaceAutocomplete } from "./Map";
 // import { APIProvider } from "@vis.gl/react-google-maps";
 import { useRef, useState } from "react";
-import supabase from "../supabase/supabase";
+import supabase from "../../supabase/supabase";
 import { useContext } from "react";
-import UserContext from "../UserContext";
+import UserContext from "../../UserContext";
 import Editor from "./Editor";
 import { useNavigate } from "react-router";
 
@@ -17,8 +17,7 @@ const currTime = localISOString.substring(
   0,
   ((localISOString.indexOf("T") | 0) + 6) | 0
 );
-console.log(currTime);
-interface formdata {
+export interface formdata {
   title: string;
   start_date: string;
   end_date: string;
@@ -27,7 +26,16 @@ interface formdata {
   content: string;
 }
 
-export default function Form({ formdata }: { formdata?: formdata }) {
+export default function Form({
+  formdata,
+  id,
+  onSuccess
+}: {
+  formdata?: formdata;
+  id: number;
+  onSuccess: () => void;
+}) {
+  console.log(formdata?.start_date);
   const form = useRef<HTMLFormElement>(null);
   // const [selectedPlace, setSelectedPlace] =
   //   useState<google.maps.places.PlaceResult | null>(null);
@@ -43,38 +51,58 @@ export default function Form({ formdata }: { formdata?: formdata }) {
           end_date: currTime,
           location: [0, 0],
           location_str: "",
-          content: "",
+          content: ""
         }
   );
 
   const handleSubmit = async () => {
-    const { error } = await supabase.from("Events").insert({
-      UID: User?.id,
-      title: formData.title,
-      start_date: formData.start_date,
-      end_date: formData.end_date,
-      location: formData.location,
-      location_str: formData.location,
-      content: formData.content,
-    });
-    if (error) {
-      setError(error.message);
+    if (formdata) {
+      const { error } = await supabase
+        .from("Events")
+        .update({
+          UID: User?.id,
+          title: formData.title,
+          start_date: formData.start_date,
+          end_date: formData.end_date,
+          location: formData.location,
+          location_str: formData.location_str,
+          content: formData.content
+        })
+        .eq("id", id);
+      if (error) {
+        setError(error.message);
+      } else {
+        onSuccess();
+      }
     } else {
-      form.current?.reset();
-      setFormData({
-        title: "",
-        start_date: currTime,
-        end_date: currTime,
-        location: [0, 0],
-        location_str: "",
-        content: "",
+      const { error } = await supabase.from("Events").insert({
+        UID: User?.id,
+        title: formData.title,
+        start_date: formData.start_date,
+        end_date: formData.end_date,
+        location: formData.location,
+        location_str: formData.location_str,
+        content: formData.content
       });
-      navigate("/");
+      if (error) {
+        setError(error.message);
+      } else {
+        form.current?.reset();
+        setFormData({
+          title: "",
+          start_date: currTime,
+          end_date: currTime,
+          location: [0, 0],
+          location_str: "",
+          content: ""
+        });
+        navigate("/");
+      }
     }
   };
 
   return (
-    <div className="w-1/2 flex mt-[15vh] m-auto">
+    <div className="w-1/2 flex m-auto bg-white z-101">
       <form
         className="border border-black p-5 flex flex-col gap-2 w-full h-min"
         ref={form}
@@ -109,7 +137,7 @@ export default function Form({ formdata }: { formdata?: formdata }) {
               setFormData({
                 ...formData,
                 ["start_date"]: e.target.value,
-                ["end_date"]: e.target.value,
+                ["end_date"]: e.target.value
               });
             }}
           ></input>
@@ -128,7 +156,7 @@ export default function Form({ formdata }: { formdata?: formdata }) {
               } else {
                 setFormData({
                   ...formData,
-                  ["end_date"]: e.target.value,
+                  ["end_date"]: e.target.value
                 });
               }
             }}
@@ -153,7 +181,7 @@ export default function Form({ formdata }: { formdata?: formdata }) {
           onChange={(e) => {
             setFormData({
               ...formData,
-              ["location_str"]: e.target.value,
+              ["location_str"]: e.target.value
             });
           }}
         ></input>
@@ -162,7 +190,7 @@ export default function Form({ formdata }: { formdata?: formdata }) {
           setEditorContent={(e) => {
             setFormData({
               ...formData,
-              ["content"]: e,
+              ["content"]: e
             });
           }}
         />

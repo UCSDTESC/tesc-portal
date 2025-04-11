@@ -12,7 +12,7 @@ export default function LoginModal({ onclose }: { onclose: () => void }) {
       handleSignUp(
         {
           email: ObjectFormdata.email.toString(),
-          password: ObjectFormdata.password.toString(),
+          password: ObjectFormdata.password.toString()
         },
         onclose
       );
@@ -20,7 +20,7 @@ export default function LoginModal({ onclose }: { onclose: () => void }) {
       handleSignIn(
         {
           email: ObjectFormdata.email.toString(),
-          password: ObjectFormdata.password.toString(),
+          password: ObjectFormdata.password.toString()
         },
         onclose
       );

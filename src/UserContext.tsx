@@ -14,7 +14,9 @@ interface UserContext {
     email: string;
   } | null;
   Error: string;
-  setError:(error:string)=>void
+  showLoginModal: boolean;
+  setShowLoginModal: (bool: boolean) => void;
+  setError: (error: string) => void;
   handleSignOut: () => void;
   handleSignIn: (user: UserCredentials, OnSuccess: () => void) => void;
   handleSignUp: (user: UserCredentials, OnSuccess: () => void) => void;
@@ -22,6 +24,8 @@ interface UserContext {
 const UserContext = createContext<UserContext>({
   User: null,
   Error: "",
+  showLoginModal: false,
+  setShowLoginModal: () => {},
   setError: (error: string) => {
     console.log(error);
   },
@@ -31,6 +35,6 @@ const UserContext = createContext<UserContext>({
   },
   handleSignUp: (user: UserCredentials) => {
     console.log(user);
-  },
+  }
 });
 export default UserContext;
