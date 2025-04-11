@@ -1,9 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import App from "./App.tsx";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router";
-import User from "./User/User.tsx";
+import { BrowserRouter, Routes, Route } from "react-router";
 import Form from "./User/Form.tsx";
 import DataTable from "./User/DataTable.tsx";
 import Home from "./User/Home.tsx";
@@ -12,7 +10,12 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route path="" element={<Page />} />
+        <Route element={<Page />}>
+          <Route path="" element={<Home />} />
+          <Route path="form" element={<Form />} />
+          <Route path="data" element={<DataTable />} />
+          <Route path="" element={<Page />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   </StrictMode>

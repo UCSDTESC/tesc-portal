@@ -16,28 +16,28 @@ const extensions = [
   Color.configure({ types: [TextStyle.name, ListItem.name] }),
   TextStyle.configure(),
   TextAlign.configure({
-    types: ["heading", "paragraph"]
+    types: ["heading", "paragraph"],
   }),
   StarterKit,
   Image.configure({
     HTMLAttributes: {
-      class: "w-1/2 aspect-square object-contain ml-2"
+      class: "w-1/2 aspect-square object-contain ml-2",
     },
-    inline: true
+    inline: true,
   }),
   Placeholder,
 
   BulletList.configure({
     HTMLAttributes: {
-      class: "list-disc"
-    }
+      class: "list-disc",
+    },
   }),
   OrderedList.configure({
     HTMLAttributes: {
-      class: "list-decimal"
-    }
+      class: "list-decimal",
+    },
   }),
-  ListItem
+  ListItem,
 ];
 
 export default function DataTable() {
@@ -58,14 +58,19 @@ export default function DataTable() {
   >(null);
 
   useEffect(() => {
+    console.log(User);
+    if (!User) {
+      return;
+    }
     const fetchData = async () => {
       console.log(User);
       const { data, error } = await supabase
         .from("Events")
         .select()
-        .eq("UID", User.toString());
+        .eq("UID", User.id);
       if (data) {
         setData(data);
+        console.log(data);
       }
       if (error) {
         console.log(error);
@@ -83,7 +88,7 @@ export default function DataTable() {
   return (
     <>
       {data && (
-        <div className="grid w-1/2 mt-[10vh] gap-2">
+        <div className="grid w-1/2 mt-[20vh] gap-2">
           {data.map((daton) => {
             console.log(daton.content);
             return (
@@ -127,8 +132,8 @@ export default function DataTable() {
                   editorProps={{
                     attributes: {
                       class:
-                        "border-black border rounded-lg p-3 w-full col-span-2 focus:outline-none max-h-[40vh]  overflow-y-auto"
-                    }
+                        "border-black border rounded-lg p-3 w-full col-span-2 focus:outline-none max-h-[40vh]  overflow-y-auto",
+                    },
                   }}
                 ></EditorProvider>
               </span>

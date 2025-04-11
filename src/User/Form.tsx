@@ -1,67 +1,86 @@
-import GoogleMap, { PlaceAutocomplete } from "./Map";
-import { APIProvider } from "@vis.gl/react-google-maps";
-import { FormEvent, useRef, useState } from "react";
+// import GoogleMap, { PlaceAutocomplete } from "./Map";
+// import { APIProvider } from "@vis.gl/react-google-maps";
+import { useRef, useState } from "react";
 import supabase from "../supabase/supabase";
 import { useContext } from "react";
 import UserContext from "../UserContext";
 import Editor from "./Editor";
 import { useNavigate } from "react-router";
-console.log(
-  new Date(
-    new Date()
-      .toLocaleString("en-US", { timeZone: "America/Los_Angeles" })
-      .toString()
-  ).toISOString()
-);
-const currTime = new Date(Date.now())
+
+const tzoffset = new Date().getTimezoneOffset() * 60000; //offset in milliseconds
+const localISOString = new Date(Date.now() - tzoffset)
   .toISOString()
-  .split(":")
-  .slice(0, 2)
-  .toString()
-  .replace(",", ":");
-export default function Form() {
+  .slice(0, -1);
+
+// convert to YYYY-MM-DDTHH:MM
+const currTime = localISOString.substring(
+  0,
+  ((localISOString.indexOf("T") | 0) + 6) | 0
+);
+console.log(currTime);
+interface formdata {
+  title: string;
+  start_date: string;
+  end_date: string;
+  location: number[];
+  location_str: string;
+  content: string;
+}
+
+export default function Form({ formdata }: { formdata?: formdata }) {
   const form = useRef<HTMLFormElement>(null);
-  const [selectedPlace, setSelectedPlace] =
-    useState<google.maps.places.PlaceResult | null>(null);
-  const [editorContent, setEditorContent] = useState("");
+  // const [selectedPlace, setSelectedPlace] =
+  //   useState<google.maps.places.PlaceResult | null>(null);
   const { User } = useContext(UserContext);
   const navigate = useNavigate();
-  const [StartDate, setStartDate] = useState(currTime);
-  const [EndDate, setEndDate] = useState(currTime);
   const [error, setError] = useState("");
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    const formData = new FormData(event.currentTarget);
-    const data = Object.fromEntries(formData.entries());
-    const location = [
-      selectedPlace?.geometry?.location?.lat(),
-      selectedPlace?.geometry?.location?.lng()
-    ];
+  const [formData, setFormData] = useState<formdata>(
+    formdata
+      ? formdata
+      : {
+          title: "",
+          start_date: currTime,
+          end_date: currTime,
+          location: [0, 0],
+          location_str: "",
+          content: "",
+        }
+  );
 
+  const handleSubmit = async () => {
     const { error } = await supabase.from("Events").insert({
-      UID: User,
-      title: data.title,
-      start_date: data.StartTime,
-      end_date: data.EndTime,
-      location: location,
-      location_str: data.location,
-      content: editorContent
+      UID: User?.id,
+      title: formData.title,
+      start_date: formData.start_date,
+      end_date: formData.end_date,
+      location: formData.location,
+      location_str: formData.location,
+      content: formData.content,
     });
     if (error) {
       setError(error.message);
     } else {
       form.current?.reset();
-      navigate("/User/");
+      setFormData({
+        title: "",
+        start_date: currTime,
+        end_date: currTime,
+        location: [0, 0],
+        location_str: "",
+        content: "",
+      });
+      navigate("/");
     }
   };
 
   return (
-    <div className="w-1/2 flex mt-[15vh] ">
+    <div className="w-1/2 flex mt-[15vh] m-auto">
       <form
         className="border border-black p-5 flex flex-col gap-2 w-full h-min"
         ref={form}
         onSubmit={(e) => {
           e.preventDefault();
-          handleSubmit(e);
+          handleSubmit();
         }}
       >
         <p className="text-red-500">{error}</p>
@@ -71,20 +90,27 @@ export default function Form() {
           name="title"
           placeholder="Title"
           className="border-black border rounded-lg px-3 h-12"
+          value={formData.title}
+          onChange={(e) => {
+            setFormData({ ...formData, ["title"]: e.target.value });
+          }}
           autoFocus
           required
-        ></input>
+        />
         <label htmlFor="StartTime">Start Time (date and time):</label>
         <div className="border-black border rounded-lg px-3 h-12 flex items-center">
           <input
             type="datetime-local"
             name="StartTime"
             min={currTime}
-            value={StartDate}
+            value={formData.start_date}
             required
             onChange={(e) => {
-              setStartDate(e.target.value);
-              setEndDate(e.target.value);
+              setFormData({
+                ...formData,
+                ["start_date"]: e.target.value,
+                ["end_date"]: e.target.value,
+              });
             }}
           ></input>
         </div>
@@ -94,28 +120,52 @@ export default function Form() {
             type="datetime-local"
             name="EndTime"
             required
-            min={StartDate}
-            value={EndDate}
+            min={formData.start_date}
+            value={formData.end_date}
             onChange={(e) => {
-              if (e.target.value < StartDate) {
+              if (e.target.value < formData.start_date) {
                 return;
               } else {
-                setEndDate(e.target.value);
+                setFormData({
+                  ...formData,
+                  ["end_date"]: e.target.value,
+                });
               }
             }}
           ></input>
         </div>
 
         <label>Location: </label>
-        <APIProvider
+        {/* <APIProvider
           apiKey={import.meta.env.VITE_MAPS_API}
           solutionChannel="GMP_devsite_samples_v3_rgmautocomplete"
         >
           <PlaceAutocomplete onPlaceSelect={setSelectedPlace} />
         </APIProvider>
-        <GoogleMap selectedPlace={selectedPlace}></GoogleMap>
-
-        <Editor setEditorContent={setEditorContent} />
+        <GoogleMap selectedPlace={selectedPlace}></GoogleMap> */}
+        <input
+          name="location"
+          placeholder="location"
+          className="border-black border rounded-lg px-3 h-12"
+          autoFocus
+          required
+          value={formData.location_str}
+          onChange={(e) => {
+            setFormData({
+              ...formData,
+              ["location_str"]: e.target.value,
+            });
+          }}
+        ></input>
+        <Editor
+          content={formData.content}
+          setEditorContent={(e) => {
+            setFormData({
+              ...formData,
+              ["content"]: e,
+            });
+          }}
+        />
         <button
           type="submit"
           className="border border-black bg-red-400 hover:bg-red-500 w-fit rounded-lg px-5 cursor-pointer"

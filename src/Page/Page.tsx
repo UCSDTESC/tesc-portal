@@ -1,14 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import UserContext from "../UserContext";
 import supabase from "../supabase/supabase";
 import type { User, UserCredentials } from "../UserContext";
 import Navbar from "./Navbar";
-import { Outlet } from "react-router";
+import { Outlet, useNavigate } from "react-router";
 export default function Page() {
   const [User, setUser] = useState<User>({ id: "", email: "" });
   const [Error, setError] = useState("");
-
-  const handleSignIn = async ({ email, password }: UserCredentials) => {
+  const navigate = useNavigate();
+  const handleSignIn = async (
+    { email, password }: UserCredentials,
+    OnSuccess: () => void
+  ) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email,
       password: password,
@@ -17,33 +20,49 @@ export default function Page() {
       console.log(data);
       setError("");
       setUser({ id: data.user.id, email: data.user.email });
+      OnSuccess();
     }
     if (error) {
       setError(error.message);
     }
   };
 
-  const handleSignUp = async ({ email, password }: UserCredentials) => {
+  const handleSignUp = async (
+    { email, password }: UserCredentials,
+    OnSuccess: () => void
+  ) => {
     const { data, error } = await supabase.auth.signUp({
       email: email,
       password: password,
     });
     if (data.user) {
-      await supabase
+      const { error } = await supabase
         .from("Users")
-        .insert({ uuid: data.user?.id, email: data.user?.email })
-        .then(
-          () => {},
-          (error) => {
-            setError(error.message);
-          }
-        );
+        .insert({ uuid: data.user?.id, email: data.user?.email });
+      if (error) {
+        setError(error.message);
+      } else {
+        if (data.user && data.user?.email)
+          setUser({ id: data.user?.id, email: data.user?.email });
+        OnSuccess();
+      }
     }
     if (error) {
       setError(error.message);
     }
   };
-
+  useEffect(() => {
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user && user.email) {
+        console.log(user);
+        setUser({ id: user.id, email: user.email });
+      }
+    };
+    getUser();
+  }, []);
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -51,6 +70,7 @@ export default function Page() {
       console.log(error);
     } else {
       setUser({ id: "", email: "" });
+      navigate("");
     }
   };
   return (

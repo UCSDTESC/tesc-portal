@@ -14,39 +14,41 @@ import {
   AlignLeftOutlined,
   AlignRightOutlined,
   RedoOutlined,
-  UndoOutlined
+  UndoOutlined,
 } from "@ant-design/icons";
 import { useCallback } from "react";
 
 export default function Editor({
-  setEditorContent
+  content,
+  setEditorContent,
 }: {
+  content: string;
   setEditorContent: (content: string) => void;
 }) {
   const extensions = [
     TextStyle.configure(),
     TextAlign.configure({
-      types: ["heading", "paragraph"]
+      types: ["heading", "paragraph"],
     }),
     StarterKit,
     Image.configure({
       HTMLAttributes: {
-        class: "w-1/2 aspect-square object-contain ml-2"
+        class: "w-1/2 aspect-square object-contain ml-2",
       },
-      inline: true
+      inline: true,
     }),
     Placeholder,
 
     BulletList.configure({
       HTMLAttributes: {
-        class: "list-disc"
-      }
+        class: "list-disc",
+      },
     }),
     OrderedList.configure({
       HTMLAttributes: {
-        class: "list-decimal"
-      }
-    })
+        class: "list-decimal",
+      },
+    }),
   ];
   return (
     <EditorProvider
@@ -55,12 +57,12 @@ export default function Editor({
       }}
       slotBefore={<MenuBar />}
       extensions={extensions}
-      content={``}
+      content={content}
       editorProps={{
         attributes: {
           class:
-            "border-black border rounded-lg p-3 min-h-[40vh] focus:outline-none max-h-[70vh] overflow-y-scroll"
-        }
+            "border-black border rounded-lg p-3 min-h-[40vh] focus:outline-none max-h-[70vh] overflow-y-scroll",
+        },
       }}
     ></EditorProvider>
   );

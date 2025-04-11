@@ -12,10 +12,10 @@ export default function Navbar() {
       {User && User.id && (
         <>
           Logged in: {User.email}
-          <NavLink to="/User/">Home</NavLink>
-          <NavLink to="/User/">Bulletin</NavLink>
-          <NavLink to="/User/Form">Form</NavLink>
-          <NavLink to="/User/Data">Data</NavLink>
+          <NavLink to="">Home</NavLink>
+          <NavLink to="">Bulletin</NavLink>
+          <NavLink to="form">Form</NavLink>
+          <NavLink to="data">Data</NavLink>
           <button
             className="rounded-lg border border-black px-5 cursor-pointer h-1/2 right-10 bg-red-400 hover:bg-red-500"
             onClick={handleSignOut}
@@ -39,7 +39,14 @@ export default function Navbar() {
           </>
         ))}
       {showLoginModel &&
-        createPortal(<LoginModal onclose={() => {setShowLoginModal(false)}} />, document.body)}
+        createPortal(
+          <LoginModal
+            onclose={() => {
+              setShowLoginModal(false);
+            }}
+          />,
+          document.body
+        )}
     </nav>
   );
 }
