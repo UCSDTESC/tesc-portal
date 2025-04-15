@@ -60,6 +60,7 @@ export default function Form({
     cols.map((col) => {
       currform = { ...currform, [col]: value };
     });
+    console.log(currform);
     setFormData(currform);
   };
 
@@ -76,6 +77,7 @@ export default function Form({
           location: formData.location,
           location_str: formData.location_str,
           content: formData.content,
+          tags: formData.tags,
         })
         .eq("id", id);
       if (error) {

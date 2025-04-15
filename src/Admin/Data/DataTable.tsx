@@ -20,6 +20,7 @@ export default function DataTable() {
         end_date: string;
         location_str: string;
         rsvp: string;
+        tags: string[];
       }[]
     | null
   >(null);
@@ -32,7 +33,8 @@ export default function DataTable() {
     end_date: "",
     location: [],
     location_str: "",
-    content: ""
+    content: "",
+    tags: [""],
   });
   useEffect(() => {
     console.log(User);
@@ -116,7 +118,8 @@ export default function DataTable() {
                       ),
                       location: [],
                       location_str: daton.location_str,
-                      content: daton.content
+                      content: daton.content,
+                      tags: daton.tags,
                     });
                   }}
                 >
@@ -143,6 +146,10 @@ export default function DataTable() {
                   </div>
                   <label htmlFor="">rsvp: </label>
                   <div className=" whitespace-pre-line">{daton.rsvp}</div>
+                  <label htmlFor="">tags: </label>
+                  <div className=" whitespace-pre-line">
+                    {daton.tags ? daton.tags.join(", ") : ""}
+                  </div>
                 </div>
                 <EditorProvider
                   extensions={extensions}
@@ -151,8 +158,8 @@ export default function DataTable() {
                   editorProps={{
                     attributes: {
                       class:
-                        "border-black border rounded-lg p-3 w-full col-span-2 focus:outline-none max-h-[40vh]  overflow-y-auto"
-                    }
+                        "border-black border rounded-lg p-3 w-full col-span-2 focus:outline-none max-h-[40vh]  overflow-y-auto",
+                    },
                   }}
                 ></EditorProvider>
               </span>
