@@ -26,6 +26,7 @@ export default function Bulletin() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [RSVP, setRSVP] = useState<number[]>([]);
+  const [Attendance, setAttendance] = useState<number[]>([]);
   const filtered = useMemo(() => {
     return search
       ? data?.filter((daton) => daton.title.toLowerCase().includes(search))
@@ -47,11 +48,12 @@ export default function Bulletin() {
       if (User?.id) {
         const { data, error } = await supabase
           .from("Users")
-          .select("rsvp")
+          .select("rsvp,attended")
           .eq("email", User.email);
         if (data) {
           // console.log("rsvp: ", data[0].rsvp);
-          setRSVP(data[0].rsvp);
+          setRSVP(data[0].rsvp ? data[0].rsvp : []);
+          setAttendance(data[0].attended ? data[0].attended : []);
           console.log(data[0].rsvp);
         }
         if (error) {
@@ -105,7 +107,34 @@ export default function Bulletin() {
       }
     }
   };
-  const handleAttendance = async () => {
+
+  const handleAttendance = async (remove: boolean) => {
+    if (remove) {
+      const { data, error } = await supabase
+        .from("Users")
+        .select("points, attended")
+        .eq("email", User?.email);
+      if (data) {
+        const { error } = await supabase
+          .from("Users")
+          .update({
+            points: data[0].points - 1,
+            attended: Attendance.filter((item) => item != selection),
+          })
+          .eq("email", User?.email);
+        if (error) {
+          console.log(error);
+          return;
+        } else {
+          setAttendance(Attendance.filter((item) => item != selection));
+          return;
+        }
+      }
+      if (error) {
+        console.log(error);
+      }
+      return;
+    }
     const userInput = prompt("Please enter password:", "password");
     const filtered = data?.filter((daton) => daton.id === selection)[0];
     if (!filtered) {
@@ -123,17 +152,20 @@ export default function Bulletin() {
       } else {
         const { data, error } = await supabase
           .from("Users")
-          .select("points")
+          .select("points, attended")
           .eq("email", User?.email);
         if (data) {
           const { error } = await supabase
             .from("Users")
-            .update({ points: data[0].points + 1 })
+            .update({
+              points: data[0].points + 1,
+              attended: [...Attendance, filtered.id],
+            })
             .eq("email", User?.email);
           if (error) {
             console.log(error);
           } else {
-            return;
+            setAttendance([...Attendance, filtered.id]);
           }
         }
         if (error) {
@@ -142,6 +174,7 @@ export default function Bulletin() {
       }
     }
   };
+
   return (
     <div className="w-full flex justify-center mt-10">
       <div className="grid w-[80%] border border-black border-spacing-1 grid-cols-[200px_1fr] min-h-[80vh]  grid-rows-[auto_1fr] my-20">
@@ -249,12 +282,27 @@ export default function Bulletin() {
                             </button>
                           )}
                         {new Date() >= new Date(daton.start_date) &&
-                          new Date() <= new Date(daton.end_date) && (
+                          new Date() <= new Date(daton.end_date) &&
+                          !Attendance.includes(daton.id) && (
                             <button
                               className="border px-4 py-2 rounded-lg cursor-pointer"
-                              onClick={handleAttendance}
+                              onClick={() => {
+                                handleAttendance(false);
+                              }}
                             >
                               Mark attendance
+                            </button>
+                          )}
+                        {new Date() >= new Date(daton.start_date) &&
+                          new Date() <= new Date(daton.end_date) &&
+                          Attendance.includes(daton.id) && (
+                            <button
+                              className="border px-4 py-2 rounded-lg cursor-pointer"
+                              onClick={() => {
+                                handleAttendance(true);
+                              }}
+                            >
+                              Remove Attendance
                             </button>
                           )}
                       </div>
