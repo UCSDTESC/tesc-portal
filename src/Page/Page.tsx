@@ -15,7 +15,7 @@ export default function Page() {
   ) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email,
-      password: password
+      password: password,
     });
     if (data.user && data.user?.email) {
       console.log(data);
@@ -34,7 +34,7 @@ export default function Page() {
   ) => {
     const { data, error } = await supabase.auth.signUp({
       email: email,
-      password: password
+      password: password,
     });
     if (data.user) {
       const { error } = await supabase
@@ -55,15 +55,19 @@ export default function Page() {
   useEffect(() => {
     const getUser = async () => {
       const {
-        data: { user }
+        data: { user },
       } = await supabase.auth.getUser();
       if (user && user.email) {
         console.log(user);
         setUser({ id: user.id, email: user.email });
+      } else {
+        setUser({ id: "", email: "" });
+        navigate("");
       }
     };
     getUser();
   }, []);
+
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -85,7 +89,7 @@ export default function Page() {
           setError,
           handleSignIn,
           handleSignOut,
-          handleSignUp
+          handleSignUp,
         }}
       >
         <Navbar />

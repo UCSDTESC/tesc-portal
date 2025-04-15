@@ -6,7 +6,7 @@ import { useContext } from "react";
 import UserContext from "../../UserContext";
 import Editor from "./Editor";
 import { useNavigate } from "react-router";
-
+import { MultipleSelectChip, Dropdown } from "./Dropdowns";
 const tzoffset = new Date().getTimezoneOffset() * 60000; //offset in milliseconds
 const localISOString = new Date(Date.now() - tzoffset)
   .toISOString()
@@ -25,21 +25,19 @@ export interface formdata {
   location_str: string;
   content: string;
   password: string;
+  tags: string[];
 }
 
 export default function Form({
   formdata,
   id,
-  onSuccess
+  onSuccess,
 }: {
   formdata?: formdata;
   id: number;
   onSuccess: () => void;
 }) {
-  console.log(formdata?.start_date);
   const form = useRef<HTMLFormElement>(null);
-  // const [selectedPlace, setSelectedPlace] =
-  //   useState<google.maps.places.PlaceResult | null>(null);
   const { User } = useContext(UserContext);
   const navigate = useNavigate();
   const [error, setError] = useState("");
@@ -53,9 +51,17 @@ export default function Form({
           end_date: currTime,
           location: [0, 0],
           location_str: "",
-          content: ""
+          content: "",
+          tags: [],
         }
   );
+  const handleChange = <T,>(value: T, cols: string[]): void => {
+    let currform = formData;
+    cols.map((col) => {
+      currform = { ...currform, [col]: value };
+    });
+    setFormData(currform);
+  };
 
   const handleSubmit = async () => {
     if (formdata) {
@@ -69,7 +75,7 @@ export default function Form({
           end_date: formData.end_date,
           location: formData.location,
           location_str: formData.location_str,
-          content: formData.content
+          content: formData.content,
         })
         .eq("id", id);
       if (error) {
@@ -86,7 +92,7 @@ export default function Form({
         end_date: formData.end_date,
         location: formData.location,
         location_str: formData.location_str,
-        content: formData.content
+        content: formData.content,
       });
       if (error) {
         setError(error.message);
@@ -99,7 +105,8 @@ export default function Form({
           end_date: currTime,
           location: [0, 0],
           location_str: "",
-          content: ""
+          content: "",
+          tags: [],
         });
         navigate("/");
       }
@@ -137,7 +144,7 @@ export default function Form({
           className="border-black border rounded-lg px-3 h-12"
           value={formData.password}
           onChange={(e) => {
-            setFormData({ ...formData, ["password"]: e.target.value });
+            handleChange(e.target.value, ["password"]);
           }}
           autoFocus
           required
@@ -151,11 +158,7 @@ export default function Form({
             value={formData.start_date}
             required
             onChange={(e) => {
-              setFormData({
-                ...formData,
-                ["start_date"]: e.target.value,
-                ["end_date"]: e.target.value
-              });
+              handleChange(e.target.value, ["start_date", "end_date"]);
             }}
           ></input>
         </div>
@@ -171,10 +174,7 @@ export default function Form({
               if (e.target.value < formData.start_date) {
                 return;
               } else {
-                setFormData({
-                  ...formData,
-                  ["end_date"]: e.target.value
-                });
+                handleChange(e.target.value, ["end_date"]);
               }
             }}
           ></input>
@@ -188,7 +188,7 @@ export default function Form({
           <PlaceAutocomplete onPlaceSelect={setSelectedPlace} />
         </APIProvider>
         <GoogleMap selectedPlace={selectedPlace}></GoogleMap> */}
-        <input
+        {/* <input
           name="location"
           placeholder="location"
           className="border-black border rounded-lg px-3 h-12"
@@ -196,19 +196,16 @@ export default function Form({
           required
           value={formData.location_str}
           onChange={(e) => {
-            setFormData({
-              ...formData,
-              ["location_str"]: e.target.value
-            });
+            handleChange(e.target.value, ["location_str"]);
           }}
-        ></input>
+        ></input> */}
+        <Dropdown formData={formData} handleChange={handleChange} />
+        <label>Tags: </label>
+        <MultipleSelectChip formData={formData} handleChange={handleChange} />
         <Editor
           content={formData.content}
           setEditorContent={(e) => {
-            setFormData({
-              ...formData,
-              ["content"]: e
-            });
+            handleChange(e, ["content"]);
           }}
         />
         <button
