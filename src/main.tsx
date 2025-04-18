@@ -13,7 +13,10 @@ createRoot(document.getElementById("root")!).render(
       <Routes>
         <Route element={<Page />}>
           <Route path="" element={<Home />} />
-          <Route path="form" element={<Form />} />
+          <Route
+            path="form"
+            element={<Form id={0} onSuccess={function (): void {}} />}
+          />
           <Route path="data" element={<DataTable />} />
           <Route path="" element={<Page />} />
           <Route path="bulletin">

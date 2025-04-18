@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import supabase from "../supabase/supabase";
 import Editor from "./Editor";
 import { useNavigate, useParams } from "react-router";
@@ -24,27 +24,32 @@ export default function Bulletin() {
   const postId = useParams();
   const [selection, setSelection] = useState<number>(Number(postId.postId));
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
   const [RSVP, setRSVP] = useState<number[]>([]);
   const [Attendance, setAttendance] = useState<number[]>([]);
-  const filtered = useMemo(() => {
-    return search
-      ? data?.filter((daton) => daton.title.toLowerCase().includes(search))
-      : data;
-  }, [search, data]);
+
+  const [search, setSearch] = useState("");
+  const [tagFilters, setTagFilters] = useState<string[]>([]);
+  const [orgFilters, setOrgFilters] = useState<string[]>([]);
 
   useEffect(() => {
     console.log("fetching data");
     const fetch = async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("Events")
         .select()
+        .ilike("title", `%${search}%`)
+        .contains("tags", tagFilters)
         .order("created_at", { ascending: false });
+      if (orgFilters.length > 0) {
+        query = query.in("org_name", orgFilters);
+      }
+      const { data, error } = await query;
       if (data) {
         setData(data);
       } else {
         console.log(error);
       }
+
       if (User?.id) {
         const { data, error } = await supabase
           .from("Users")
@@ -191,7 +196,7 @@ export default function Bulletin() {
           </form>
         </div>
         <div className="grid grid-rows-[repeat(auto-fill,100px)] border-t border-black overflow-y-auto ">
-          {filtered?.map((daton) => {
+          {data?.map((daton) => {
             return (
               <button
                 className=" cursor-pointer flex flex-col p-1 h-full"
