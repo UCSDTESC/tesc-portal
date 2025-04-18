@@ -54,11 +54,12 @@ export default function Bulletin() {
         console.log(error);
       }
     };
-  });
+    getOrgs();
+  }, []);
 
   useEffect(() => {
-    console.log("fetching data");
     const fetch = async () => {
+      // fetch events
       let query = supabase
         .from("Events")
         .select()
@@ -75,6 +76,7 @@ export default function Bulletin() {
         console.log(error);
       }
 
+      // fetch RSVP and attended
       if (User?.id) {
         const { data, error } = await supabase
           .from("Users")
@@ -92,7 +94,7 @@ export default function Bulletin() {
       }
     };
     fetch();
-  }, [User]);
+  }, [User, search, tagFilters, orgFilters]);
 
   const formatDate = (date: string) => {
     return date.replaceAll(":", "").replaceAll("-", "").split("+")[0];
