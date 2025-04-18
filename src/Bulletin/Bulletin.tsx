@@ -3,6 +3,16 @@ import supabase from "../supabase/supabase";
 import Editor from "./Editor";
 import { useNavigate, useParams } from "react-router";
 import UserContext from "./../UserContext";
+
+const tags = [
+  "fundraiser",
+  "social",
+  "workshop",
+  "GBM",
+  "panels/talks",
+  "other",
+];
+
 export default function Bulletin() {
   const { User, setShowLoginModal } = useContext(UserContext);
   const [data, setData] = useState<
@@ -28,8 +38,23 @@ export default function Bulletin() {
   const [Attendance, setAttendance] = useState<number[]>([]);
 
   const [search, setSearch] = useState("");
+  const [orgs, setOrgs] = useState<string[]>([]);
   const [tagFilters, setTagFilters] = useState<string[]>([]);
   const [orgFilters, setOrgFilters] = useState<string[]>([]);
+
+  useEffect(() => {
+    const getOrgs = async () => {
+      const { data, error } = await supabase
+        .from("org_emails")
+        .select("org_name");
+      if (data) {
+        setOrgs(data.map((item) => item.org_name));
+      }
+      if (error) {
+        console.log(error);
+      }
+    };
+  });
 
   useEffect(() => {
     console.log("fetching data");
@@ -193,6 +218,52 @@ export default function Bulletin() {
               }}
               className=" border rounded-standard p-1 focus:outline-none"
             />
+            <div className="flex flex-row gap-3">
+              <div>
+                {tags.map((tag: string) => {
+                  return (
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={tag}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setTagFilters([...tagFilters, tag]);
+                          } else {
+                            setTagFilters(tagFilters.filter((t) => t !== tag));
+                          }
+                        }}
+                      />
+                      <label htmlFor={tag} className="ml-2">
+                        {tag}
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="max-h-[10rem] overflow-scroll">
+                {orgs.map((org: string) => {
+                  return (
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={org}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setOrgFilters([...orgFilters, org]);
+                          } else {
+                            setOrgFilters(orgFilters.filter((t) => t !== org));
+                          }
+                        }}
+                      />
+                      <label htmlFor={org} className="ml-2">
+                        {org}
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </form>
         </div>
         <div className="grid grid-rows-[repeat(auto-fill,100px)] border-t border-black overflow-y-auto ">
