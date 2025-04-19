@@ -122,7 +122,7 @@ export default function Bulletin() {
             .from("Users")
             .update({
               points: data[0].points - 1,
-              attended: Attendance.filter((item) => item != selection),
+              attended: Attendance.filter((item) => item != selection)
             })
             .eq("email", User?.email);
           if (error) {
@@ -138,7 +138,6 @@ export default function Bulletin() {
         }
         return;
       }
-
       const userInput = prompt("Please enter password:", "password");
       const filtered = data?.filter((daton) => daton.id === selection)[0];
       if (!filtered) {
@@ -148,14 +147,17 @@ export default function Bulletin() {
       {
         const id = User.id;
         const { data, error } = await supabase.rpc("validate_attendance", {
-          selection,
-          userInput,
-          id,
+          event_id: selection,
+          input: userInput,
+          user_id: id
         });
         if (error) {
           console.error(error);
           return;
-        } else console.log(data);
+        }
+        if (data) {
+          setAttendance([...Attendance, selection]);
+        }
       }
       console.log(filtered);
       // if (userInput === filtered.password) {
