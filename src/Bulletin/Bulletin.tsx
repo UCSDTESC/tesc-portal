@@ -141,47 +141,10 @@ export default function Bulletin() {
   };
 
   const handleAttendance = async (remove: boolean) => {
-    if (remove) {
-      const { data, error } = await supabase
-        .from("Users")
-        .select("points, attended")
-        .eq("email", User?.email);
-      if (data) {
-        const { error } = await supabase
-          .from("Users")
-          .update({
-            points: data[0].points - 1,
-            attended: Attendance.filter((item) => item != selection),
-          })
-          .eq("email", User?.email);
-        if (error) {
-          console.log(error);
-          return;
-        } else {
-          setAttendance(Attendance.filter((item) => item != selection));
-          return;
-        }
-      }
-      if (error) {
-        console.log(error);
-      }
-      return;
-    }
-    const userInput = prompt("Please enter password:", "password");
-    const filtered = data?.filter((daton) => daton.id === selection)[0];
-    if (!filtered) {
-      console.log("empty");
-      return;
-    }
-    console.log(filtered);
-    if (userInput === filtered.password) {
-      const { error } = await supabase
-        .from("Events")
-        .update({ attendance: filtered.attendance + 1 })
-        .eq("id", filtered.id);
-      if (error) {
-        console.log(error);
-      } else {
+    if (!User?.id) {
+      setShowLoginModal(true);
+    } else {
+      if (remove) {
         const { data, error } = await supabase
           .from("Users")
           .select("points, attended")
@@ -190,20 +153,76 @@ export default function Bulletin() {
           const { error } = await supabase
             .from("Users")
             .update({
-              points: data[0].points + 1,
-              attended: [...Attendance, filtered.id],
+              points: data[0].points - 1,
+              attended: Attendance.filter((item) => item != selection)
             })
             .eq("email", User?.email);
           if (error) {
             console.log(error);
+            return;
           } else {
-            setAttendance([...Attendance, filtered.id]);
+            setAttendance(Attendance.filter((item) => item != selection));
+            return;
           }
         }
         if (error) {
           console.log(error);
         }
+        return;
       }
+      const userInput = prompt("Please enter password:", "password");
+      const filtered = data?.filter((daton) => daton.id === selection)[0];
+      if (!filtered) {
+        console.log("empty");
+        return;
+      }
+      {
+        const id = User.id;
+        const { data, error } = await supabase.rpc("validate_attendance", {
+          event_id: selection,
+          input: userInput,
+          user_id: id
+        });
+        if (error) {
+          console.error(error);
+          return;
+        }
+        if (data) {
+          setAttendance([...Attendance, selection]);
+        }
+      }
+      console.log(filtered);
+      // if (userInput === filtered.password) {
+      //   const { error } = await supabase
+      //     .from("Events")
+      //     .update({ attendance: filtered.attendance + 1 })
+      //     .eq("id", filtered.id);
+      //   if (error) {
+      //     console.log(error);
+      //   } else {
+      //     const { data, error } = await supabase
+      //       .from("Users")
+      //       .select("points, attended")
+      //       .eq("email", User?.email);
+      //     if (data) {
+      //       const { error } = await supabase
+      //         .from("Users")
+      //         .update({
+      //           points: data[0].points + 1,
+      //           attended: [...Attendance, filtered.id],
+      //         })
+      //         .eq("email", User?.email);
+      //       if (error) {
+      //         console.log(error);
+      //       } else {
+
+      //       }
+      //     }
+      //     if (error) {
+      //       console.log(error);
+      //     }
+      //   }
+      // }
     }
   };
 
