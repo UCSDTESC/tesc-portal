@@ -1,26 +1,24 @@
 import { useEffect, useState } from "react";
 import UserContext from "../UserContext";
-import supabase from "../supabase/supabase";
 import type { User, UserCredentials } from "../UserContext";
 import Navbar from "./Navbar";
 import { Outlet, useNavigate } from "react-router";
+import { signIn, fetchUser, signOut, signUp } from "../services/user";
+
 export default function Page() {
   const [User, setUser] = useState<User>({ id: "", email: "" });
   const [Error, setError] = useState("");
   const [showLoginModal, setShowLoginModal] = useState(false);
   const navigate = useNavigate();
+
   const handleSignIn = async (
     { email, password }: UserCredentials,
     OnSuccess: () => void
   ) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
-    });
-    if (data.user && data.user?.email) {
-      console.log(data);
+    const { user, error } = await signIn(email, password);
+    if (user && user?.email) {
       setError("");
-      setUser({ id: data.user.id, email: data.user.email });
+      setUser({ id: user.id, email: user.email });
       OnSuccess();
     }
     if (error) {
@@ -32,33 +30,29 @@ export default function Page() {
     { email, password }: UserCredentials,
     OnSuccess: () => void
   ) => {
-    const { data, error } = await supabase.auth.signUp({
-      email: email,
-      password: password,
-    });
-    if (data.user) {
-      const { error } = await supabase
-        .from("Users")
-        .insert({ uuid: data.user?.id, email: data.user?.email });
-      if (error) {
-        setError(error.message);
-      } else {
-        if (data.user && data.user?.email)
-          setUser({ id: data.user?.id, email: data.user?.email });
-        OnSuccess();
-      }
-    }
+    const { user, error } = await signUp(email, password);
     if (error) {
       setError(error.message);
+    } else if (user && user?.email) {
+      setUser({ id: user?.id, email: user?.email });
+      OnSuccess();
     }
   };
+
+  const handleSignOut = async () => {
+    const error = await signOut();
+    if (error) {
+      setError(error.message);
+    } else {
+      setUser({ id: "", email: "" });
+      navigate("");
+    }
+  };
+
   useEffect(() => {
     const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const user = await fetchUser();
       if (user && user.email) {
-        console.log(user);
         setUser({ id: user.id, email: user.email });
       } else {
         setUser({ id: "", email: "" });
@@ -68,16 +62,6 @@ export default function Page() {
     getUser();
   }, []);
 
-  const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      setError(error.message);
-      console.log(error);
-    } else {
-      setUser({ id: "", email: "" });
-      navigate("");
-    }
-  };
   return (
     <main>
       <UserContext.Provider
