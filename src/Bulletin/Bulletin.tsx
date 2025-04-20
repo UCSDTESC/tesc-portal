@@ -3,6 +3,7 @@ import supabase from "../supabase/supabase";
 import Editor from "./Editor";
 import { useNavigate, useParams } from "react-router";
 import UserContext from "./../UserContext";
+import { fetchOrgs } from "../services/organization";
 import { tags, Event } from "../lib/constants";
 import { formatDate } from "../lib/utils";
 
@@ -20,15 +21,13 @@ export default function Bulletin() {
   const [tagFilters, setTagFilters] = useState<string[]>([]);
   const [orgFilters, setOrgFilters] = useState<string[]>([]);
 
+  // fetch list of organizations
   useEffect(() => {
     const getOrgs = async () => {
-      const { data, error } = await supabase
-        .from("org_emails")
-        .select("org_name");
-      if (data) {
-        setOrgs(data.map((item) => item.org_name));
-      }
-      if (error) {
+      const { events, error } = await fetchOrgs();
+      if (events) {
+        setOrgs(events);
+      } else if (error) {
         console.log(error);
       }
     };

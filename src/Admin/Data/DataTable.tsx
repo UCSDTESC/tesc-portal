@@ -6,24 +6,11 @@ import { extensions } from "../Form/EditorExtensions";
 import { createPortal } from "react-dom";
 import Form from "../Form/Form";
 import { formdata } from "../Form/Form";
+import { Event } from "../../lib/constants";
+
 export default function DataTable() {
   const { User } = useContext(UserContext);
-  const [data, setData] = useState<
-    | {
-        id: number;
-        password: string;
-        created_at: string;
-        UID: string;
-        title: string;
-        content: string;
-        start_date: string;
-        end_date: string;
-        location_str: string;
-        rsvp: string;
-        tags: string[];
-      }[]
-    | null
-  >(null);
+  const [data, setData] = useState<Event[] | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [curID, setCurrID] = useState(0);
   const [currEdit, setCurrEdit] = useState<formdata>({
