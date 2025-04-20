@@ -11,11 +11,15 @@ export const deleteEvent = async (id: number) => {
   return error;
 };
 
-export const updateEvent = async (id: string, formData: formdata) => {
+export const updateEvent = async (
+  eventId: number,
+  uid: string,
+  formData: formdata
+) => {
   const { error } = await supabase
     .from("Events")
     .update({
-      UID: id,
+      UID: uid,
       title: formData.title,
       password: formData.password,
       start_date: formData.start_date,
@@ -25,6 +29,6 @@ export const updateEvent = async (id: string, formData: formdata) => {
       content: formData.content,
       tags: formData.tags,
     })
-    .eq("id", id);
+    .eq("id", eventId);
   return error;
 };

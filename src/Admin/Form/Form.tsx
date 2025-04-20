@@ -1,5 +1,3 @@
-// import GoogleMap, { PlaceAutocomplete } from "./Map";
-// import { APIProvider } from "@vis.gl/react-google-maps";
 import { useRef, useState } from "react";
 import supabase from "../../supabase/supabase";
 import { useContext } from "react";
@@ -9,17 +7,7 @@ import { useNavigate } from "react-router";
 import { MultipleSelectChip, Dropdown } from "./Dropdowns";
 import { formdata } from "../../lib/constants";
 import { updateEvent } from "../../services/event";
-
-const tzoffset = new Date().getTimezoneOffset() * 60000; //offset in milliseconds
-const localISOString = new Date(Date.now() - tzoffset)
-  .toISOString()
-  .slice(0, -1);
-
-// convert to YYYY-MM-DDTHH:MM
-const currTime = localISOString.substring(
-  0,
-  ((localISOString.indexOf("T") | 0) + 6) | 0
-);
+import { getCurrentTime, getFormDataDefault } from "../../lib/utils";
 
 export default function Form({
   formdata,
@@ -35,31 +23,20 @@ export default function Form({
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [formData, setFormData] = useState<formdata>(
-    formdata
-      ? formdata
-      : {
-          title: "",
-          password: "",
-          start_date: currTime,
-          end_date: currTime,
-          location: [0, 0],
-          location_str: "",
-          content: "",
-          tags: [],
-        }
+    formdata ? formdata : getFormDataDefault()
   );
+
   const handleChange = <T,>(value: T, cols: string[]): void => {
     let currform = formData;
     cols.map((col) => {
       currform = { ...currform, [col]: value };
     });
-    console.log(currform);
     setFormData(currform);
   };
 
   const handleSubmit = async () => {
     if (formdata && User?.id) {
-      const error = await updateEvent(User.id, formData);
+      const error = await updateEvent(id, User.id, formData);
       if (error) {
         setError(error.message);
       } else {
@@ -80,16 +57,7 @@ export default function Form({
         setError(error.message);
       } else {
         form.current?.reset();
-        setFormData({
-          title: "",
-          password: "",
-          start_date: currTime,
-          end_date: currTime,
-          location: [0, 0],
-          location_str: "",
-          content: "",
-          tags: [],
-        });
+        setFormData(getFormDataDefault());
         navigate("/");
       }
     }
@@ -136,7 +104,7 @@ export default function Form({
           <input
             type="datetime-local"
             name="StartTime"
-            min={formdata ? "" : currTime}
+            min={formdata ? "" : getCurrentTime()}
             value={formData.start_date}
             required
             onChange={(e) => {
