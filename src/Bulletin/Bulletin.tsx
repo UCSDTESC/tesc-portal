@@ -3,34 +3,12 @@ import supabase from "../supabase/supabase";
 import Editor from "./Editor";
 import { useNavigate, useParams } from "react-router";
 import UserContext from "./../UserContext";
-
-const tags = [
-  "fundraiser",
-  "social",
-  "workshop",
-  "GBM",
-  "panels/talks",
-  "other",
-];
+import { tags, Event } from "../lib/constants";
+import { formatDate } from "../lib/utils";
 
 export default function Bulletin() {
   const { User, setShowLoginModal } = useContext(UserContext);
-  const [data, setData] = useState<
-    {
-      id: number;
-      UID: string;
-      password: string;
-      created_at: string;
-      title: string;
-      content: string;
-      location: string;
-      location_str: string;
-      start_date: string;
-      end_date: string;
-      attendance: number;
-      rsvp: number;
-    }[]
-  >();
+  const [data, setData] = useState<Event[]>();
   const postId = useParams();
   const [selection, setSelection] = useState<number>(Number(postId.postId));
   const navigate = useNavigate();
@@ -96,10 +74,6 @@ export default function Bulletin() {
     fetch();
   }, [User, search, tagFilters, orgFilters]);
 
-  const formatDate = (date: string) => {
-    return date.replaceAll(":", "").replaceAll("-", "").split("+")[0];
-  };
-
   const handleRSVP = async (id: number, remove: boolean) => {
     let currRSVP = RSVP;
     if (!User?.id) {
@@ -154,7 +128,7 @@ export default function Bulletin() {
             .from("Users")
             .update({
               points: data[0].points - 1,
-              attended: Attendance.filter((item) => item != selection)
+              attended: Attendance.filter((item) => item != selection),
             })
             .eq("email", User?.email);
           if (error) {
@@ -181,7 +155,7 @@ export default function Bulletin() {
         const { data, error } = await supabase.rpc("validate_attendance", {
           event_id: selection,
           input: userInput,
-          user_id: id
+          user_id: id,
         });
         if (error) {
           console.error(error);
