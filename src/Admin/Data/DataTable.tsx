@@ -4,8 +4,8 @@ import { EditorProvider } from "@tiptap/react";
 import { extensions } from "../Form/EditorExtensions";
 import { createPortal } from "react-dom";
 import Form from "../Form/Form";
-import { formdata } from "../../lib/constants";
-import { Event } from "../../lib/constants";
+import { DateParser } from "../../lib/utils";
+import { Event, eventFormDataDefault, formdata } from "../../lib/constants";
 import { deleteEvent, fetchEventByOrg } from "../../services/event";
 
 export default function DataTable() {
@@ -13,16 +13,7 @@ export default function DataTable() {
   const [data, setData] = useState<Event[] | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [curID, setCurrID] = useState(0);
-  const [currEdit, setCurrEdit] = useState<formdata>({
-    title: "",
-    password: "",
-    start_date: "",
-    end_date: "",
-    location: [],
-    location_str: "",
-    content: "",
-    tags: [""],
-  });
+  const [currEdit, setCurrEdit] = useState<formdata>(eventFormDataDefault);
 
   // fetch events posted by user
   useEffect(() => {
@@ -48,21 +39,6 @@ export default function DataTable() {
     } else {
       setData(data ? data.filter((daton) => daton.id != id) : null);
     }
-  };
-
-  const DateParser = (date: string) => {
-    const parsedDate = date.split(/-|T|:/);
-    console.log(parsedDate);
-    const correctDate = new Date(
-      Date.UTC(
-        parseInt(parsedDate[0]),
-        parseInt(parsedDate[1]) - 1,
-        parseInt(parsedDate[2]),
-        parseInt(parsedDate[3]),
-        parseInt(parsedDate[4])
-      )
-    );
-    return correctDate.toUTCString();
   };
 
   return (

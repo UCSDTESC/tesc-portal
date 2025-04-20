@@ -33,3 +33,14 @@ export const tags = [
     password: string;
     tags: string[];
   }
+
+  export const eventFormDataDefault = {
+    title: "",
+    password: "",
+    start_date: "",
+    end_date: "",
+    location: [],
+    location_str: "",
+    content: "",
+    tags: [""],
+}

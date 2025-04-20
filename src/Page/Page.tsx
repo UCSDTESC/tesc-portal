@@ -11,6 +11,7 @@ export default function Page() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const navigate = useNavigate();
 
+  // sign in user
   const handleSignIn = async (
     { email, password }: UserCredentials,
     OnSuccess: () => void
@@ -26,6 +27,7 @@ export default function Page() {
     }
   };
 
+  // sign up user
   const handleSignUp = async (
     { email, password }: UserCredentials,
     OnSuccess: () => void
@@ -39,6 +41,7 @@ export default function Page() {
     }
   };
 
+  // sign out user
   const handleSignOut = async () => {
     const error = await signOut();
     if (error) {
@@ -49,6 +52,7 @@ export default function Page() {
     }
   };
 
+  // get current user
   useEffect(() => {
     const getUser = async () => {
       const user = await fetchUser();

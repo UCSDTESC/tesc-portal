@@ -6,7 +6,7 @@ import Editor from "./Editor";
 import { useNavigate } from "react-router";
 import { MultipleSelectChip, Dropdown } from "./Dropdowns";
 import { formdata } from "../../lib/constants";
-import { updateEvent } from "../../services/event";
+import { createEvent, updateEvent } from "../../services/event";
 import { getCurrentTime, getFormDataDefault } from "../../lib/utils";
 
 export default function Form({
@@ -26,6 +26,7 @@ export default function Form({
     formdata ? formdata : getFormDataDefault()
   );
 
+  // handle change to form
   const handleChange = <T,>(value: T, cols: string[]): void => {
     let currform = formData;
     cols.map((col) => {
@@ -34,6 +35,7 @@ export default function Form({
     setFormData(currform);
   };
 
+  // update event or create new event
   const handleSubmit = async () => {
     if (formdata && User?.id) {
       const error = await updateEvent(id, User.id, formData);
@@ -42,17 +44,8 @@ export default function Form({
       } else {
         onSuccess();
       }
-    } else {
-      const { error } = await supabase.from("Events").insert({
-        UID: User?.id,
-        title: formData.title,
-        password: formData.password,
-        start_date: formData.start_date,
-        end_date: formData.end_date,
-        location: formData.location,
-        location_str: formData.location_str,
-        content: formData.content,
-      });
+    } else if (User?.id) {
+      const error = await createEvent(User?.id, formData);
       if (error) {
         setError(error.message);
       } else {

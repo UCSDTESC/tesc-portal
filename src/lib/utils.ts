@@ -23,3 +23,18 @@ export const getFormDataDefault = () =>{
         tags: [],
       }
 }
+
+export const DateParser = (date: string) => {
+    const parsedDate = date.split(/-|T|:/);
+    console.log(parsedDate);
+    const correctDate = new Date(
+      Date.UTC(
+        parseInt(parsedDate[0]),
+        parseInt(parsedDate[1]) - 1,
+        parseInt(parsedDate[2]),
+        parseInt(parsedDate[3]),
+        parseInt(parsedDate[4])
+      )
+    );
+    return correctDate.toUTCString();
+  };

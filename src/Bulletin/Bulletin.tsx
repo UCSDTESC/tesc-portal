@@ -6,6 +6,7 @@ import UserContext from "./../UserContext";
 import { fetchOrgs } from "../services/organization";
 import { tags, Event } from "../lib/constants";
 import { formatDate } from "../lib/utils";
+import { queryEventsBySearchAndFilters } from "../services/event";
 
 export default function Bulletin() {
   const { User, setShowLoginModal } = useContext(UserContext);
@@ -36,19 +37,14 @@ export default function Bulletin() {
 
   useEffect(() => {
     const fetch = async () => {
-      // fetch events
-      let query = supabase
-        .from("Events")
-        .select()
-        .ilike("title", `%${search}%`)
-        .contains("tags", tagFilters)
-        .order("created_at", { ascending: false });
-      if (orgFilters.length > 0) {
-        query = query.in("org_name", orgFilters);
-      }
-      const { data, error } = await query;
-      if (data) {
-        setData(data);
+      // fetch events by search and filters
+      const { events, error } = await queryEventsBySearchAndFilters(
+        search,
+        tagFilters,
+        orgFilters
+      );
+      if (events) {
+        setData(events);
       } else {
         console.log(error);
       }
@@ -60,10 +56,8 @@ export default function Bulletin() {
           .select("rsvp,attended")
           .eq("email", User.email);
         if (data) {
-          // console.log("rsvp: ", data[0].rsvp);
           setRSVP(data[0].rsvp ? data[0].rsvp : []);
           setAttendance(data[0].attended ? data[0].attended : []);
-          console.log(data[0].rsvp);
         }
         if (error) {
           console.log(error);
