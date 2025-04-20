@@ -8,6 +8,7 @@ export const tags = [
   ];
 
   export type Event = {
+    tags: string[];
     id: number;
     UID: string;
     password: string;
@@ -20,4 +21,15 @@ export const tags = [
     end_date: string;
     attendance: number;
     rsvp: number;
+  }
+
+  export interface formdata {
+    title: string;
+    start_date: string;
+    end_date: string;
+    location: number[];
+    location_str: string;
+    content: string;
+    password: string;
+    tags: string[];
   }

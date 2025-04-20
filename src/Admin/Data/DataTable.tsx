@@ -1,12 +1,12 @@
 import { useContext, useEffect, useState } from "react";
-import supabase from "../../supabase/supabase";
 import UserContext from "../../UserContext";
 import { EditorProvider } from "@tiptap/react";
 import { extensions } from "../Form/EditorExtensions";
 import { createPortal } from "react-dom";
 import Form from "../Form/Form";
-import { formdata } from "../Form/Form";
+import { formdata } from "../../lib/constants";
 import { Event } from "../../lib/constants";
+import { deleteEvent, fetchEventByOrg } from "../../services/event";
 
 export default function DataTable() {
   const { User } = useContext(UserContext);
@@ -23,37 +23,33 @@ export default function DataTable() {
     content: "",
     tags: [""],
   });
+
+  // fetch events posted by user
   useEffect(() => {
-    console.log(User);
     if (!User) {
       return;
     }
     const fetchData = async () => {
-      console.log(User);
-      const { data, error } = await supabase
-        .from("Events")
-        .select()
-        .eq("UID", User.id);
+      const { data, error } = await fetchEventByOrg(User.id);
       if (data) {
         setData(data);
-        console.log(data);
-      }
-      if (error) {
+      } else if (error) {
         console.log(error);
       }
     };
     fetchData();
   }, [User, showEditModal]);
 
+  // delete event
   const handleDelete = async (id: number) => {
-    console.log(id);
-    const { error } = await supabase.from("Events").delete().eq("id", id);
+    const error = await deleteEvent(id);
     if (error) {
       console.log(error);
     } else {
       setData(data ? data.filter((daton) => daton.id != id) : null);
     }
   };
+
   const DateParser = (date: string) => {
     const parsedDate = date.split(/-|T|:/);
     console.log(parsedDate);
@@ -68,6 +64,7 @@ export default function DataTable() {
     );
     return correctDate.toUTCString();
   };
+
   return (
     <>
       {data && (

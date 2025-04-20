@@ -7,6 +7,9 @@ import UserContext from "../../UserContext";
 import Editor from "./Editor";
 import { useNavigate } from "react-router";
 import { MultipleSelectChip, Dropdown } from "./Dropdowns";
+import { formdata } from "../../lib/constants";
+import { updateEvent } from "../../services/event";
+
 const tzoffset = new Date().getTimezoneOffset() * 60000; //offset in milliseconds
 const localISOString = new Date(Date.now() - tzoffset)
   .toISOString()
@@ -17,16 +20,6 @@ const currTime = localISOString.substring(
   0,
   ((localISOString.indexOf("T") | 0) + 6) | 0
 );
-export interface formdata {
-  title: string;
-  start_date: string;
-  end_date: string;
-  location: number[];
-  location_str: string;
-  content: string;
-  password: string;
-  tags: string[];
-}
 
 export default function Form({
   formdata,
@@ -65,21 +58,8 @@ export default function Form({
   };
 
   const handleSubmit = async () => {
-    if (formdata) {
-      const { error } = await supabase
-        .from("Events")
-        .update({
-          UID: User?.id,
-          title: formData.title,
-          password: formData.password,
-          start_date: formData.start_date,
-          end_date: formData.end_date,
-          location: formData.location,
-          location_str: formData.location_str,
-          content: formData.content,
-          tags: formData.tags,
-        })
-        .eq("id", id);
+    if (formdata && User?.id) {
+      const error = await updateEvent(User.id, formData);
       if (error) {
         setError(error.message);
       } else {
