@@ -7,6 +7,11 @@ import { fetchOrgs } from "../services/organization";
 import { tags, Event } from "../lib/constants";
 import { formatDate } from "../lib/utils";
 import { queryEventsBySearchAndFilters } from "../services/event";
+import {
+  fetchRSVPAndAttended,
+  editRSVP,
+  logAttendance,
+} from "../services/user";
 
 export default function Bulletin() {
   const { User, setShowLoginModal } = useContext(UserContext);
@@ -15,7 +20,7 @@ export default function Bulletin() {
   const [selection, setSelection] = useState<number>(Number(postId.postId));
   const navigate = useNavigate();
   const [RSVP, setRSVP] = useState<number[]>([]);
-  const [Attendance, setAttendance] = useState<number[]>([]);
+  const [attendance, setAttendance] = useState<number[]>([]);
 
   const [search, setSearch] = useState("");
   const [orgs, setOrgs] = useState<string[]>([]);
@@ -35,9 +40,9 @@ export default function Bulletin() {
     getOrgs();
   }, []);
 
+  // fetch events (with any searches and filters)
   useEffect(() => {
-    const fetch = async () => {
-      // fetch events by search and filters
+    const fetchEvents = async () => {
       const { events, error } = await queryEventsBySearchAndFilters(
         search,
         tagFilters,
@@ -48,66 +53,52 @@ export default function Bulletin() {
       } else {
         console.log(error);
       }
+    };
+    fetchEvents();
+  }, [search, tagFilters, orgFilters]);
 
-      // fetch RSVP and attended
+  // fetch RSVP and attended events
+  useEffect(() => {
+    const fetchRSVPAndAttendedEvents = async () => {
       if (User?.id) {
-        const { data, error } = await supabase
-          .from("Users")
-          .select("rsvp,attended")
-          .eq("email", User.email);
-        if (data) {
-          setRSVP(data[0].rsvp ? data[0].rsvp : []);
-          setAttendance(data[0].attended ? data[0].attended : []);
-        }
-        if (error) {
+        const { rsvp, attended, error } = await fetchRSVPAndAttended(
+          User.email
+        );
+        if (rsvp && attended) {
+          setRSVP(rsvp);
+          setAttendance(attended);
+        } else if (error) {
           console.log(error);
         }
       }
     };
-    fetch();
-  }, [User, search, tagFilters, orgFilters]);
+    fetchRSVPAndAttendedEvents();
+  }, [User]);
 
   const handleRSVP = async (id: number, remove: boolean) => {
-    let currRSVP = RSVP;
+    // if user is not logged in, show login modal
     if (!User?.id) {
       setShowLoginModal(true);
     } else {
+      // update rsvp array
+      let currRSVP = RSVP;
       if (remove) {
         currRSVP = currRSVP.filter((item) => item !== id);
       } else {
         currRSVP = [...currRSVP, id];
       }
-      const { error } = await supabase
-        .from("Users")
-        .update({ rsvp: currRSVP })
-        .eq("email", User.email);
-
+      // edit database rsvp array and count
+      const error = await editRSVP(id, User.email, remove, currRSVP);
       if (error) {
         console.log(error);
       } else {
-        const { data, error } = await supabase
-          .from("Events")
-          .select("rsvp")
-          .eq("id", id);
-        if (data) {
-          const { error } = await supabase
-            .from("Events")
-            .update({ rsvp: remove ? data[0].rsvp - 1 : data[0].rsvp + 1 })
-            .eq("id", id);
-          if (error) {
-            console.log(error);
-          } else {
-            setRSVP(currRSVP);
-          }
-        }
-        if (error) {
-          console.log(error);
-        }
+        setRSVP(currRSVP);
       }
     }
   };
 
   const handleAttendance = async (remove: boolean) => {
+    // if user is not logged in, show login modal
     if (!User?.id) {
       setShowLoginModal(true);
     } else {
@@ -121,14 +112,14 @@ export default function Bulletin() {
             .from("Users")
             .update({
               points: data[0].points - 1,
-              attended: Attendance.filter((item) => item != selection),
+              attended: attendance.filter((item) => item != selection),
             })
             .eq("email", User?.email);
           if (error) {
             console.log(error);
             return;
           } else {
-            setAttendance(Attendance.filter((item) => item != selection));
+            setAttendance(attendance.filter((item) => item != selection));
             return;
           }
         }
@@ -155,7 +146,7 @@ export default function Bulletin() {
           return;
         }
         if (data) {
-          setAttendance([...Attendance, selection]);
+          setAttendance([...attendance, selection]);
         }
       }
       console.log(filtered);
@@ -347,7 +338,7 @@ export default function Bulletin() {
                           )}
                         {new Date() >= new Date(daton.start_date) &&
                           new Date() <= new Date(daton.end_date) &&
-                          !Attendance.includes(daton.id) && (
+                          !attendance.includes(daton.id) && (
                             <button
                               className="border px-4 py-2 rounded-lg cursor-pointer"
                               onClick={() => {
@@ -359,7 +350,7 @@ export default function Bulletin() {
                           )}
                         {new Date() >= new Date(daton.start_date) &&
                           new Date() <= new Date(daton.end_date) &&
-                          Attendance.includes(daton.id) && (
+                          attendance.includes(daton.id) && (
                             <button
                               className="border px-4 py-2 rounded-lg cursor-pointer"
                               onClick={() => {

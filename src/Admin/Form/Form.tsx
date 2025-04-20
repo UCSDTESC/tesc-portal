@@ -1,5 +1,4 @@
 import { useRef, useState } from "react";
-import supabase from "../../supabase/supabase";
 import { useContext } from "react";
 import UserContext from "../../UserContext";
 import Editor from "./Editor";

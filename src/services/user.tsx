@@ -38,3 +38,55 @@ export const signUp = async (email: string, password: string) => {
     return { user, error };
   } else return { user: null, error };
 };
+
+export const fetchRSVPAndAttended = async (email: string) => {
+  const { data, error } = await supabase
+    .from("Users")
+    .select("rsvp,attended")
+    .eq("email", email);
+  if (data) {
+    return {
+      rsvp: data[0].rsvp ? data[0].rsvp : [],
+      attended: data[0].attended ? data[0].attended : [],
+      error: null,
+    };
+  } else return { rsvp: null, attended: null, error };
+};
+
+export const editRSVP = async (
+  id: number,
+  email: string,
+  remove: boolean,
+  currRSVP: number[]
+) => {
+  // update rsvp array in user table
+  const { error } = await supabase
+    .from("Users")
+    .update({ rsvp: currRSVP })
+    .eq("email", email);
+
+  if (error) {
+    return error;
+  } else {
+    // update rsvp count in event table
+    const { data, error } = await supabase
+      .from("Events")
+      .select("rsvp")
+      .eq("id", id);
+
+    if (data) {
+      const { error } = await supabase
+        .from("Events")
+        .update({ rsvp: remove ? data[0].rsvp - 1 : data[0].rsvp + 1 })
+        .eq("id", id);
+      if (error) {
+        return error;
+      }
+    } else return error;
+  }
+
+  // return no errors
+  return null;
+};
+
+export const logAttendance = async () => {};
