@@ -1,9 +1,10 @@
 import { FormEvent, useContext, useState } from "react";
-import UserContext from "../UserContext";
+
+import UserContext from "@lib/UserContext";
+
 export default function LoginModal({ onclose }: { onclose: () => void }) {
   const [register, setRegister] = useState(false);
-  const { Error, setError, handleSignUp, handleSignIn } =
-    useContext(UserContext);
+  const { Error, setError, handleSignUp, handleSignIn } = useContext(UserContext);
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     setError("");
     const formData = new FormData(event.currentTarget);

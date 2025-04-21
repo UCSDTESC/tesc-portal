@@ -1,5 +1,5 @@
-import supabase from "../supabase/supabase";
-import { formdata } from "../lib/constants";
+import supabase from "@server/supabase";
+import { formdata } from "@lib/constants";
 
 export const fetchEventByOrg = async (uid: string) => {
   const { data, error } = await supabase.from("Events").select().eq("UID", uid);
@@ -15,7 +15,7 @@ export const createEvent = async (uid: string, formData: formdata) => {
     end_date: formData.end_date,
     location: formData.location,
     location_str: formData.location_str,
-    content: formData.content,
+    content: formData.content
   });
   return error;
 };
@@ -25,11 +25,7 @@ export const deleteEvent = async (id: number) => {
   return error;
 };
 
-export const updateEvent = async (
-  eventId: number,
-  uid: string,
-  formData: formdata
-) => {
+export const updateEvent = async (eventId: number, uid: string, formData: formdata) => {
   const { error } = await supabase
     .from("Events")
     .update({
@@ -41,7 +37,7 @@ export const updateEvent = async (
       location: formData.location,
       location_str: formData.location_str,
       content: formData.content,
-      tags: formData.tags,
+      tags: formData.tags
     })
     .eq("id", eventId);
   return error;

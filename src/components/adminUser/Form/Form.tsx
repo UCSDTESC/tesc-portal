@@ -1,12 +1,14 @@
 import { useRef, useState } from "react";
 import { useContext } from "react";
-import UserContext from "../../../UserContext";
-import Editor from "./Editor";
 import { useNavigate } from "react-router";
+
+import UserContext from "@lib/UserContext";
+import { formdata } from "@lib/constants";
+import { getCurrentTime, getFormDataDefault } from "@lib/utils";
+import { createEvent, updateEvent } from "@services/event";
+
+import Editor from "./Editor";
 import { MultipleSelectChip, Dropdown } from "./Dropdowns";
-import { formdata } from "../../../lib/constants";
-import { createEvent, updateEvent } from "../../../services/event";
-import { getCurrentTime, getFormDataDefault } from "../../../lib/utils";
 
 // TODO: refactor label and input components into an individual component
 export default function Form({

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { deleteEvent, fetchEventByOrg } from "../services/event";
-import { User } from "../UserContext";
+import { User } from "./UserContext";
 import { Event, eventFormDataDefault, formdata } from "../lib/constants";
 export const formatDate = (date: string) => {
   return date.replaceAll(":", "").replaceAll("-", "").split("+")[0];

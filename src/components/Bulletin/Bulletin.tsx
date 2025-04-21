@@ -1,13 +1,15 @@
 import { useContext, useEffect, useState } from "react";
-import supabase from "../../supabase/supabase";
-import Editor from "./Editor";
 import { useNavigate, useParams } from "react-router";
-import UserContext from "./../../UserContext";
-import { fetchOrgs } from "../../services/organization";
-import { tags, Event } from "../../lib/constants";
-import { formatDate } from "../../lib/utils";
-import { queryEventsBySearchAndFilters } from "../../services/event";
-import { fetchRSVPAndAttended, editRSVP, logAttendance } from "../../services/user";
+
+import UserContext from "@lib/UserContext";
+import { tags, Event } from "@lib/constants";
+import { formatDate } from "@lib/utils";
+import { fetchRSVPAndAttended, editRSVP, logAttendance } from "@services/user";
+import { fetchOrgs } from "@services/organization";
+import { queryEventsBySearchAndFilters } from "@services/event";
+import supabase from "@server/supabase";
+
+import Editor from "./Editor";
 
 // TODO: useBulletin custom hook
 // TODO: refactor individualised components to shorten return statement

@@ -28,6 +28,7 @@
     "@tiptap/react": "^2.11.5",
     "@tiptap/starter-kit": "^2.11.5",
     "@vis.gl/react-google-maps": "^1.5.1",
+    "path": "^0.12.7",
     "react": "^19.0.0",
     "react-datepicker": "^8.1.0",
     "react-dom": "^19.0.0",

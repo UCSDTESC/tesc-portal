@@ -1,9 +1,9 @@
-import supabase from "../supabase/supabase";
+import supabase from "@server/supabase";
 
 export const signIn = async (email: string, password: string) => {
   const { data, error } = await supabase.auth.signInWithPassword({
     email: email,
-    password: password,
+    password: password
   });
   const user = data.user;
   return { user, error };
@@ -11,7 +11,7 @@ export const signIn = async (email: string, password: string) => {
 
 export const fetchUser = async () => {
   const {
-    data: { user },
+    data: { user }
   } = await supabase.auth.getUser();
   return user;
 };
@@ -25,7 +25,7 @@ export const signUp = async (email: string, password: string) => {
   // add user to auth table
   const { data, error } = await supabase.auth.signUp({
     email: email,
-    password: password,
+    password: password
   });
   if (error) return { user: null, error };
 
@@ -40,39 +40,25 @@ export const signUp = async (email: string, password: string) => {
 };
 
 export const fetchRSVPAndAttended = async (email: string) => {
-  const { data, error } = await supabase
-    .from("Users")
-    .select("rsvp,attended")
-    .eq("email", email);
+  const { data, error } = await supabase.from("Users").select("rsvp,attended").eq("email", email);
   if (data) {
     return {
       rsvp: data[0].rsvp ? data[0].rsvp : [],
       attended: data[0].attended ? data[0].attended : [],
-      error: null,
+      error: null
     };
   } else return { rsvp: null, attended: null, error };
 };
 
-export const editRSVP = async (
-  id: number,
-  email: string,
-  remove: boolean,
-  currRSVP: number[]
-) => {
+export const editRSVP = async (id: number, email: string, remove: boolean, currRSVP: number[]) => {
   // update rsvp array in user table
-  const { error } = await supabase
-    .from("Users")
-    .update({ rsvp: currRSVP })
-    .eq("email", email);
+  const { error } = await supabase.from("Users").update({ rsvp: currRSVP }).eq("email", email);
 
   if (error) {
     return error;
   } else {
     // update rsvp count in event table
-    const { data, error } = await supabase
-      .from("Events")
-      .select("rsvp")
-      .eq("id", id);
+    const { data, error } = await supabase.from("Events").select("rsvp").eq("id", id);
 
     if (data) {
       const { error } = await supabase
