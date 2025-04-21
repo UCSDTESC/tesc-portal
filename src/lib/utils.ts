@@ -38,3 +38,10 @@ export const DateParser = (date: string) => {
     );
     return correctDate.toUTCString();
   };
+
+export const toISO = (date:string) =>{
+  return date.substring(
+    0,
+    ((date.indexOf("T") | 0) + 6) | 0
+  )
+}

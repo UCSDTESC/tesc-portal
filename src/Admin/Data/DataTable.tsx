@@ -4,7 +4,7 @@ import { EditorProvider } from "@tiptap/react";
 import { extensions } from "../Form/EditorExtensions";
 import { createPortal } from "react-dom";
 import Form from "../Form/Form";
-import { DateParser } from "../../lib/utils";
+import { DateParser, toISO } from "../../lib/utils";
 import { Event, eventFormDataDefault, formdata } from "../../lib/constants";
 import { deleteEvent, fetchEventByOrg } from "../../services/event";
 
@@ -41,6 +41,22 @@ export default function DataTable() {
     }
   };
 
+  // Open the Edit Modal with the corresponding data inserted in
+  const setEdit = (daton: Event) => {
+    setShowEditModal(true);
+    setCurrID(daton.id);
+    setCurrEdit({
+      title: daton.title,
+      password: daton.password,
+      start_date: toISO(daton.start_date),
+      end_date: toISO(daton.end_date),
+      location: [],
+      location_str: daton.location_str,
+      content: daton.content,
+      tags: daton.tags
+    });
+  };
+
   return (
     <>
       {data && (
@@ -63,24 +79,7 @@ export default function DataTable() {
                 <button
                   className="absolute right-[50px] top-[-15px] rounded-lg p-2 text-black bg-gray-300 w-fit hover:bg-gray-400 cursor-pointer"
                   onClick={() => {
-                    setShowEditModal(true);
-                    setCurrID(daton.id);
-                    setCurrEdit({
-                      title: daton.title,
-                      password: daton.password,
-                      start_date: daton.start_date.substring(
-                        0,
-                        ((daton.start_date.indexOf("T") | 0) + 6) | 0
-                      ),
-                      end_date: daton.end_date.substring(
-                        0,
-                        ((daton.end_date.indexOf("T") | 0) + 6) | 0
-                      ),
-                      location: [],
-                      location_str: daton.location_str,
-                      content: daton.content,
-                      tags: daton.tags,
-                    });
+                    setEdit(daton);
                   }}
                 >
                   edit
@@ -118,8 +117,8 @@ export default function DataTable() {
                   editorProps={{
                     attributes: {
                       class:
-                        "border-black border rounded-lg p-3 w-full col-span-2 focus:outline-none max-h-[40vh]  overflow-y-auto",
-                    },
+                        "border-black border rounded-lg p-3 w-full col-span-2 focus:outline-none max-h-[40vh]  overflow-y-auto"
+                    }
                   }}
                 ></EditorProvider>
               </span>
