@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { deleteEvent, fetchEventByOrg } from "../services/event";
 import { User } from "../UserContext";
 import { Event, eventFormDataDefault, formdata } from "../lib/constants";
@@ -52,8 +52,10 @@ export function useData(User: User | null) {
   const [data, setData] = useState<Event[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  // fetch events posted by user
-  const fetchData = async () => {
+
+  // fetch events posted by user, wrapped in useCallback so that data will
+  // update when User changes (when they log out)
+  const fetchData = useCallback(async () => {
     setLoading(true);
     if (!User) {
       return;
@@ -67,12 +69,12 @@ export function useData(User: User | null) {
       setError(error.message);
       setLoading(false);
     }
-  };
+  }, [User]);
 
   // fetch events posted by user on component render
   useEffect(() => {
     fetchData();
-  }, [User]);
+  }, [fetchData]);
 
   // delete event
   const handleDelete = async (id: number) => {

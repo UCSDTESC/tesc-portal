@@ -11,7 +11,7 @@ export default function DataTable() {
   const { User } = useContext(UserContext);
   // data hook also returns error and loading state variables to be implemented later for error and loading states
   const { data, handleDelete, fetchData } = useData(User);
-  const { showEditModal, setShowEditModal, curID, currEdit, openEditModal } = useEditModal();
+  const { showEditModal, curID, currEdit, setShowEditModal, openEditModal } = useEditModal();
 
   if (data)
     return (
@@ -53,7 +53,7 @@ export default function DataTable() {
                       "border-black border rounded-lg p-3 w-full col-span-2 focus:outline-none max-h-[40vh]  overflow-y-auto"
                   }
                 }}
-              ></EditorProvider>
+              />
             </span>
           );
         })}
