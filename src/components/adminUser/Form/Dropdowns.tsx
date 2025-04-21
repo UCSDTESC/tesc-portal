@@ -5,7 +5,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Chip from "@mui/material/Chip";
 import { Autocomplete, TextField } from "@mui/material";
-
+import { tags } from "@lib/constants";
 import { formdata } from "@lib/constants";
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
@@ -17,18 +17,6 @@ const MenuProps = {
     }
   }
 };
-const tags = [
-  "Oliver Hansen",
-  "Van Henry",
-  "April Tucker",
-  "Ralph Hubbard",
-  "Omar Alexander",
-  "Carlos Abbott",
-  "Miriam Wagner",
-  "Bradley Wilkerson",
-  "Virginia Andrews",
-  "Kelly Snyder"
-];
 
 function getStyles(name: string, personName: readonly string[], theme: Theme) {
   return {
