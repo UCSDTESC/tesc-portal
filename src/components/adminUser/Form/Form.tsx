@@ -1,17 +1,18 @@
 import { useRef, useState } from "react";
 import { useContext } from "react";
-import UserContext from "../../UserContext";
+import UserContext from "../../../UserContext";
 import Editor from "./Editor";
 import { useNavigate } from "react-router";
 import { MultipleSelectChip, Dropdown } from "./Dropdowns";
-import { formdata } from "../../lib/constants";
-import { createEvent, updateEvent } from "../../services/event";
-import { getCurrentTime, getFormDataDefault } from "../../lib/utils";
+import { formdata } from "../../../lib/constants";
+import { createEvent, updateEvent } from "../../../services/event";
+import { getCurrentTime, getFormDataDefault } from "../../../lib/utils";
 
+// TODO: refactor label and input components into an individual component
 export default function Form({
   formdata,
   id,
-  onSuccess,
+  onSuccess
 }: {
   formdata?: formdata;
   id: number;
@@ -21,9 +22,7 @@ export default function Form({
   const { User } = useContext(UserContext);
   const navigate = useNavigate();
   const [error, setError] = useState("");
-  const [formData, setFormData] = useState<formdata>(
-    formdata ? formdata : getFormDataDefault()
-  );
+  const [formData, setFormData] = useState<formdata>(formdata ? formdata : getFormDataDefault());
 
   // handle change to form
   const handleChange = <T,>(value: T, cols: string[]): void => {
@@ -123,24 +122,6 @@ export default function Form({
         </div>
 
         <label>Location: </label>
-        {/* <APIProvider
-          apiKey={import.meta.env.VITE_MAPS_API}
-          solutionChannel="GMP_devsite_samples_v3_rgmautocomplete"
-        >
-          <PlaceAutocomplete onPlaceSelect={setSelectedPlace} />
-        </APIProvider>
-        <GoogleMap selectedPlace={selectedPlace}></GoogleMap> */}
-        {/* <input
-          name="location"
-          placeholder="location"
-          className="border-black border rounded-lg px-3 h-12"
-          autoFocus
-          required
-          value={formData.location_str}
-          onChange={(e) => {
-            handleChange(e.target.value, ["location_str"]);
-          }}
-        ></input> */}
         <Dropdown formData={formData} handleChange={handleChange} />
         <label>Tags: </label>
         <MultipleSelectChip formData={formData} handleChange={handleChange} />

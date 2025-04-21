@@ -1,12 +1,14 @@
 import { ReactNode, useContext } from "react";
-import UserContext from "../../UserContext";
+import UserContext from "../../../UserContext";
 import { EditorProvider } from "@tiptap/react";
 import { extensions } from "../Form/EditorExtensions";
 import { createPortal } from "react-dom";
 import Form from "../Form/Form";
-import { DateParser, useData, useEditModal } from "../../lib/utils";
-import { formdata } from "../../lib/constants";
+import { DateParser, useData, useEditModal } from "../../../lib/utils";
+import { formdata } from "../../../lib/constants";
 
+// TODO: Loading and Error state for the data
+// TODO: styling of the component
 export default function DataTable() {
   const { User } = useContext(UserContext);
   // data hook also returns error and loading state variables to be implemented later for error and loading states
@@ -15,8 +17,6 @@ export default function DataTable() {
 
   if (data)
     return (
-      // TODO: Loading and Error state for the data
-
       <main className="grid w-1/2 gap-2">
         {data.map((daton) => {
           return (

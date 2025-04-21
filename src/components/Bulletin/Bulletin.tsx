@@ -1,18 +1,18 @@
 import { useContext, useEffect, useState } from "react";
-import supabase from "../supabase/supabase";
+import supabase from "../../supabase/supabase";
 import Editor from "./Editor";
 import { useNavigate, useParams } from "react-router";
-import UserContext from "./../UserContext";
-import { fetchOrgs } from "../services/organization";
-import { tags, Event } from "../lib/constants";
-import { formatDate } from "../lib/utils";
-import { queryEventsBySearchAndFilters } from "../services/event";
-import {
-  fetchRSVPAndAttended,
-  editRSVP,
-  logAttendance
-} from "../services/user";
+import UserContext from "./../../UserContext";
+import { fetchOrgs } from "../../services/organization";
+import { tags, Event } from "../../lib/constants";
+import { formatDate } from "../../lib/utils";
+import { queryEventsBySearchAndFilters } from "../../services/event";
+import { fetchRSVPAndAttended, editRSVP, logAttendance } from "../../services/user";
 
+// TODO: useBulletin custom hook
+// TODO: refactor individualised components to shorten return statement
+// TODO: refactor arrow functions into individual functions
+// TODO: replace mark attendance / rsvp spaghetti code into ternary operators
 export default function Bulletin() {
   const { User, setShowLoginModal } = useContext(UserContext);
   const [data, setData] = useState<Event[]>();
@@ -43,11 +43,7 @@ export default function Bulletin() {
   // fetch events (with any searches and filters)
   useEffect(() => {
     const fetchEvents = async () => {
-      const { events, error } = await queryEventsBySearchAndFilters(
-        search,
-        tagFilters,
-        orgFilters
-      );
+      const { events, error } = await queryEventsBySearchAndFilters(search, tagFilters, orgFilters);
       if (events) {
         setData(events);
       } else {
@@ -61,9 +57,7 @@ export default function Bulletin() {
   useEffect(() => {
     const fetchRSVPAndAttendedEvents = async () => {
       if (User?.id) {
-        const { rsvp, attended, error } = await fetchRSVPAndAttended(
-          User.email
-        );
+        const { rsvp, attended, error } = await fetchRSVPAndAttended(User.email);
         if (rsvp && attended) {
           setRSVP(rsvp);
           setAttendance(attended);
@@ -272,47 +266,39 @@ export default function Bulletin() {
                         href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${daton.title.replace(
                           " ",
                           "+"
-                        )}&details=More+details+see:+${
-                          window.location.href
-                        }&location=${daton.location_str}&dates=${formatDate(
-                          daton.start_date
-                        )}/${formatDate(daton.end_date)}&ctz=America/Los_Angeles
+                        )}&details=More+details+see:+${window.location.href}&location=${
+                          daton.location_str
+                        }&dates=${formatDate(daton.start_date)}/${formatDate(
+                          daton.end_date
+                        )}&ctz=America/Los_Angeles
 `}
                         className="hover:underline decoration-auto"
                       >
                         Add to Calendar
                       </a>
                       <div className="">
-                        {new Date() < new Date(daton.start_date) &&
-                          !RSVP.includes(daton.id) && (
-                            <button
-                              className="border px-4 py-2 rounded-lg cursor-pointer"
-                              onClick={() => {
-                                handleRSVP(daton.id, false);
-                              }}
-                            >
-                              RSVP
-                            </button>
-                          )}
-                        {new Date() < new Date(daton.start_date) &&
-                          RSVP.includes(daton.id) && (
-                            <button
-                              className="border px-4 py-2 rounded-lg cursor-pointer"
-                              onClick={() => {
-                                handleRSVP(daton.id, true);
-                              }}
-                            >
-                              Remove RSVP
-                            </button>
-                          )}
+                        {new Date() < new Date(daton.start_date) && !RSVP.includes(daton.id) && (
+                          <button
+                            className="border px-4 py-2 rounded-lg cursor-pointer"
+                            onClick={() => handleRSVP(daton.id, false)}
+                          >
+                            RSVP
+                          </button>
+                        )}
+                        {new Date() < new Date(daton.start_date) && RSVP.includes(daton.id) && (
+                          <button
+                            className="border px-4 py-2 rounded-lg cursor-pointer"
+                            onClick={() => handleRSVP(daton.id, true)}
+                          >
+                            Remove RSVP
+                          </button>
+                        )}
                         {new Date() >= new Date(daton.start_date) &&
                           new Date() <= new Date(daton.end_date) &&
                           !attendance.includes(daton.id) && (
                             <button
                               className="border px-4 py-2 rounded-lg cursor-pointer"
-                              onClick={() => {
-                                handleAttendance(false);
-                              }}
+                              onClick={() => handleAttendance(false)}
                             >
                               Mark attendance
                             </button>
@@ -322,9 +308,7 @@ export default function Bulletin() {
                           attendance.includes(daton.id) && (
                             <button
                               className="border px-4 py-2 rounded-lg cursor-pointer"
-                              onClick={() => {
-                                handleAttendance(true);
-                              }}
+                              onClick={() => handleAttendance(true)}
                             >
                               Remove Attendance
                             </button>
