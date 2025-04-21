@@ -10,7 +10,7 @@ import { queryEventsBySearchAndFilters } from "../services/event";
 import {
   fetchRSVPAndAttended,
   editRSVP,
-  logAttendance,
+  logAttendance
 } from "../services/user";
 
 export default function Bulletin() {
@@ -112,7 +112,7 @@ export default function Bulletin() {
             .from("Users")
             .update({
               points: data[0].points - 1,
-              attended: attendance.filter((item) => item != selection),
+              attended: attendance.filter((item) => item != selection)
             })
             .eq("email", User?.email);
           if (error) {
@@ -139,7 +139,7 @@ export default function Bulletin() {
         const { data, error } = await supabase.rpc("validate_attendance", {
           event_id: selection,
           input: userInput,
-          user_id: id,
+          user_id: id
         });
         if (error) {
           console.error(error);
@@ -150,37 +150,6 @@ export default function Bulletin() {
         }
       }
       console.log(filtered);
-      // if (userInput === filtered.password) {
-      //   const { error } = await supabase
-      //     .from("Events")
-      //     .update({ attendance: filtered.attendance + 1 })
-      //     .eq("id", filtered.id);
-      //   if (error) {
-      //     console.log(error);
-      //   } else {
-      //     const { data, error } = await supabase
-      //       .from("Users")
-      //       .select("points, attended")
-      //       .eq("email", User?.email);
-      //     if (data) {
-      //       const { error } = await supabase
-      //         .from("Users")
-      //         .update({
-      //           points: data[0].points + 1,
-      //           attended: [...Attendance, filtered.id],
-      //         })
-      //         .eq("email", User?.email);
-      //       if (error) {
-      //         console.log(error);
-      //       } else {
-
-      //       }
-      //     }
-      //     if (error) {
-      //       console.log(error);
-      //     }
-      //   }
-      // }
     }
   };
 
