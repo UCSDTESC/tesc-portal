@@ -9,10 +9,7 @@ export interface User {
 }
 
 interface UserContext {
-  User: {
-    id: string;
-    email: string;
-  } | null;
+  User: User | null;
   Error: string;
   showLoginModal: boolean;
   setShowLoginModal: (bool: boolean) => void;
