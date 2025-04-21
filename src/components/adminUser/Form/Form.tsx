@@ -26,6 +26,7 @@ export default function Form({
   const [error, setError] = useState("");
   const [formData, setFormData] = useState<formdata>(formdata ? formdata : getFormDataDefault());
 
+  
   // handle change to form
   const handleChange = <T,>(value: T, cols: string[]): void => {
     let currform = formData;
@@ -74,9 +75,7 @@ export default function Form({
           placeholder="Title"
           className="border-black border rounded-lg px-3 h-12"
           value={formData.title}
-          onChange={(e) => {
-            setFormData({ ...formData, ["title"]: e.target.value });
-          }}
+          onChange={(e) => setFormData({ ...formData, ["title"]: e.target.value })}
           autoFocus
           required
         />
@@ -86,9 +85,7 @@ export default function Form({
           placeholder="Password"
           className="border-black border rounded-lg px-3 h-12"
           value={formData.password}
-          onChange={(e) => {
-            handleChange(e.target.value, ["password"]);
-          }}
+          onChange={(e) => handleChange(e.target.value, ["password"])}
           autoFocus
           required
         />
@@ -100,9 +97,7 @@ export default function Form({
             min={formdata ? "" : getCurrentTime()}
             value={formData.start_date}
             required
-            onChange={(e) => {
-              handleChange(e.target.value, ["start_date", "end_date"]);
-            }}
+            onChange={(e) => handleChange(e.target.value, ["start_date", "end_date"])}
           ></input>
         </div>
         <label htmlFor="EndTime">End Time (date and time): </label>
@@ -127,12 +122,7 @@ export default function Form({
         <Dropdown formData={formData} handleChange={handleChange} />
         <label>Tags: </label>
         <MultipleSelectChip formData={formData} handleChange={handleChange} />
-        <Editor
-          content={formData.content}
-          setEditorContent={(e) => {
-            handleChange(e, ["content"]);
-          }}
-        />
+        <Editor content={formData.content} setEditorContent={(e) => handleChange(e, ["content"])} />
         <button
           type="submit"
           className="border border-black bg-red-400 hover:bg-red-500 w-fit rounded-lg px-5 cursor-pointer"

@@ -60,7 +60,7 @@ export default function Page() {
       }
     };
     getUser();
-  }, []);
+  }, [navigate]);
 
   return (
     <main>
@@ -77,7 +77,7 @@ export default function Page() {
         }}
       >
         <Navbar />
-        <div className="pt-[15vh]">
+        <div className="py-[15vh] w-full flex justify-center">
           <Outlet />
         </div>
       </UserContext.Provider>
