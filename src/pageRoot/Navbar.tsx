@@ -1,7 +1,9 @@
-import { NavLink } from "react-router";
-import UserContext from "../UserContext";
 import { useContext } from "react";
+import { NavLink } from "react-router";
 import { createPortal } from "react-dom";
+
+import UserContext from "@lib/UserContext";
+
 import LoginModal from "./LoginModal";
 
 export default function Navbar() {

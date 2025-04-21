@@ -1,11 +1,13 @@
 import { ReactNode, useContext } from "react";
-import UserContext from "../../../UserContext";
-import { EditorProvider } from "@tiptap/react";
-import { extensions } from "../Form/EditorExtensions";
 import { createPortal } from "react-dom";
+
+import { EditorProvider } from "@tiptap/react";
+import UserContext from "@lib/UserContext";
+import { DateParser, useData, useEditModal } from "@lib/utils";
+import { formdata } from "@lib/constants";
+
+import { extensions } from "../Form/EditorExtensions";
 import Form from "../Form/Form";
-import { DateParser, useData, useEditModal } from "../../../lib/utils";
-import { formdata } from "../../../lib/constants";
 
 // TODO: Loading and Error state for the data
 // TODO: styling of the component

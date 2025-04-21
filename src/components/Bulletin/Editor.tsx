@@ -1,6 +1,7 @@
-import "./editor-styles.css";
 import { EditorProvider } from "@tiptap/react";
+
 import { extensions } from "../adminUser/Form/EditorExtensions";
+import "./editor-styles.css";
 export default function Editor({ content }: { content: string }) {
   return (
     <EditorProvider

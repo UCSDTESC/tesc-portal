@@ -1,4 +1,4 @@
-import supabase from "../supabase/supabase";
+import supabase from "@server/supabase";
 
 export const fetchOrgs = async () => {
   const { data, error } = await supabase.from("org_emails").select("org_name");

@@ -4,8 +4,9 @@ import OutlinedInput from "@mui/material/OutlinedInput";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Chip from "@mui/material/Chip";
-import { formdata } from "../../lib/constants";
 import { Autocomplete, TextField } from "@mui/material";
+
+import { formdata } from "@lib/constants";
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
 const MenuProps = {

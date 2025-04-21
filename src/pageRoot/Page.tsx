@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import UserContext from "../UserContext";
-import type { User, UserCredentials } from "../UserContext";
-import Navbar from "./Navbar";
 import { Outlet, useNavigate } from "react-router";
-import { signIn, fetchUser, signOut, signUp } from "../services/user";
+
+import UserContext from "@lib/UserContext";
+import type { User, UserCredentials } from "@lib/UserContext";
+import { signIn, fetchUser, signOut, signUp } from "@services/user";
+
+import Navbar from "./Navbar";
 
 export default function Page() {
   const [User, setUser] = useState<User>({ id: "", email: "" });
@@ -12,10 +14,7 @@ export default function Page() {
   const navigate = useNavigate();
 
   // sign in user
-  const handleSignIn = async (
-    { email, password }: UserCredentials,
-    OnSuccess: () => void
-  ) => {
+  const handleSignIn = async ({ email, password }: UserCredentials, OnSuccess: () => void) => {
     const { user, error } = await signIn(email, password);
     if (user && user?.email) {
       setError("");
@@ -28,10 +27,7 @@ export default function Page() {
   };
 
   // sign up user
-  const handleSignUp = async (
-    { email, password }: UserCredentials,
-    OnSuccess: () => void
-  ) => {
+  const handleSignUp = async ({ email, password }: UserCredentials, OnSuccess: () => void) => {
     const { user, error } = await signUp(email, password);
     if (error) {
       setError(error.message);
@@ -77,7 +73,7 @@ export default function Page() {
           setError,
           handleSignIn,
           handleSignOut,
-          handleSignUp,
+          handleSignUp
         }}
       >
         <Navbar />
