@@ -8,7 +8,6 @@ import { formatDate } from "@lib/utils";
 import Editor from "./Editor";
 import { useBulletin } from "@lib/hooks/useBulletin";
 
-const BulletinContext = createContext(null)
 // TODO: useBulletin custom hook
 // TODO: refactor individualised components to shorten return statement
 // TODO: refactor arrow functions into individual functions
@@ -20,18 +19,17 @@ export default function Bulletin() {
   const navigate = useNavigate();
   const {
     data,
-    orgFilters,
-    orgs,
-    RSVP,
     tagFilters,
+    RSVP,
     attendance,
-    setOrgFilters,
     handleAttendance,
     handleRSVP,
     setTagFilters,
-    setSearch
+    setSearch,
+    orgFilters,
+    setOrgFilters,
+    orgs
   } = useBulletin(User);
-
   return (
     <div className="grid w-[80%] border border-black border-spacing-1 grid-cols-[200px_1fr] min-h-[80vh]  grid-rows-[auto_1fr]">
       <div className="col-span-2">
@@ -46,48 +44,10 @@ export default function Bulletin() {
           />
           <div className="flex flex-row gap-3">
             <div>
-              {tags.map((tag: string) => {
-                return (
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id={tag}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setTagFilters([...tagFilters, tag]);
-                        } else {
-                          setTagFilters(tagFilters.filter((t) => t !== tag));
-                        }
-                      }}
-                    />
-                    <label htmlFor={tag} className="ml-2">
-                      {tag}
-                    </label>
-                  </div>
-                );
-              })}
+              <TagsCheckboxes {...{ tagFilters, setTagFilters }} />
             </div>
             <div className="max-h-[10rem] overflow-scroll">
-              {orgs.map((org: string) => {
-                return (
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id={org}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setOrgFilters([...orgFilters, org]);
-                        } else {
-                          setOrgFilters(orgFilters.filter((t) => t !== org));
-                        }
-                      }}
-                    />
-                    <label htmlFor={org} className="ml-2">
-                      {org}
-                    </label>
-                  </div>
-                );
-              })}
+              <OrgsCheckboxes {...{ orgs, orgFilters, setOrgFilters }} />
             </div>
           </div>
         </form>
@@ -207,5 +167,73 @@ export default function Bulletin() {
         </div>
       </div>
     </div>
+  );
+}
+
+function TagsCheckboxes({
+  tagFilters,
+  setTagFilters
+}: {
+  tagFilters: string[];
+  setTagFilters: (tagFilters: string[]) => void;
+}) {
+  return (
+    <>
+      {tags.map((tag: string) => {
+        return (
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id={tag}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setTagFilters([...tagFilters, tag]);
+                } else {
+                  setTagFilters(tagFilters.filter((t) => t !== tag));
+                }
+              }}
+            />
+            <label htmlFor={tag} className="ml-2">
+              {tag}
+            </label>
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
+function OrgsCheckboxes({
+  orgs,
+  orgFilters,
+  setOrgFilters
+}: {
+  orgs: string[];
+  orgFilters: string[];
+  setOrgFilters: (orgFilters: string[]) => void;
+}) {
+  return (
+    <>
+      {orgs.map((org: string) => {
+        return (
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id={org}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setOrgFilters([...orgFilters, org]);
+                } else {
+                  setOrgFilters(orgFilters.filter((t) => t !== org));
+                }
+              }}
+            />
+            <label htmlFor={org} className="ml-2">
+              {org}
+            </label>
+          </div>
+        );
+      })}
+    </>
   );
 }
