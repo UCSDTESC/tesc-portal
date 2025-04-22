@@ -93,6 +93,7 @@ export function useBulletin(User: User | null) {
           .select("points, attended")
           .eq("email", User?.email);
         if (data) {
+          console.log(data);
           const { error } = await supabase
             .from("Users")
             .update({
@@ -121,6 +122,7 @@ export function useBulletin(User: User | null) {
       }
       {
         const id = User.id;
+        console.log(id);
         const { data, error } = await supabase.rpc("validate_attendance", {
           event_id: selection,
           input: userInput,
@@ -129,12 +131,12 @@ export function useBulletin(User: User | null) {
         if (error) {
           console.error(error);
           return;
-        }
-        if (data) {
+        } else {
+          console.log(data);
           setAttendance([...attendance, selection]);
+          console.log([...attendance, selection]);
         }
       }
-      console.log(filtered);
     }
   };
 
