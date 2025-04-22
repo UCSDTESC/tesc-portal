@@ -1,153 +1,36 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 
 import UserContext from "@lib/UserContext";
-import { tags, Event } from "@lib/constants";
+import { tags } from "@lib/constants";
 import { formatDate } from "@lib/utils";
-import { fetchRSVPAndAttended, editRSVP, logAttendance } from "@services/user";
-import { fetchOrgs } from "@services/organization";
-import { queryEventsBySearchAndFilters } from "@services/event";
-import supabase from "@server/supabase";
 
 import Editor from "./Editor";
+import { useBulletin } from "@lib/hooks/useBulletin";
 
+const BulletinContext = createContext(null)
 // TODO: useBulletin custom hook
 // TODO: refactor individualised components to shorten return statement
 // TODO: refactor arrow functions into individual functions
 // TODO: replace mark attendance / rsvp spaghetti code into ternary operators
 export default function Bulletin() {
-  const { User, setShowLoginModal } = useContext(UserContext);
-  const [data, setData] = useState<Event[]>();
+  const { User } = useContext(UserContext);
   const postId = useParams();
-  const [selection, setSelection] = useState<number>(Number(postId.postId));
+  const [selection, setSelection] = useState<number>(Number(postId));
   const navigate = useNavigate();
-  const [RSVP, setRSVP] = useState<number[]>([]);
-  const [attendance, setAttendance] = useState<number[]>([]);
-
-  const [search, setSearch] = useState("");
-  const [orgs, setOrgs] = useState<string[]>([]);
-  const [tagFilters, setTagFilters] = useState<string[]>([]);
-  const [orgFilters, setOrgFilters] = useState<string[]>([]);
-
-  // fetch list of organizations
-  useEffect(() => {
-    const getOrgs = async () => {
-      const { events, error } = await fetchOrgs();
-      if (events) {
-        setOrgs(events);
-      } else if (error) {
-        console.log(error);
-      }
-    };
-    getOrgs();
-  }, []);
-
-  // fetch events (with any searches and filters)
-  useEffect(() => {
-    const fetchEvents = async () => {
-      const { events, error } = await queryEventsBySearchAndFilters(search, tagFilters, orgFilters);
-      if (events) {
-        setData(events);
-      } else {
-        console.log(error);
-      }
-    };
-    fetchEvents();
-  }, [search, tagFilters, orgFilters]);
-
-  // fetch RSVP and attended events
-  useEffect(() => {
-    const fetchRSVPAndAttendedEvents = async () => {
-      if (User?.id) {
-        const { rsvp, attended, error } = await fetchRSVPAndAttended(User.email);
-        if (rsvp && attended) {
-          setRSVP(rsvp);
-          setAttendance(attended);
-        } else if (error) {
-          console.log(error);
-        }
-      }
-    };
-    fetchRSVPAndAttendedEvents();
-  }, [User]);
-
-  const handleRSVP = async (id: number, remove: boolean) => {
-    // if user is not logged in, show login modal
-    if (!User?.id) {
-      setShowLoginModal(true);
-    } else {
-      // update rsvp array
-      let currRSVP = RSVP;
-      if (remove) {
-        currRSVP = currRSVP.filter((item) => item !== id);
-      } else {
-        currRSVP = [...currRSVP, id];
-      }
-      // edit database rsvp array and count
-      const error = await editRSVP(id, User.email, remove, currRSVP);
-      if (error) {
-        console.log(error);
-      } else {
-        setRSVP(currRSVP);
-      }
-    }
-  };
-
-  const handleAttendance = async (remove: boolean) => {
-    // if user is not logged in, show login modal
-    if (!User?.id) {
-      setShowLoginModal(true);
-    } else {
-      if (remove) {
-        const { data, error } = await supabase
-          .from("Users")
-          .select("points, attended")
-          .eq("email", User?.email);
-        if (data) {
-          const { error } = await supabase
-            .from("Users")
-            .update({
-              points: data[0].points - 1,
-              attended: attendance.filter((item) => item != selection)
-            })
-            .eq("email", User?.email);
-          if (error) {
-            console.log(error);
-            return;
-          } else {
-            setAttendance(attendance.filter((item) => item != selection));
-            return;
-          }
-        }
-        if (error) {
-          console.log(error);
-        }
-        return;
-      }
-      const userInput = prompt("Please enter password:", "password");
-      const filtered = data?.filter((daton) => daton.id === selection)[0];
-      if (!filtered) {
-        console.log("empty");
-        return;
-      }
-      {
-        const id = User.id;
-        const { data, error } = await supabase.rpc("validate_attendance", {
-          event_id: selection,
-          input: userInput,
-          user_id: id
-        });
-        if (error) {
-          console.error(error);
-          return;
-        }
-        if (data) {
-          setAttendance([...attendance, selection]);
-        }
-      }
-      console.log(filtered);
-    }
-  };
+  const {
+    data,
+    orgFilters,
+    orgs,
+    RSVP,
+    tagFilters,
+    attendance,
+    setOrgFilters,
+    handleAttendance,
+    handleRSVP,
+    setTagFilters,
+    setSearch
+  } = useBulletin(User);
 
   return (
     <div className="grid w-[80%] border border-black border-spacing-1 grid-cols-[200px_1fr] min-h-[80vh]  grid-rows-[auto_1fr]">
@@ -299,7 +182,7 @@ export default function Bulletin() {
                         !attendance.includes(daton.id) && (
                           <button
                             className="border px-4 py-2 rounded-lg cursor-pointer"
-                            onClick={() => handleAttendance(false)}
+                            onClick={() => handleAttendance(false, selection)}
                           >
                             Mark attendance
                           </button>
@@ -309,7 +192,7 @@ export default function Bulletin() {
                         attendance.includes(daton.id) && (
                           <button
                             className="border px-4 py-2 rounded-lg cursor-pointer"
-                            onClick={() => handleAttendance(true)}
+                            onClick={() => handleAttendance(true, selection)}
                           >
                             Remove Attendance
                           </button>
