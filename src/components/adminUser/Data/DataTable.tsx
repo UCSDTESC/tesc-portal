@@ -3,7 +3,9 @@ import { createPortal } from "react-dom";
 
 import { EditorProvider } from "@tiptap/react";
 import UserContext from "@lib/UserContext";
-import { DateParser, useData, useEditModal } from "@lib/utils";
+import { DateParser } from "@lib/utils";
+import { useEditModal } from "@lib/hooks/useEditModal";
+import { useData } from "@lib/hooks/useData";
 import { formdata } from "@lib/constants";
 
 import { extensions } from "../Form/EditorExtensions";

@@ -1,8 +1,3 @@
-import { useCallback, useEffect, useState } from "react";
-import { deleteEvent, fetchEventByOrg } from "../services/event";
-import { User } from "./UserContext";
-import { Event, eventFormDataDefault, formdata } from "../lib/constants";
-
 export const formatDate = (date: string) => {
   return date.replaceAll(":", "").replaceAll("-", "").split("+")[0];
 };
@@ -47,75 +42,6 @@ export const DateParser = (date: string) => {
 export const toISO = (date: string) => {
   return date.substring(0, ((date.indexOf("T") | 0) + 6) | 0);
 };
-
-// useData custom hook used in DataTable component
-export function useData(User: User | null) {
-  const [data, setData] = useState<Event[] | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  // fetch events posted by user, wrapped in useCallback so that data will
-  // update when User changes (when they log out)
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    if (!User) {
-      return;
-    }
-    const { data, error } = await fetchEventByOrg(User.id);
-    if (data) {
-      setData(data);
-      setError("");
-      setLoading(false);
-    } else if (error) {
-      setError(error.message);
-      setLoading(false);
-    }
-  }, [User]);
-
-  // fetch events posted by user on component render
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  // delete event
-  const handleDelete = async (id: number) => {
-    const error = await deleteEvent(id);
-    if (error) {
-      setError(error.message);
-    } else {
-      setData(data ? data.filter((daton) => daton.id != id) : null);
-      setError("");
-    }
-  };
-
-  return { data, loading, error, handleDelete, fetchData };
-}
-
-// custom hook managing the edit modal in the DataTable component
-export function useEditModal() {
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [curID, setCurrID] = useState(0);
-  const [currEdit, setCurrEdit] = useState<formdata>(eventFormDataDefault);
-
-  // Open the Edit Modal with the corresponding data inserted in
-  const openEditModal = (daton: Event) => {
-    setShowEditModal(true);
-    setCurrID(daton.id);
-    setCurrEdit({
-      title: daton.title,
-      password: daton.password,
-      start_date: toISO(daton.start_date),
-      end_date: toISO(daton.end_date),
-      location: [],
-      location_str: daton.location_str,
-      content: daton.content,
-      tags: daton.tags
-    });
-  };
-
-  return { showEditModal, setShowEditModal, curID, currEdit, openEditModal };
-}
-
 export const formatGoogleMapsLocation = (location: string) => {
   return `https://www.google.com/maps/dir/?api=1&destination=${location
     .replace(" ", "+")
@@ -135,4 +61,3 @@ export const formatGoogleCalendarEvent = (
     start_date
   )}/${formatDate(end_date)}&ctz=America/Los_Angeles`;
 };
-
