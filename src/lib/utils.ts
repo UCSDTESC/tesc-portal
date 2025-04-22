@@ -116,5 +116,23 @@ export function useEditModal() {
   return { showEditModal, setShowEditModal, curID, currEdit, openEditModal };
 }
 
+export const formatGoogleMapsLocation = (location: string) => {
+  return `https://www.google.com/maps/dir/?api=1&destination=${location
+    .replace(" ", "+")
+    .replace(",", "%2C")}&travelmode=walking`;
+};
 
+export const formatGoogleCalendarEvent = (
+  title: string,
+  location: string,
+  start_date: string,
+  end_date: string
+) => {
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title.replace(
+    " ",
+    "+"
+  )}&details=More+details+see:+${window.location.href}&location=${location}&dates=${formatDate(
+    start_date
+  )}/${formatDate(end_date)}&ctz=America/Los_Angeles`;
+};
 

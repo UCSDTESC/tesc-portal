@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 import { fetchOrgs } from "@services/organization";
 import { editRSVP, fetchRSVPAndAttended } from "@services/user";
@@ -154,3 +154,19 @@ export function useBulletin(User: User | null) {
     orgs
   };
 }
+
+export interface BulletinContextProps {
+  data: Event[] | undefined;
+  tagFilters: string[];
+  RSVP: number[];
+  attendance: number[];
+  handleAttendance: (remove: boolean, selection: number) => void;
+  handleRSVP: (selection: number, remove: boolean) => void;
+  setTagFilters: (tags: string[]) => void;
+  setSearch: (search: string) => void;
+  orgFilters: string[];
+  setOrgFilters: (orgs: string[]) => void;
+  orgs: string[];
+}
+
+export const BulletinContext = createContext<BulletinContextProps>({} as BulletinContextProps);
