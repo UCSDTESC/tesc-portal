@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 import { fetchOrgs } from "@services/organization";
-import { editRSVP, fetchRSVPAndAttended } from "@services/user";
+import { editRSVP, fetchRSVPAndAttended, logAttendance } from "@services/user";
 import supabase from "@server/supabase";
 import { queryEventsBySearchAndFilters } from "@services/event";
 import UserContext, { User } from "@lib/UserContext";
@@ -82,59 +82,20 @@ export function useBulletin(User: User | null) {
     }
   };
 
-  const handleAttendance = async (remove: boolean, selection: number) => {
+  const handleAttendance = async (selection: number) => {
     // if user is not logged in, show login modal
     if (!User?.id) {
       setShowLoginModal(true);
     } else {
-      if (remove) {
-        const { data, error } = await supabase
-          .from("Users")
-          .select("points, attended")
-          .eq("email", User?.email);
-        if (data) {
-          console.log(data);
-          const { error } = await supabase
-            .from("Users")
-            .update({
-              points: data[0].points - 1,
-              attended: attendance.filter((item) => item != selection)
-            })
-            .eq("email", User?.email);
-          if (error) {
-            console.log(error);
-            return;
-          } else {
-            setAttendance(attendance.filter((item) => item != selection));
-            return;
-          }
-        }
-        if (error) {
-          console.log(error);
-        }
-        return;
-      }
+      //log attendance
       const userInput = prompt("Please enter password:", "password");
       const filtered = data?.filter((daton) => daton.id === selection)[0];
-      if (!filtered) {
-        console.log("empty");
-        return;
-      }
-      {
-        const id = User.id;
-        console.log(id);
-        const { data, error } = await supabase.rpc("validate_attendance", {
-          event_id: selection,
-          input: userInput,
-          user_id: id
-        });
+      if (filtered && userInput){
+        const error = await logAttendance(selection, User.id, userInput);
         if (error) {
           console.error(error);
-          return;
         } else {
-          console.log(data);
           setAttendance([...attendance, selection]);
-          console.log([...attendance, selection]);
         }
       }
     }
@@ -160,7 +121,7 @@ export interface BulletinContextProps {
   tagFilters: string[];
   RSVP: number[];
   attendance: number[];
-  handleAttendance: (remove: boolean, selection: number) => void;
+  handleAttendance: (selection: number) => void;
   handleRSVP: (selection: number, remove: boolean) => void;
   setTagFilters: (tags: string[]) => void;
   setSearch: (search: string) => void;
