@@ -19,6 +19,7 @@ export default function Navbar() {
           <NavLink to="/bulletin">Bulletin</NavLink>
           <NavLink to="/form">Form</NavLink>
           <NavLink to="/data">Data</NavLink>
+          <NavLink to="/profile">profile</NavLink>
           <button
             className="rounded-lg border border-black px-5 cursor-pointer h-1/2 right-10 bg-red-400 hover:bg-red-500"
             onClick={handleSignOut}
