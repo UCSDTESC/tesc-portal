@@ -50,7 +50,9 @@ export const queryEventsBySearchAndFilters = async (
 ) => {
   let query = supabase
     .from("Events")
-    .select()
+    .select(
+      "UID,content,created_at,end_date,id,location_str,start_date,tags,title,attendance,rsvp,Users (uuid,email,pfp_str), org_emails (email,org_name)"
+    )
     .ilike("title", `%${keyword}%`)
     .contains("tags", tagFilters)
     .order("created_at", { ascending: false });

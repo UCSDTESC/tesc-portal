@@ -18,7 +18,8 @@ export function EventsList({ setSelection }: { setSelection: (selection: number)
             <div className="border  border-black h-full w-full p-1 rounded-standard bg-lightBlue">
               <div className="font-bold w-max">{daton.title}</div>
               <span className="line-clamp-3 w-max">
-                posted: {new Date(daton.created_at).toDateString()}
+                {new Date(daton.created_at).toUTCString().slice(0, 16)} <br />
+                {daton.org_emails ? daton.org_emails.org_name : "unknown"}
               </span>
             </div>
           </button>
