@@ -1,6 +1,8 @@
-import { useRef, useState } from "react";
-
+import supabase from "@server/supabase";
+import { useContext, useRef, useState } from "react";
+import UserContext from "@lib/UserContext";
 export default function NewProfile() {
+  const { User } = useContext(UserContext);
   const picInput = useRef<HTMLInputElement>(null);
   const [image, setImage] = useState("");
   const imageUpload = () => {
@@ -10,12 +12,60 @@ export default function NewProfile() {
       picInput.current.value = "";
     } else {
       setImage(URL.createObjectURL(picInput.current.files[0]));
+      console.log(picInput.current.files[0].type.replace("image/", "."));
     }
   };
-  const formSubmit = () => {};
+
+  const handleUploadProfilePicture = async () => {
+    const fetchOrgname = async () => {
+      if (!picInput.current?.files) return;
+      console.log(User?.email);
+      const { data: Orgname, error } = await supabase
+        .from("org_emails")
+        .select("org_name")
+        .eq("email", User?.email);
+      if (Orgname) {
+        console.log(Orgname[0].org_name);
+        const { data, error } = await supabase.storage
+          .from("profile.images")
+          .upload(
+            `${Orgname[0].org_name}/pfp${picInput.current.files[0].type.replace("image/", ".")}`,
+            picInput.current.files[0],
+            {
+              upsert: true
+            }
+          );
+        if (data) {
+          const { error } = await supabase
+            .from("Users")
+            .update({ pfp_str: `pfp${picInput.current.files[0].type.replace("image/", ".")}` })
+            .eq("email", User?.email);
+          if (error) {
+            console.log(error.message);
+          }
+        }
+        if (error) {
+          console.log(error);
+        } else {
+          return;
+        }
+      }
+      if (error) {
+        console.log(error.message);
+      }
+    };
+    fetchOrgname();
+  };
+
   return (
     <div>
-      <form action="" onSubmit={formSubmit}>
+      <form
+        action=""
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleUploadProfilePicture();
+        }}
+      >
         <input
           type="file"
           accept="image/*"
@@ -24,17 +74,13 @@ export default function NewProfile() {
           onChange={imageUpload}
         ></input>
         {picInput.current?.files && (
-          <img
-            src={image}
-            alt=""
-            className="w-[5vw] aspect-square object-cover rounded-full"
-          />
+          <img src={image} alt="" className="w-[5vw] h-[5vw] object-cover rounded-full" />
         )}
         <button
           type="submit"
           className="border border-black rounded-lg px-2 py-1 hover:bg-amber-100 cursor-pointer"
         >
-          Add new Profile Picture
+          Submit Profile Picture
         </button>
       </form>
     </div>
