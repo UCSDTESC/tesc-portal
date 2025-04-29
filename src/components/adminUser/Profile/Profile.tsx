@@ -1,6 +1,7 @@
 import UserContext from "@lib/UserContext";
 import supabase from "@server/supabase";
 import { useContext, useEffect, useState } from "react";
+import { NavLink } from "react-router";
 
 export default function Profile() {
   const { User } = useContext(UserContext);
@@ -42,10 +43,13 @@ export default function Profile() {
       <div className="flex ">
         {orgname}{" "}
         <div className="w-32 aspect-square rounded-full overflow-hidden relative border-2 border-black">
-          <img src={imageUrl} alt="" className="w-full h-full " />
-          <button className="absolute bottom-0 w-full h-fit flex justify-center bg-black/30 cursor-pointer ">
+          <img src={imageUrl} alt="" className="w-full h-full object-cover " />
+          <NavLink
+            to="./edit"
+            className="absolute bottom-0 w-full h-fit flex justify-center bg-black/30 cursor-pointer"
+          >
             Edit +
-          </button>
+          </NavLink>
         </div>
       </div>
     </section>
