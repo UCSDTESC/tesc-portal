@@ -37,7 +37,7 @@ export default function Profile() {
       }
     };
     fetchpfp();
-  }, [orgname]);
+  }, [User?.email, orgname]);
   return (
     <section>
       <div className="flex ">
