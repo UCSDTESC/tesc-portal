@@ -1,6 +1,8 @@
 import supabase from "@server/supabase";
 import { useContext, useRef, useState } from "react";
 import UserContext from "@lib/UserContext";
+
+//TODO: code clean-up
 export default function NewProfile() {
   const { User } = useContext(UserContext);
   const picInput = useRef<HTMLInputElement>(null);
