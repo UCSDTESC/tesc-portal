@@ -9,11 +9,10 @@ import CheckBoxes from "./CheckBoxes";
 import { EventsList } from "./EventsList";
 import EventDisplay from "./EventDisplay";
 
-
 export default function Bulletin() {
   const { User } = useContext(UserContext);
   const postId = useParams();
-  const [selection, setSelection] = useState<number>(Number(postId));
+  const [selection, setSelection] = useState<number>(Number(postId.postId));
   const {
     data,
     tagFilters,
@@ -27,7 +26,6 @@ export default function Bulletin() {
     setOrgFilters,
     orgs
   } = useBulletin(User);
-
   return (
     <BulletinContext.Provider
       value={{

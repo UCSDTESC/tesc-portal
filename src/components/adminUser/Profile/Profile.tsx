@@ -3,6 +3,7 @@ import supabase from "@server/supabase";
 import { useContext, useEffect, useState } from "react";
 import { NavLink } from "react-router";
 
+// TODO: code clean-up
 export default function Profile() {
   const { User } = useContext(UserContext);
   const [orgname, setOrgname] = useState("");

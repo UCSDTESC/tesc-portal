@@ -7,6 +7,8 @@ import supabase from "@server/supabase";
 export default function EventDisplay({ selection }: { selection: number }) {
   const { data } = useContext(BulletinContext);
   const [imageUrl, setImageUrl] = useState("");
+
+  // TODO: Code clean-up
   useEffect(() => {
     const filtered = data?.filter((daton) => daton.id === selection);
     if (!filtered || filtered.length === 0) return;

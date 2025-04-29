@@ -8,7 +8,6 @@ import LoginModal from "./LoginModal";
 
 export default function Navbar() {
   const { User, handleSignOut } = useContext(UserContext);
-  console.log(User);
   const { showLoginModal, setShowLoginModal } = useContext(UserContext);
   return (
     <nav className="w-full h-[10vh] bg-green-200 text-[3vh] flex justify-between items-center px-10 absolute top-0 z-10">
