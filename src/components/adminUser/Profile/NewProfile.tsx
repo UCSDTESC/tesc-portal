@@ -21,7 +21,7 @@ export default function NewProfile() {
   const handleUploadProfilePicture = async () => {
     const fetchOrgname = async () => {
       if (!picInput.current?.files) return;
-      console.log(User?.email);
+
       const { data: Orgname, error } = await supabase
         .from("org_emails")
         .select("org_name")
@@ -31,16 +31,17 @@ export default function NewProfile() {
         const { data, error } = await supabase.storage
           .from("profile.images")
           .upload(
-            `${Orgname[0].org_name}/pfp${picInput.current.files[0].type.replace("image/", ".")}`,
+            `${Orgname[0].org_name}/${picInput.current.files[0].name}`,
             picInput.current.files[0],
             {
+              cacheControl: "3600",
               upsert: true
             }
           );
         if (data) {
           const { error } = await supabase
             .from("Users")
-            .update({ pfp_str: `pfp${picInput.current.files[0].type.replace("image/", ".")}` })
+            .update({ pfp_str: picInput.current.files[0].name })
             .eq("email", User?.email);
           if (error) {
             console.log(error.message);

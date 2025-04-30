@@ -11,16 +11,20 @@ export default function EventDisplay({ selection }: { selection: number }) {
   // TODO: Code clean-up
   useEffect(() => {
     const filtered = data?.filter((daton) => daton.id === selection);
-    if (!filtered || filtered.length === 0) return;
+    console.log(filtered);
+    if (!filtered || filtered.length === 0 || !filtered[0].Users || !filtered[0].Users?.pfp_str) {
+      setImageUrl("");
+      return;
+    }
     console.log(filtered[0].Users?.pfp_str);
     const { data: URL } = supabase.storage
       .from("profile.images")
       .getPublicUrl(`${filtered[0].org_emails?.org_name}/${filtered[0].Users?.pfp_str}`);
     if (URL) {
       setImageUrl(URL.publicUrl);
-      console.log(URL.publicUrl);
+    } else {
+      setImageUrl("");
     }
-    if (URL) setImageUrl(URL.publicUrl);
   }, [data, selection]);
 
   return (
@@ -32,9 +36,14 @@ export default function EventDisplay({ selection }: { selection: number }) {
               <h1 className="font-bold text-[30px]">
                 {daton.title} &nbsp; {new Date(daton.created_at).toUTCString()}
               </h1>
-              <h1>
-                {daton.org_emails?.org_name}{" "}
-                <img src={imageUrl} alt="" className="w-20 h-20 aspect-square rounded-full" />
+              <h1 className="">
+                {daton.org_emails?.org_name}
+
+                <img
+                  src={imageUrl ? imageUrl : "https://placehold.co/600x600"}
+                  alt=""
+                  className="w-20 h-20 aspect-square rounded-full relative"
+                />
               </h1>
               <div>Start Date:&nbsp;{new Date(daton.start_date).toUTCString()}</div>
               <div>End Date: &nbsp;{new Date(daton.end_date).toUTCString()}</div>

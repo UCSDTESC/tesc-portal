@@ -47,7 +47,7 @@ export default function Profile() {
           <img src={imageUrl} alt="" className="w-full h-full object-cover " />
           <NavLink
             to="./edit"
-            className="absolute bottom-0 w-full h-fit flex justify-center bg-black/30 cursor-pointer"
+            className="absolute bottom-0 w-full h-fit flex justify-center bg-black/30 cursor-pointer text-white"
           >
             Edit +
           </NavLink>
