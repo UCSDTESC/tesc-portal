@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Outlet, useNavigate } from "react-router";
+import { Outlet, useLocation, useNavigate } from "react-router";
 
 import UserContext from "@lib/UserContext";
 import type { User, UserCredentials } from "@lib/UserContext";
@@ -12,7 +12,7 @@ export default function Page() {
   const [Error, setError] = useState("");
   const [showLoginModal, setShowLoginModal] = useState(false);
   const navigate = useNavigate();
-
+  const location = useLocation();
   // sign in user
   const handleSignIn = async ({ email, password }: UserCredentials, OnSuccess: () => void) => {
     const { user, error } = await signIn(email, password);
@@ -56,7 +56,7 @@ export default function Page() {
         setUser({ id: user.id, email: user.email });
       } else {
         setUser({ id: "", email: "" });
-        navigate("");
+        if (location.pathname !== "" && !location.pathname.includes("bulletin")) navigate("");
       }
     };
     getUser();

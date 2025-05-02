@@ -36,7 +36,7 @@ export function useBulletin(User: User | null) {
     const fetchEvents = async () => {
       const { events, error } = await queryEventsBySearchAndFilters(search, tagFilters, orgFilters);
       if (events) {
-        setData(events);
+        setData(events as unknown as Event[]);
       } else {
         console.log(error);
       }

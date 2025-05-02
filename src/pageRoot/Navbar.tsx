@@ -8,7 +8,6 @@ import LoginModal from "./LoginModal";
 
 export default function Navbar() {
   const { User, handleSignOut } = useContext(UserContext);
-  console.log(User);
   const { showLoginModal, setShowLoginModal } = useContext(UserContext);
   return (
     <nav className="w-full h-[10vh] bg-green-200 text-[3vh] flex justify-between items-center px-10 absolute top-0 z-10">
@@ -19,6 +18,7 @@ export default function Navbar() {
           <NavLink to="/bulletin">Bulletin</NavLink>
           <NavLink to="/form">Form</NavLink>
           <NavLink to="/data">Data</NavLink>
+          <NavLink to="/profile">profile</NavLink>
           <button
             className="rounded-lg border border-black px-5 cursor-pointer h-1/2 right-10 bg-red-400 hover:bg-red-500"
             onClick={handleSignOut}

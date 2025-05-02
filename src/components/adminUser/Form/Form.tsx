@@ -26,7 +26,6 @@ export default function Form({
   const [error, setError] = useState("");
   const [formData, setFormData] = useState<formdata>(formdata ? formdata : getFormDataDefault());
 
-  
   // handle change to form
   const handleChange = <T,>(value: T, cols: string[]): void => {
     let currform = formData;
@@ -46,7 +45,7 @@ export default function Form({
         onSuccess();
       }
     } else if (User?.id) {
-      const error = await createEvent(User?.id, formData);
+      const error = await createEvent(User, formData);
       if (error) {
         setError(error.message);
       } else {

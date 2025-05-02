@@ -1,23 +1,32 @@
 import supabase from "@server/supabase";
 import { formdata } from "@lib/constants";
-
+import { User } from "@lib/UserContext";
 export const fetchEventByOrg = async (uid: string) => {
   const { data, error } = await supabase.from("Events").select().eq("UID", uid);
   return { data, error };
 };
 
-export const createEvent = async (uid: string, formData: formdata) => {
-  const { error } = await supabase.from("Events").insert({
-    UID: uid,
-    title: formData.title,
-    password: formData.password,
-    start_date: formData.start_date,
-    end_date: formData.end_date,
-    location: formData.location,
-    location_str: formData.location_str,
-    content: formData.content
-  });
-  return error;
+export const createEvent = async (User: User, formData: formdata) => {
+  const { data: org_name } = await supabase
+    .from("org_emails")
+    .select("org_name")
+    .eq("email", User.email);
+  if (org_name) {
+    console.log(org_name[0]);
+    const { error } = await supabase.from("Events").insert({
+      UID: User.id,
+      title: formData.title,
+      password: formData.password,
+      start_date: formData.start_date,
+      end_date: formData.end_date,
+      location: formData.location,
+      location_str: formData.location_str,
+      content: formData.content,
+      tags: formData.tags,
+      org_name: org_name[0].org_name
+    });
+    return error;
+  }
 };
 
 export const deleteEvent = async (id: number) => {
@@ -50,7 +59,9 @@ export const queryEventsBySearchAndFilters = async (
 ) => {
   let query = supabase
     .from("Events")
-    .select()
+    .select(
+      "UID,content,created_at,end_date,id,location_str,start_date,tags,title,attendance,rsvp,Users (uuid,email,pfp_str), org_emails (email,org_name)"
+    )
     .ilike("title", `%${keyword}%`)
     .contains("tags", tagFilters)
     .order("created_at", { ascending: false });
