@@ -21,6 +21,9 @@ export default function CheckBoxes() {
         <div className="max-h-[10rem] overflow-scroll">
           <OrgsCheckboxes />
         </div>
+        <div>
+          <SortCheckboxes />
+        </div>
       </div>
     </form>
   );
@@ -32,7 +35,7 @@ function TagsCheckboxes() {
     <>
       {tags.map((tag: string) => {
         return (
-          <div className="flex items-center">
+          <div key={tag} className="flex items-center">
             <input
               type="checkbox"
               id={tag}
@@ -60,7 +63,7 @@ function OrgsCheckboxes() {
     <>
       {orgs.map((org: string) => {
         return (
-          <div className="flex items-center">
+          <div key={org} className="flex items-center">
             <input
               type="checkbox"
               id={org}
@@ -78,6 +81,32 @@ function OrgsCheckboxes() {
           </div>
         );
       })}
+    </>
+  );
+}
+
+function SortCheckboxes() {
+  const sortMethodsList = ["Most Recent", "Event Name (A-Z)"];
+  const { setSortMethod } = useContext(BulletinContext);
+  return (
+    <>
+      {sortMethodsList.map((method) => (
+        <div key={method} className="flex items-center">
+          <input
+            type="radio"
+            id={method}
+            name="sortMethod"
+            onChange={(e) => {
+              if (e.target.checked) {
+                setSortMethod(method);
+              }
+            }}
+          />
+          <label htmlFor={method} className="ml-2">
+            {method}
+          </label>
+        </div>
+      ))}
     </>
   );
 }

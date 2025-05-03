@@ -2,7 +2,10 @@ import { useContext, useEffect, useState } from "react";
 import { BulletinContext } from "@lib/hooks/useBulletin";
 import { RsvpOrAttendanceButton } from "./RsvpOrAttendanceButton";
 import Editor from "./Editor";
-import { formatGoogleCalendarEvent, formatGoogleMapsLocation } from "@lib/utils";
+import {
+  formatGoogleCalendarEvent,
+  formatGoogleMapsLocation,
+} from "@lib/utils";
 import supabase from "@server/supabase";
 export default function EventDisplay({ selection }: { selection: number }) {
   const { data } = useContext(BulletinContext);
@@ -11,15 +14,21 @@ export default function EventDisplay({ selection }: { selection: number }) {
   // TODO: Code clean-up
   useEffect(() => {
     const filtered = data?.filter((daton) => daton.id === selection);
-    console.log(filtered);
-    if (!filtered || filtered.length === 0 || !filtered[0].Users || !filtered[0].Users?.pfp_str) {
+    if (
+      !filtered ||
+      filtered.length === 0 ||
+      !filtered[0].Users ||
+      !filtered[0].Users?.pfp_str
+    ) {
       setImageUrl("");
       return;
     }
     console.log(filtered[0].Users?.pfp_str);
     const { data: URL } = supabase.storage
       .from("profile.images")
-      .getPublicUrl(`${filtered[0].org_emails?.org_name}/${filtered[0].Users?.pfp_str}`);
+      .getPublicUrl(
+        `${filtered[0].org_emails?.org_name}/${filtered[0].Users?.pfp_str}`
+      );
     if (URL) {
       setImageUrl(URL.publicUrl);
     } else {
@@ -45,8 +54,12 @@ export default function EventDisplay({ selection }: { selection: number }) {
                   className="w-20 h-20 aspect-square rounded-full relative"
                 />
               </h1>
-              <div>Start Date:&nbsp;{new Date(daton.start_date).toUTCString()}</div>
-              <div>End Date: &nbsp;{new Date(daton.end_date).toUTCString()}</div>
+              <div>
+                Start Date:&nbsp;{new Date(daton.start_date).toUTCString()}
+              </div>
+              <div>
+                End Date: &nbsp;{new Date(daton.end_date).toUTCString()}
+              </div>
               {daton.location_str && (
                 <div>
                   location: &nbsp;
@@ -74,7 +87,7 @@ export default function EventDisplay({ selection }: { selection: number }) {
                 {...{
                   start_date: daton.start_date,
                   end_date: daton.end_date,
-                  selection
+                  selection,
                 }}
               />
               <Editor content={daton.content}></Editor>

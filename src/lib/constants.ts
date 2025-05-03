@@ -1,6 +1,7 @@
 export const tags = ["fundraiser", "social", "workshop", "GBM", "panels/talks", "other"];
 
 export type Event = {
+  password: string | number;
   tags: string[];
   id: number;
   UID: string;

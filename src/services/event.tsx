@@ -23,7 +23,7 @@ export const createEvent = async (User: User, formData: formdata) => {
       location_str: formData.location_str,
       content: formData.content,
       tags: formData.tags,
-      org_name: org_name[0].org_name
+      org_name: org_name[0].org_name,
     });
     return error;
   }
@@ -34,7 +34,11 @@ export const deleteEvent = async (id: number) => {
   return error;
 };
 
-export const updateEvent = async (eventId: number, uid: string, formData: formdata) => {
+export const updateEvent = async (
+  eventId: number,
+  uid: string,
+  formData: formdata
+) => {
   const { error } = await supabase
     .from("Events")
     .update({
@@ -46,7 +50,7 @@ export const updateEvent = async (eventId: number, uid: string, formData: formda
       location: formData.location,
       location_str: formData.location_str,
       content: formData.content,
-      tags: formData.tags
+      tags: formData.tags,
     })
     .eq("id", eventId);
   return error;
@@ -55,19 +59,28 @@ export const updateEvent = async (eventId: number, uid: string, formData: formda
 export const queryEventsBySearchAndFilters = async (
   keyword: string,
   tagFilters: string[],
-  orgFilters: string[]
+  orgFilters: string[],
+  sortMethod: string
 ) => {
   let query = supabase
     .from("Events")
     .select(
       "UID,content,created_at,end_date,id,location_str,start_date,tags,title,attendance,rsvp,Users (uuid,email,pfp_str), org_emails (email,org_name)"
     )
-    .ilike("title", `%${keyword}%`)
-    .contains("tags", tagFilters)
-    .order("created_at", { ascending: false });
+    .ilike("title", `%${keyword}%`);
+
+  if (tagFilters.length > 0) query = query.overlaps("tags", tagFilters);
+
   if (orgFilters.length > 0) {
     query = query.in("org_name", orgFilters);
   }
+
+  if (sortMethod === "Event Name (A-Z)")
+    query = query.order("title", { ascending: true });
+  else if (sortMethod == "Most Recent")
+    query = query.order("start_date", { ascending: false });
+  else query = query.order("created_at", { ascending: false });
+
   const { data, error } = await query;
   return { events: data, error };
 };

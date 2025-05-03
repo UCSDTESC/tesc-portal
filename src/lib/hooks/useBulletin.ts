@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useState } from "react";
 
 import { fetchOrgs } from "@services/organization";
 import { editRSVP, fetchRSVPAndAttended, logAttendance } from "@services/user";
-import supabase from "@server/supabase";
 import { queryEventsBySearchAndFilters } from "@services/event";
 import UserContext, { User } from "@lib/UserContext";
 import { Event } from "@lib/constants";
@@ -17,6 +16,7 @@ export function useBulletin(User: User | null) {
   const [orgs, setOrgs] = useState<string[]>([]);
   const [tagFilters, setTagFilters] = useState<string[]>([]);
   const [orgFilters, setOrgFilters] = useState<string[]>([]);
+  const [sortMethod, setSortMethod] = useState<string>('');
 
   // fetch list of organizations
   useEffect(() => {
@@ -34,7 +34,7 @@ export function useBulletin(User: User | null) {
   // fetch events (with any searches and filters)
   useEffect(() => {
     const fetchEvents = async () => {
-      const { events, error } = await queryEventsBySearchAndFilters(search, tagFilters, orgFilters);
+      const { events, error } = await queryEventsBySearchAndFilters(search, tagFilters, orgFilters, sortMethod);
       if (events) {
         setData(events as unknown as Event[]);
       } else {
@@ -42,7 +42,7 @@ export function useBulletin(User: User | null) {
       }
     };
     fetchEvents();
-  }, [search, tagFilters, orgFilters]);
+  }, [search, tagFilters, orgFilters, sortMethod]);
 
   // fetch RSVP and attended events
   useEffect(() => {
@@ -112,7 +112,9 @@ export function useBulletin(User: User | null) {
     setSearch,
     orgFilters,
     setOrgFilters,
-    orgs
+    orgs,
+    sortMethod,
+    setSortMethod
   };
 }
 
@@ -128,6 +130,23 @@ export interface BulletinContextProps {
   orgFilters: string[];
   setOrgFilters: (orgs: string[]) => void;
   orgs: string[];
+  sortMethod: string;
+  setSortMethod: (sortMethod: string) => void
 }
 
-export const BulletinContext = createContext<BulletinContextProps>({} as BulletinContextProps);
+export const BulletinContext = createContext<BulletinContextProps>(
+  {
+  data: [],
+  tagFilters: [],
+  RSVP: [],
+  attendance: [],
+  handleAttendance: () => {},
+  handleRSVP: () => {},
+  setTagFilters: () => {},
+  setSearch: () => {},
+  orgFilters: [],
+  setOrgFilters: () => {},
+  orgs: [],
+  sortMethod: '',
+  setSortMethod: () => {}
+} as BulletinContextProps);

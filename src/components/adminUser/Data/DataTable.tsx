@@ -44,7 +44,7 @@ export default function DataTable() {
                 <DataPair data={DateParser(daton.start_date)}>Start Date</DataPair>
                 <DataPair data={DateParser(daton.end_date)}>End Date</DataPair>
                 <DataPair data={daton.location_str}>Location</DataPair>
-                <DataPair data={daton.rsvp}>rsvp:</DataPair>
+                <DataPair data={daton.rsvp ?? 0}>rsvp:</DataPair>
                 <DataPair data={daton.tags ? daton.tags.join(", ") : ""}>tags:</DataPair>
               </span>
               <EditorProvider
