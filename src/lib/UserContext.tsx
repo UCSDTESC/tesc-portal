@@ -6,6 +6,7 @@ export interface UserCredentials {
 export interface User {
   id: string;
   email: string;
+  role: string;
 }
 
 interface UserContext {
@@ -32,6 +33,6 @@ const UserContext = createContext<UserContext>({
   },
   handleSignUp: (user: UserCredentials) => {
     console.log(user);
-  }
+  },
 });
 export default UserContext;

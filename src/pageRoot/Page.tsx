@@ -8,17 +8,20 @@ import { signIn, fetchUser, signOut, signUp } from "@services/user";
 import Navbar from "./Navbar";
 
 export default function Page() {
-  const [User, setUser] = useState<User>({ id: "", email: "" });
+  const [User, setUser] = useState<User>({ id: "", email: "", role: "" });
   const [Error, setError] = useState("");
   const [showLoginModal, setShowLoginModal] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   // sign in user
-  const handleSignIn = async ({ email, password }: UserCredentials, OnSuccess: () => void) => {
+  const handleSignIn = async (
+    { email, password }: UserCredentials,
+    OnSuccess: () => void
+  ) => {
     const { user, error } = await signIn(email, password);
     if (user && user?.email) {
       setError("");
-      setUser({ id: user.id, email: user.email });
+      setUser({ id: user.id, email: user.email, role: "unknown" });
       OnSuccess();
     }
     if (error) {
@@ -27,12 +30,19 @@ export default function Page() {
   };
 
   // sign up user
-  const handleSignUp = async ({ email, password }: UserCredentials, OnSuccess: () => void) => {
+  const handleSignUp = async (
+    { email, password }: UserCredentials,
+    OnSuccess: () => void
+  ) => {
     const { user, error } = await signUp(email, password);
     if (error) {
       setError(error.message);
     } else if (user && user?.email) {
-      setUser({ id: user?.id, email: user?.email });
+      setUser({
+        id: user?.id,
+        email: user?.email,
+        role: user.role ? user.role : "unknown",
+      });
       OnSuccess();
     }
   };
@@ -43,7 +53,7 @@ export default function Page() {
     if (error) {
       setError(error.message);
     } else {
-      setUser({ id: "", email: "" });
+      setUser({ id: "", email: "", role: "" });
       navigate("");
     }
   };
@@ -53,10 +63,11 @@ export default function Page() {
     const getUser = async () => {
       const user = await fetchUser();
       if (user && user.email) {
-        setUser({ id: user.id, email: user.email });
+        setUser({ id: user.id, email: user.email, role: user.role });
       } else {
-        setUser({ id: "", email: "" });
-        if (location.pathname !== "" && !location.pathname.includes("bulletin")) navigate("");
+        setUser({ id: "", email: "", role: "" });
+        if (location.pathname !== "" && !location.pathname.includes("bulletin"))
+          navigate("");
       }
     };
     getUser();
@@ -73,7 +84,7 @@ export default function Page() {
           setError,
           handleSignIn,
           handleSignOut,
-          handleSignUp
+          handleSignUp,
         }}
       >
         <Navbar />

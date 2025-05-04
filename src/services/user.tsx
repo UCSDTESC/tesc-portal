@@ -3,7 +3,7 @@ import supabase from "@server/supabase";
 export const signIn = async (email: string, password: string) => {
   const { data, error } = await supabase.auth.signInWithPassword({
     email: email,
-    password: password
+    password: password,
   });
   const user = data.user;
   return { user, error };
@@ -11,9 +11,14 @@ export const signIn = async (email: string, password: string) => {
 
 export const fetchUser = async () => {
   const {
-    data: { user }
+    data: { user },
   } = await supabase.auth.getUser();
-  return user;
+  const { data: role } = await supabase
+    .from("Users")
+    .select("role")
+    .eq("email", user?.email);
+  if (user && role)
+    return { id: user.id, email: user.email, role: role[0].role };
 };
 
 export const signOut = async () => {
@@ -25,7 +30,7 @@ export const signUp = async (email: string, password: string) => {
   // add user to auth table
   const { data, error } = await supabase.auth.signUp({
     email: email,
-    password: password
+    password: password,
   });
   if (error) return { user: null, error };
 
@@ -34,31 +39,53 @@ export const signUp = async (email: string, password: string) => {
     const { error } = await supabase
       .from("Users")
       .insert({ uuid: data.user?.id, email: data.user?.email });
-    const user = data.user;
+    const { data: role } = await supabase
+      .from("Users")
+      .select("role")
+      .eq("email", data.user.email);
+    const user = {
+      id: data.user.id,
+      email: data.user.email,
+      role: role ? role[0].role : "unknown",
+    };
     return { user, error };
   } else return { user: null, error };
 };
 
 export const fetchRSVPAndAttended = async (email: string) => {
-  const { data, error } = await supabase.from("Users").select("rsvp,attended").eq("email", email);
+  const { data, error } = await supabase
+    .from("Users")
+    .select("rsvp,attended")
+    .eq("email", email);
   if (data) {
     return {
       rsvp: data[0].rsvp ? data[0].rsvp : [],
       attended: data[0].attended ? data[0].attended : [],
-      error: null
+      error: null,
     };
   } else return { rsvp: null, attended: null, error };
 };
 
-export const editRSVP = async (id: number, email: string, remove: boolean, currRSVP: number[]) => {
+export const editRSVP = async (
+  id: number,
+  email: string,
+  remove: boolean,
+  currRSVP: number[]
+) => {
   // update rsvp array in user table
-  const { error } = await supabase.from("Users").update({ rsvp: currRSVP }).eq("email", email);
+  const { error } = await supabase
+    .from("Users")
+    .update({ rsvp: currRSVP })
+    .eq("email", email);
 
   if (error) {
     return error;
   } else {
     // update rsvp count in event table
-    const { data, error } = await supabase.from("Events").select("rsvp").eq("id", id);
+    const { data, error } = await supabase
+      .from("Events")
+      .select("rsvp")
+      .eq("id", id);
 
     if (data) {
       const { error } = await supabase
