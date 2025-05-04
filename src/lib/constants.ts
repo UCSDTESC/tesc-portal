@@ -11,10 +11,11 @@ export type Event = {
   location?: number[];
   start_date: string;
   end_date: string;
-  attendance?: number;
-  rsvp?: number;
+  attendance: number;
+  rsvp: number;
   Users?: { uuid: string; email: string; pfp_str: string };
   org_emails?: { email: string; org_name: string };
+  password:string|number;
 };
 
 export interface formdata {
