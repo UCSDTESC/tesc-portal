@@ -102,4 +102,15 @@ export const editRSVP = async (
   return null;
 };
 
-export const logAttendance = async () => {};
+export const logAttendance = async (
+  selection: number,
+  id: string,
+  userInput: string | null
+) => {
+  const { error } = await supabase.rpc("validate_attendance", {
+    event_id: selection,
+    input: userInput,
+    user_id: id,
+  });
+  return error;
+};

@@ -25,6 +25,7 @@ export const getFormDataDefault = () => {
 };
 
 export const DateParser = (date: string) => {
+  console.log(date)
   const parsedDate = date.split(/-|T|:/);
   console.log(parsedDate);
   const correctDate = new Date(

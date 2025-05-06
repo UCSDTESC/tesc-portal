@@ -25,6 +25,8 @@ export default function Bulletin() {
     orgFilters,
     setOrgFilters,
     orgs,
+    sortMethod,
+    setSortMethod,
   } = useBulletin(User);
   return (
     <BulletinContext.Provider
@@ -40,6 +42,8 @@ export default function Bulletin() {
         orgFilters,
         setOrgFilters,
         orgs,
+        sortMethod,
+        setSortMethod,
       }}
     >
       <div className="grid w-full   grid-cols-[300px_1fr] min-h-[80vh]  grid-rows-[auto_1fr]">
