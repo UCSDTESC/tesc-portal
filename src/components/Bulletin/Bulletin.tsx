@@ -46,14 +46,14 @@ export default function Bulletin() {
         setSortMethod,
       }}
     >
-      <div className="grid w-full   grid-cols-[300px_1fr] min-h-[80vh]  grid-rows-[auto_1fr]">
+      <div className="grid w-full grid-cols-[330px_1fr] min-h-[80vh] max-h-screen grid-rows-[auto_1fr]">
         <div className="col-span-2 bg-linear-to-r from-0% from-blue via-70% via-[#3B7DB6] to-blue">
           <CheckBoxes />
         </div>
-        <div className="grid grid-rows-[repeat(auto-fill,100px)]   overflow-y-auto ">
+        <div className="grid grid-rows-[repeat(auto-fill,150px)] overflow-y-auto bg-gray-200 ">
           <EventsList {...{ setSelection }} />
         </div>
-        <div className="  flex justify-center p-10">
+        <div className="flex justify-center p-10">
           <EventDisplay selection={selection} />
         </div>
       </div>
