@@ -88,7 +88,7 @@ export default function Page() {
         }}
       >
         <Navbar />
-        <div className="py-[15vh] w-full flex justify-center">
+        <div className="py-[10vh] w-full flex justify-center">
           <Outlet />
         </div>
       </UserContext.Provider>

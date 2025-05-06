@@ -24,7 +24,7 @@ export default function Bulletin() {
     setSearch,
     orgFilters,
     setOrgFilters,
-    orgs
+    orgs,
   } = useBulletin(User);
   return (
     <BulletinContext.Provider
@@ -39,17 +39,17 @@ export default function Bulletin() {
         setSearch,
         orgFilters,
         setOrgFilters,
-        orgs
+        orgs,
       }}
     >
-      <div className="grid w-[80%] border border-black border-spacing-1 grid-cols-[200px_1fr] min-h-[80vh]  grid-rows-[auto_1fr]">
-        <div className="col-span-2">
+      <div className="grid w-full   grid-cols-[300px_1fr] min-h-[80vh]  grid-rows-[auto_1fr]">
+        <div className="col-span-2 bg-linear-to-r from-0% from-blue via-70% via-[#3B7DB6] to-blue">
           <CheckBoxes />
         </div>
-        <div className="grid grid-rows-[repeat(auto-fill,100px)] border-t border-black overflow-y-auto ">
+        <div className="grid grid-rows-[repeat(auto-fill,100px)]   overflow-y-auto ">
           <EventsList {...{ setSelection }} />
         </div>
-        <div className="border-l border-t border-black flex justify-center p-10">
+        <div className="  flex justify-center p-10">
           <EventDisplay selection={selection} />
         </div>
       </div>

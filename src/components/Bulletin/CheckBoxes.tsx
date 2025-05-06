@@ -5,14 +5,14 @@ import { useContext } from "react";
 export default function CheckBoxes() {
   const { setSearch } = useContext(BulletinContext);
   return (
-    <form className="p-3">
+    <form className="p-3 w-full flex gap-2">
       <input
         type="Search"
         placeholder="Search"
         onChange={(e) => {
           setSearch(e.target.value);
         }}
-        className=" border rounded-standard p-1 focus:outline-none"
+        className=" rounded-lg w-1/2 h-fit p-1 focus:outline-none bg-white"
       />
       <div className="flex flex-row gap-3">
         <div>
