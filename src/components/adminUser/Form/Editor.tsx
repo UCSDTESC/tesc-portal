@@ -1,12 +1,10 @@
-import { useCallback } from "react";
-
 import { EditorProvider, useCurrentEditor } from "@tiptap/react";
 import {
   AlignCenterOutlined,
   AlignLeftOutlined,
   AlignRightOutlined,
   RedoOutlined,
-  UndoOutlined
+  UndoOutlined,
 } from "@ant-design/icons";
 
 import { extensions } from "./EditorExtensions";
@@ -14,7 +12,7 @@ import "./editor-styles.css";
 
 export default function Editor({
   content,
-  setEditorContent
+  setEditorContent,
 }: {
   content: string;
   setEditorContent: (content: string) => void;
@@ -30,8 +28,8 @@ export default function Editor({
       editorProps={{
         attributes: {
           class:
-            "border-black border rounded-lg p-3 min-h-[40vh] focus:outline-none max-h-[70vh] overflow-y-scroll"
-        }
+            "border-black border rounded-lg p-3 min-h-[40vh] focus:outline-none max-h-[70vh] overflow-y-scroll",
+        },
       }}
     ></EditorProvider>
   );
@@ -42,16 +40,8 @@ const MenuBar = () => {
   if (!editor) {
     return null;
   }
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const addImage = useCallback(() => {
-    const url = window.prompt("URL");
-
-    if (url) {
-      editor.chain().focus().setImage({ src: url }).run();
-    }
-  }, [editor]);
   return (
-    <div className="bg-amber-100 m-0 rounded-lg">
+    <div className=" m-0 rounded-lg">
       <div className="button-group [&>button]:m-1 [&>button]:border [&>button]:border-black [&>button]:rounded-lg [&>button]:px-2 [&>button]:hover:cursor-pointer">
         <button
           type="button"
@@ -71,7 +61,7 @@ const MenuBar = () => {
           type="button"
           onClick={() => editor.chain().focus().toggleBold().run()}
           disabled={!editor.can().chain().focus().toggleBold().run()}
-          className={`${editor.isActive("bold") ? "bg-amber-200" : ""} font-bold`}
+          className={`${editor.isActive("bold") ? "bg-blue/40" : ""} font-bold`}
         >
           B
         </button>
@@ -79,7 +69,7 @@ const MenuBar = () => {
           type="button"
           onClick={() => editor.chain().focus().toggleItalic().run()}
           disabled={!editor.can().chain().focus().toggleItalic().run()}
-          className={`${editor.isActive("italic") ? "bg-amber-200" : ""} italic`}
+          className={`${editor.isActive("italic") ? "bg-blue/40" : ""} italic`}
         >
           I
         </button>
@@ -87,7 +77,9 @@ const MenuBar = () => {
           type="button"
           onClick={() => editor.chain().focus().toggleStrike().run()}
           disabled={!editor.can().chain().focus().toggleStrike().run()}
-          className={`${editor.isActive("strike") ? "bg-amber-200" : ""} line-through`}
+          className={`${
+            editor.isActive("strike") ? "bg-blue/40" : ""
+          } line-through`}
         >
           Strike
         </button>
@@ -95,28 +87,40 @@ const MenuBar = () => {
         <button
           type="button"
           onClick={() => editor.chain().focus().setParagraph().run()}
-          className={editor.isActive("paragraph") ? "bg-amber-200" : ""}
+          className={editor.isActive("paragraph") ? "bg-blue/40" : ""}
         >
           p
         </button>
         <button
           type="button"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          className={editor.isActive("heading", { level: 1 }) ? "bg-amber-200" : ""}
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 1 }).run()
+          }
+          className={
+            editor.isActive("heading", { level: 1 }) ? "bg-blue/40" : ""
+          }
         >
           h1
         </button>
         <button
           type="button"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={editor.isActive("heading", { level: 2 }) ? "bg-amber-200" : ""}
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 2 }).run()
+          }
+          className={
+            editor.isActive("heading", { level: 2 }) ? "bg-blue/40" : ""
+          }
         >
           h2
         </button>
         <button
           type="button"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          className={editor.isActive("heading", { level: 3 }) ? "bg-amber-200" : ""}
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 3 }).run()
+          }
+          className={
+            editor.isActive("heading", { level: 3 }) ? "bg-blue/40" : ""
+          }
         >
           h3
         </button>
@@ -124,53 +128,60 @@ const MenuBar = () => {
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`${editor.isActive("bulletList") ? "bg-amber-200" : ""}`}
+          className={`${editor.isActive("bulletList") ? "bg-blue/40" : ""}`}
         >
           <li className="list-disc"></li>
         </button>
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={editor.isActive("orderedList") ? "bg-amber-200" : ""}
+          className={editor.isActive("orderedList") ? "bg-blue/40" : ""}
         >
           <li className="list-decimal pl-0 m-0"></li>
         </button>
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          className={editor.isActive("blockquote") ? "bg-amber-200" : ""}
+          className={editor.isActive("blockquote") ? "bg-blue/40" : ""}
         >
           Quote
         </button>
-        <button type="button" onClick={() => editor.chain().focus().setHorizontalRule().run()}>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().setHorizontalRule().run()}
+        >
           Horizontal rule
         </button>
-        <button type="button" onClick={() => editor.chain().focus().setHardBreak().run()}>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().setHardBreak().run()}
+        >
           break
         </button>
         <button
           type="button"
           onClick={() => editor.chain().focus().setTextAlign("left").run()}
-          className={editor.isActive({ textAlign: "left" }) ? "bg-amber-200" : ""}
+          className={editor.isActive({ textAlign: "left" }) ? "bg-blue/40" : ""}
         >
           <AlignLeftOutlined />
         </button>
         <button
           type="button"
           onClick={() => editor.chain().focus().setTextAlign("center").run()}
-          className={editor.isActive({ textAlign: "center" }) ? "bg-amber-200" : ""}
+          className={
+            editor.isActive({ textAlign: "center" }) ? "bg-blue/40" : ""
+          }
         >
           <AlignCenterOutlined />
         </button>
         <button
           type="button"
           onClick={() => editor.chain().focus().setTextAlign("right").run()}
-          className={editor.isActive({ textAlign: "right" }) ? "bg-amber-200" : ""}
+          className={
+            editor.isActive({ textAlign: "right" }) ? "bg-blue/40" : ""
+          }
         >
           <AlignRightOutlined />
-        </button>
-        <button type="button" onClick={addImage}>
-          Set image
         </button>
       </div>
     </div>

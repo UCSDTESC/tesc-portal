@@ -1,3 +1,5 @@
+import { formdata } from "./constants";
+
 export const formatDate = (date: string) => {
   return date.replaceAll(":", "").replaceAll("-", "").split("+")[0];
 };
@@ -10,7 +12,7 @@ export const getCurrentTime = () => {
   return currTime;
 };
 
-export const getFormDataDefault = () => {
+export const getFormDataDefault = ():formdata => {
   const currTime = getCurrentTime();
   return {
     title: "",
@@ -20,7 +22,8 @@ export const getFormDataDefault = () => {
     location: [0, 0],
     location_str: "",
     content: "",
-    tags: []
+    tags: [],
+    poster:""
   };
 };
 

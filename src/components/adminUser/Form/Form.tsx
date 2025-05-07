@@ -14,7 +14,7 @@ import { MultipleSelectChip, Dropdown } from "./Dropdowns";
 export default function Form({
   formdata,
   id,
-  onSuccess
+  onSuccess,
 }: {
   formdata?: formdata;
   id: number;
@@ -24,7 +24,9 @@ export default function Form({
   const { User } = useContext(UserContext);
   const navigate = useNavigate();
   const [error, setError] = useState("");
-  const [formData, setFormData] = useState<formdata>(formdata ? formdata : getFormDataDefault());
+  const [formData, setFormData] = useState<formdata>(
+    formdata ? formdata : getFormDataDefault()
+  );
 
   // handle change to form
   const handleChange = <T,>(value: T, cols: string[]): void => {
@@ -57,7 +59,7 @@ export default function Form({
   };
 
   return (
-    <div className="w-1/2 flex m-auto bg-white z-101">
+    <div className="w-1/2 mt-20 flex m-auto bg-white z-101">
       <form
         className="border border-black p-5 flex flex-col gap-2 w-full h-min"
         ref={form}
@@ -74,7 +76,9 @@ export default function Form({
           placeholder="Title"
           className="border-black border rounded-lg px-3 h-12"
           value={formData.title}
-          onChange={(e) => setFormData({ ...formData, ["title"]: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, ["title"]: e.target.value })
+          }
           autoFocus
           required
         />
@@ -96,7 +100,9 @@ export default function Form({
             min={formdata ? "" : getCurrentTime()}
             value={formData.start_date}
             required
-            onChange={(e) => handleChange(e.target.value, ["start_date", "end_date"])}
+            onChange={(e) =>
+              handleChange(e.target.value, ["start_date", "end_date"])
+            }
           ></input>
         </div>
         <label htmlFor="EndTime">End Time (date and time): </label>
@@ -121,7 +127,24 @@ export default function Form({
         <Dropdown formData={formData} handleChange={handleChange} />
         <label>Tags: </label>
         <MultipleSelectChip formData={formData} handleChange={handleChange} />
-        <Editor content={formData.content} setEditorContent={(e) => handleChange(e, ["content"])} />
+        <label>Poster: </label>
+        <input
+          name="poster"
+          placeholder=""
+          className="border-black border rounded-lg px-3 h-12"
+          value={formData.poster}
+          onChange={(e) =>
+            setFormData({ ...formData, ["poster"]: e.target.value })
+          }
+          autoFocus
+        />
+        {formData.poster && (
+          <img src={formData.poster} alt="" className="rounded-2xl" />
+        )}
+        <Editor
+          content={formData.content}
+          setEditorContent={(e) => handleChange(e, ["content"])}
+        />
         <button
           type="submit"
           className="border border-black bg-red-400 hover:bg-red-500 w-fit rounded-lg px-5 cursor-pointer"

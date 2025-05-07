@@ -16,7 +16,7 @@ export type Event = {
   rsvp: number;
   Users?: { uuid: string; email: string; pfp_str: string };
   org_emails?: { email: string; org_name: string };
-  password:string|number;
+  
 };
 
 export interface formdata {
@@ -28,6 +28,7 @@ export interface formdata {
   content: string;
   password: string;
   tags: string[];
+  poster: string
 }
 
 export const eventFormDataDefault = {

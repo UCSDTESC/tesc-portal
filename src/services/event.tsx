@@ -51,6 +51,7 @@ export const updateEvent = async (
       location_str: formData.location_str,
       content: formData.content,
       tags: formData.tags,
+      poster: formData.poster,
     })
     .eq("id", eventId);
   return error;
