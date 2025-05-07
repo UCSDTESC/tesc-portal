@@ -22,9 +22,7 @@ export function RsvpOrAttendanceButton({
     if (RSVP.includes(selection)) {
       return (
         <button
-          className={
-            "border px-4 py-2 rounded-lg cursor-pointer w-fit h-fit my-2"
-          }
+          className={buttonClassName}
           onClick={() => handleRSVP(selection, true)}
         >
           Remove RSVP

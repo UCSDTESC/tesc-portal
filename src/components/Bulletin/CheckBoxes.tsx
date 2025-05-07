@@ -1,9 +1,15 @@
 import { tags } from "@lib/constants";
 import { BulletinContext } from "@lib/hooks/useBulletin";
-import { useContext } from "react";
+import { useContext, useRef, useState } from "react";
+import { Arrow, FilterIcon, SortIcon } from "./svgIcons";
+import { useOutsideClicks } from "@lib/hooks/useOutsideClick";
 
 export default function CheckBoxes() {
   const { setSearch } = useContext(BulletinContext);
+  const filterRef = useRef(null);
+  const sortRef = useRef(null);
+  const [filterMenu, setFilterMenu] = useState("");
+  useOutsideClicks([filterRef, sortRef], () => setFilterMenu(""));
   return (
     <form className="p-3 w-full flex gap-2">
       <input
@@ -15,14 +21,49 @@ export default function CheckBoxes() {
         className=" rounded-lg w-1/2 h-fit p-1 focus:outline-none bg-white"
       />
       <div className="flex flex-row gap-3">
-        <div>
-          <TagsCheckboxes />
+        <div
+          className="bg-white w-fit flex items-center gap-1 h-full px-2 rounded-2xl relative cursor-pointer"
+          ref={filterRef}
+          onClick={() => {
+            setFilterMenu("Tags");
+          }}
+        >
+          <FilterIcon />
+          Filter by
+          <Arrow />
+          <div
+            className={`absolute top-9 w-max -left-1 bg-white px-2 rounded-lg border border-navy z-100 ${
+              filterMenu === "Tags" ? "block" : "hidden"
+            }`}
+          >
+            <div className="grid grid-cols-[max-content_max-content] gap-2 h-[40vh]">
+              <div className="">
+                <TagsCheckboxes />
+              </div>
+              <div className="h-full overflow-y-scroll">
+                <OrgsCheckboxes />
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="max-h-[10rem] overflow-scroll">
-          <OrgsCheckboxes />
-        </div>
-        <div>
-          <SortCheckboxes />
+
+        <div
+          className="bg-white w-fit flex items-center gap-1 h-full px-2 rounded-2xl relative cursor-pointer"
+          ref={sortRef}
+          onClick={() => {
+            setFilterMenu("Sort");
+          }}
+        >
+          <SortIcon />
+          Sort With
+          <Arrow />
+          <div
+            className={`absolute top-9 -left-1 bg-white px-2 w-max rounded-lg border border-navy z-100 ${
+              filterMenu === "Sort" ? "block" : "hidden"
+            }`}
+          >
+            <SortCheckboxes />
+          </div>
         </div>
       </div>
     </form>
@@ -30,12 +71,12 @@ export default function CheckBoxes() {
 }
 
 function TagsCheckboxes() {
-  const { tagFilters, setTagFilters } = useContext(BulletinContext);
+  const { setTagFilters, tagFilters } = useContext(BulletinContext);
   return (
     <>
       {tags.map((tag: string) => {
         return (
-          <div key={tag} className="flex items-center">
+          <div key={tag} className="flex items-center w-full">
             <input
               type="checkbox"
               id={tag}
