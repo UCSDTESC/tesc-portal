@@ -38,12 +38,12 @@ export default function Navbar() {
           <>
             <NavLink to="/bulletin">Bulletin</NavLink>
             <button
-              className="rounded-lg border border-black px-5 cursor-pointer h-1/2 right-10 bg-navy hover:opacity-80"
+              className=" border border-black px-5 cursor-pointer h-1/2 right-10 bg-navy rounded-2xl hover:opacity-80"
               onClick={() => {
                 setShowLoginModal(true);
               }}
             >
-              Log in
+              Member Log in
             </button>
           </>
         ))}

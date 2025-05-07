@@ -71,7 +71,7 @@ export default function Page() {
       }
     };
     getUser();
-  }, [navigate]);
+  }, [location.pathname, navigate]);
 
   return (
     <main>
