@@ -10,9 +10,8 @@ export default function Editor({ content }: { content: string }) {
       content={content}
       editorProps={{
         attributes: {
-          class:
-            "border-black border rounded-standard p-5  focus:outline-none min-h-[70vh] overflow-y-scroll"
-        }
+          class: "mt-5 focus:outline-none min-h-[70vh]",
+        },
       }}
     ></EditorProvider>
   );

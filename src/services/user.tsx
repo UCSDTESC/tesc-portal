@@ -5,7 +5,16 @@ export const signIn = async (email: string, password: string) => {
     email: email,
     password: password,
   });
-  const user = data.user;
+  if (error) return { user: null, error };
+  const { data: role } = await supabase
+    .from("Users")
+    .select("role")
+    .eq("email", data.user.email);
+  const user = {
+    id: data.user.id,
+    email: data.user.email,
+    role: role ? role[0].role : "unknown",
+  };
   return { user, error };
 };
 

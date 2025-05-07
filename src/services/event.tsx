@@ -24,6 +24,7 @@ export const createEvent = async (User: User, formData: formdata) => {
       content: formData.content,
       tags: formData.tags,
       org_name: org_name[0].org_name,
+      poaster: formData.poster,
     });
     return error;
   }
@@ -66,7 +67,7 @@ export const queryEventsBySearchAndFilters = async (
   let query = supabase
     .from("Events")
     .select(
-      "UID,content,created_at,end_date,id,location_str,start_date,tags,title,attendance,rsvp,Users (uuid,email,pfp_str), org_emails (email,org_name)"
+      "UID,content,created_at,end_date,id,location_str,start_date,tags,title,attendance,poster,rsvp,Users (uuid,email,pfp_str), org_emails (email,org_name)"
     )
     .ilike("title", `%${keyword}%`);
 

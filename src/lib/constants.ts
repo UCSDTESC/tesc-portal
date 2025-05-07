@@ -16,6 +16,7 @@ export type Event = {
   rsvp: number;
   Users?: { uuid: string; email: string; pfp_str: string };
   org_emails?: { email: string; org_name: string };
+  poster:string
   
 };
 

@@ -3,9 +3,11 @@ import { BulletinContext } from "@lib/hooks/useBulletin";
 import { RsvpOrAttendanceButton } from "./RsvpOrAttendanceButton";
 import Editor from "./Editor";
 import {
+  DateParser,
   formatGoogleCalendarEvent,
   formatGoogleMapsLocation,
 } from "@lib/utils";
+import googleCalendar from "/Google_Calendar_icon_(2020).svg";
 import supabase from "@server/supabase";
 export default function EventDisplay({ selection }: { selection: number }) {
   const { data } = useContext(BulletinContext);
@@ -41,56 +43,77 @@ export default function EventDisplay({ selection }: { selection: number }) {
       {data?.map((daton) => {
         if (daton.id === selection)
           return (
-            <span className="w-full flex flex-col">
-              <h1 className="font-bold text-[30px]">
-                {daton.title} &nbsp; {new Date(daton.created_at).toUTCString()}
-              </h1>
-              <h1 className="">
-                {daton.org_emails?.org_name}
-
-                <img
-                  src={imageUrl ? imageUrl : "https://placehold.co/600x600"}
-                  alt=""
-                  className="w-20 h-20 aspect-square rounded-full relative"
-                />
-              </h1>
-              <div>
-                Start Date:&nbsp;{new Date(daton.start_date).toUTCString()}
-              </div>
-              <div>
-                End Date: &nbsp;{new Date(daton.end_date).toUTCString()}
-              </div>
-              {daton.location_str && (
-                <div>
-                  location: &nbsp;
-                  {daton.location_str} | &nbsp;
-                  <a
-                    href={formatGoogleMapsLocation(daton.location_str)}
-                    className=" hover:underline decoration-auto"
-                  >
-                    directions
-                  </a>
-                </div>
-              )}
-              <a
-                href={formatGoogleCalendarEvent(
-                  daton.title,
-                  daton.location_str,
-                  daton.start_date,
-                  daton.end_date
-                )}
-                className="hover:underline decoration-auto"
-              >
-                Add to Calendar
-              </a>
-              <RsvpOrAttendanceButton
-                {...{
-                  start_date: daton.start_date,
-                  end_date: daton.end_date,
-                  selection,
-                }}
+            <span className="w-full grid grid-cols-[70px_1fr] grid-rows-[70px_1fr] gap-4">
+              <img
+                src={imageUrl}
+                alt=""
+                className="w-full aspect-square onject-cover rounded-full"
               />
-              <Editor content={daton.content}></Editor>
+              <div className="flex flex-col h-full justify-center relative">
+                <h1 className="font-bold text-4xl">{daton.title}</h1>
+                <RsvpOrAttendanceButton
+                  {...{
+                    start_date: daton.start_date,
+                    end_date: daton.end_date,
+                    selection,
+                  }}
+                  className="absolute bottom-0 right-[5%] bg-navy/20 hover:bg-navy/10"
+                />
+                <p>
+                  {daton.org_emails?.org_name
+                    ? daton.org_emails.org_name
+                    : "Unknown"}
+                </p>
+              </div>
+              <div className="col-start-2 w-[95%]">
+                {daton.poster ? (
+                  <img
+                    src={daton.poster}
+                    alt=""
+                    className="w-full rounded-lg aspect-video object-cover"
+                  />
+                ) : (
+                  <div className="w-full bg-blue/15 animate-pulse aspect-video rounded-lg"></div>
+                )}
+                <div className="grid grid-cols-[2fr_1fr] mt-10">
+                  <span className="w-full">
+                    <h1 className=" font-semibold ">
+                      {DateParser(daton.start_date)} <br />
+                      {daton.location_str}
+                    </h1>
+                    <Editor content={daton.content} />
+                  </span>
+                  <div className="w-full flex flex-col gap-2 ">
+                    <a
+                      href={formatGoogleCalendarEvent(
+                        daton.title,
+                        daton.location_str,
+                        daton.start_date,
+                        daton.end_date
+                      )}
+                      className="flex items-center gap-2 bg-blue/20 justify-center px-2 rounded-2xl text-gray-700 hover:bg-blue/40"
+                    >
+                      <img src={googleCalendar} alt="" className="h-[15px]" />
+                      Add to Google Calendar
+                    </a>
+                    <a
+                      href={formatGoogleMapsLocation(daton.location_str)}
+                      className="flex items-center gap-2 bg-blue/20 justify-center px-2 rounded-2xl text-gray-700 hover:bg-blue/40"
+                    >
+                      📍Directions to Event
+                    </a>
+                    <div className="flex gap-2">
+                      {daton.tags.map((tag) => {
+                        return (
+                          <div className="bg-navy/40 px-2 rounded-2xl font-semibold">
+                            {tag}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </span>
           );
       })}

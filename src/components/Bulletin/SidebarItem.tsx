@@ -32,13 +32,13 @@ export default function SidebarItem({
   return (
     <button
       key={daton.id}
-      className=" cursor-pointer flex flex-col p-1 h-[150px]"
+      className=" cursor-pointer flex flex-col p-1 h-[100px]"
       onClick={() => {
         navigate(`/bulletin/${daton.id}`);
         setSelection(daton.id);
       }}
     >
-      <div className="flex flex-col justify-between  rounded-lg bg-white h-full w-full p-1 rounded-standard bg-lightBlue">
+      <div className="flex flex-col justify-between rounded-lg bg-white h-full w-full p-1 rounded-standard bg-lightBlue">
         <div className="flex gap-2 w-full h-1/2">
           {imageURL ? (
             <img
@@ -56,19 +56,19 @@ export default function SidebarItem({
             />
           )}
           <div className="flex flex-col">
-            <div className="font-bold text-[25px] w-full line-clamp-1">
+            <div className="font-bold text-[20px] w-full line-clamp-1">
               {daton.title}
             </div>
-            <div className="text-[15px] opacity-70">
+            <div className="text-[12px] opacity-70 w-full text-left">
               {daton.org_emails ? daton.org_emails.org_name : "unknown"}
             </div>
           </div>
         </div>
         <span className="w-full flex flex-col items-start">
-          <p className="text-[15px] line-clamp-1">
+          <p className="text-[12px] line-clamp-1">
             {new Date(daton.created_at).toUTCString().slice(0, 16)} <br />
           </p>
-          <p className="w-full text-left text-[20px] line-clamp-1">
+          <p className="w-full text-left text-[15px] line-clamp-1">
             {daton.location_str ? daton.location_str : "N/A"}
           </p>
         </span>

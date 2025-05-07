@@ -12,9 +12,10 @@ export default function Navbar() {
     <nav className="w-full h-[10vh] bg-blue text-white text-[3vh] flex justify-between items-center px-10 absolute top-0 z-10">
       {User && User.id && (
         <>
-          <img src={TESC} alt="" className="h-[40px]" />
+          <NavLink to="/">
+            <img src={TESC} alt="" className="h-[40px]" />
+          </NavLink>
           <div className="flex gap-4">
-            <NavLink to="/">Home</NavLink>
             <NavLink to="/bulletin">Bulletin</NavLink>
             {User.role === "internal" && (
               <>
@@ -37,7 +38,7 @@ export default function Navbar() {
           <>
             <NavLink to="/bulletin">Bulletin</NavLink>
             <button
-              className="rounded-lg border border-black px-5 cursor-pointer h-1/2 right-10 bg-green-400 hover:bg-green-500"
+              className="rounded-lg border border-black px-5 cursor-pointer h-1/2 right-10 bg-navy hover:opacity-80"
               onClick={() => {
                 setShowLoginModal(true);
               }}
