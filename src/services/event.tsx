@@ -24,7 +24,7 @@ export const createEvent = async (User: User, formData: formdata) => {
       content: formData.content,
       tags: formData.tags,
       org_name: org_name[0].org_name,
-      poaster: formData.poster,
+      poster: formData.poster,
     });
     return error;
   }

@@ -6,29 +6,30 @@ import Select from "@mui/material/Select";
 import Chip from "@mui/material/Chip";
 import { Autocomplete, TextField } from "@mui/material";
 import { tags } from "@lib/constants";
-import { formdata } from "@lib/constants";
+import { formdata, locations } from "@lib/constants";
+
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
 const MenuProps = {
   PaperProps: {
     style: {
       maxHeight: ITEM_HEIGHT * 2 + ITEM_PADDING_TOP,
-      width: 250
-    }
-  }
+      width: 250,
+    },
+  },
 };
 
 function getStyles(name: string, personName: readonly string[], theme: Theme) {
   return {
     fontWeight: personName.includes(name)
       ? theme.typography.fontWeightMedium
-      : theme.typography.fontWeightRegular
+      : theme.typography.fontWeightRegular,
   };
 }
 
 export function MultipleSelectChip({
   formData,
-  handleChange
+  handleChange,
 }: {
   formData: formdata;
   handleChange: (value: string[], cols: string[]) => void;
@@ -45,9 +46,11 @@ export function MultipleSelectChip({
       value={formData.tags}
       onChange={(e) => {
         const {
-          target: { value }
+          target: { value },
         } = e;
-        handleChange(typeof value === "string" ? value.split(",") : value, ["tags"]);
+        handleChange(typeof value === "string" ? value.split(",") : value, [
+          "tags",
+        ]);
       }}
       MenuProps={MenuProps}
       input={<OutlinedInput />}
@@ -60,7 +63,11 @@ export function MultipleSelectChip({
       )}
     >
       {tags.map((name) => (
-        <MenuItem key={name} value={name} style={getStyles(name, formData.tags, theme)}>
+        <MenuItem
+          key={name}
+          value={name}
+          style={getStyles(name, formData.tags, theme)}
+        >
           {name}
         </MenuItem>
       ))}
@@ -68,11 +75,9 @@ export function MultipleSelectChip({
   );
 }
 
-const places = ["asd1", "asd2", "asdasd3"];
-
 export function Dropdown({
   formData,
-  handleChange
+  handleChange,
 }: {
   formData: formdata;
   handleChange: (value: string, cols: string[]) => void;
@@ -80,7 +85,7 @@ export function Dropdown({
   return (
     <Autocomplete
       disablePortal
-      options={places}
+      options={locations}
       className="border-black border rounded-lg px-0 h-fit w-full flex text-5xl"
       freeSolo
       sx={{ borderRadius: "0.5rem" }}
