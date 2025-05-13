@@ -1,7 +1,7 @@
 import { BulletinContext } from "@lib/hooks/useBulletin";
-import { useContext } from "react";
+import { memo, useContext } from "react";
 import SidebarItem from "./SidebarItem";
-export function EventsList({
+export const EventsList = memo(function ({
   setSelection,
 }: {
   setSelection: (selection: number) => void;
@@ -15,4 +15,4 @@ export function EventsList({
       })}
     </>
   );
-}
+});
