@@ -44,11 +44,19 @@ export default function EventDisplay({ selection }: { selection: number }) {
         if (daton.id === selection)
           return (
             <span className="w-full grid grid-cols-[70px_1fr] grid-rows-[70px_1fr] gap-4">
-              <img
-                src={imageUrl}
-                alt=""
-                className="w-full aspect-square onject-cover rounded-full"
-              />
+              {imageUrl ? (
+                <img
+                  src={imageUrl}
+                  alt=""
+                  className="h-full rounded-full object-cover aspect-square"
+                />
+              ) : (
+                <img
+                  src="https://placehold.co/600x600"
+                  alt=""
+                  className="h-full rounded-full object-cover aspect-square"
+                />
+              )}
               <div className="flex flex-col h-full justify-center relative">
                 <h1 className="font-bold text-4xl">{daton.title}</h1>
                 <RsvpOrAttendanceButton
