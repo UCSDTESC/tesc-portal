@@ -7,7 +7,7 @@ import TESC from "/TESC.png";
 export default function Navbar() {
   const { User, handleSignOut } = useContext(UserContext);
   const { showLoginModal, setShowLoginModal } = useContext(UserContext);
-  console.log(User);
+
   return (
     <nav className="w-full h-[10vh] bg-blue text-white text-[3vh] flex justify-between items-center px-10 absolute top-0 z-10">
       {User && User.id && (
