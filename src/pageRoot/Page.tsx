@@ -14,14 +14,11 @@ export default function Page() {
   const navigate = useNavigate();
   const location = useLocation();
   // sign in user
-  const handleSignIn = async (
-    { email, password }: UserCredentials,
-    OnSuccess: () => void
-  ) => {
+  const handleSignIn = async ({ email, password }: UserCredentials, OnSuccess: () => void) => {
     const { user, error } = await signIn(email, password);
     if (user && user?.email) {
       setError("");
-      setUser({ id: user.id, email: user.email, role: "unknown" });
+      setUser({ id: user.id, email: user.email, role: user.role });
       OnSuccess();
     }
     if (error) {
@@ -30,10 +27,7 @@ export default function Page() {
   };
 
   // sign up user
-  const handleSignUp = async (
-    { email, password }: UserCredentials,
-    OnSuccess: () => void
-  ) => {
+  const handleSignUp = async ({ email, password }: UserCredentials, OnSuccess: () => void) => {
     const { user, error } = await signUp(email, password);
     if (error) {
       setError(error.message);
@@ -66,8 +60,7 @@ export default function Page() {
         setUser({ id: user.id, email: user.email, role: user.role });
       } else {
         setUser({ id: "", email: "", role: "" });
-        if (location.pathname !== "" && !location.pathname.includes("bulletin"))
-          navigate("");
+        if (location.pathname !== "" && !location.pathname.includes("bulletin")) navigate("");
       }
     };
     getUser();

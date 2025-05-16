@@ -25,7 +25,7 @@ export default function CheckBoxes() {
           className="bg-white w-fit flex items-center gap-1 h-full px-2 rounded-2xl relative cursor-pointer"
           ref={filterRef}
           onClick={() => {
-            setFilterMenu("Tags");
+            setFilterMenu(filterMenu == "Tags" ? "" : "Tags");
           }}
         >
           <FilterIcon />
@@ -51,7 +51,7 @@ export default function CheckBoxes() {
           className="bg-white w-fit flex items-center gap-1 h-full px-2 rounded-2xl relative cursor-pointer"
           ref={sortRef}
           onClick={() => {
-            setFilterMenu("Sort");
+            setFilterMenu(filterMenu == "Sort" ? "" : "Sort");
           }}
         >
           <SortIcon />
