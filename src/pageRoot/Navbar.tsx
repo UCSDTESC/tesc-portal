@@ -20,8 +20,7 @@ export default function Navbar() {
             {User.role === "internal" && (
               <>
                 <NavLink to="/form">Form</NavLink>
-                <NavLink to="/data">Data</NavLink>
-                <NavLink to="/profile">profile</NavLink>
+                <NavLink to="/profile">Profile</NavLink>
               </>
             )}
             <button

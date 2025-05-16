@@ -2,6 +2,7 @@ import UserContext from "@lib/UserContext";
 import supabase from "@server/supabase";
 import { useContext, useEffect, useState } from "react";
 import { NavLink } from "react-router";
+import DataTable from "../Data/DataTable";
 
 // TODO: code clean-up
 export default function Profile() {
@@ -40,10 +41,9 @@ export default function Profile() {
     fetchpfp();
   }, [User?.email, orgname]);
   return (
-    <section>
-      <div className="flex ">
-        {orgname}{" "}
-        <div className="w-32 aspect-square rounded-full overflow-hidden relative border-2 border-black">
+    <div className="flex flex-row justify-between items-start w-screen mt-8 mx-15 gap-8">
+      <div className="flex flex-row gap-4">
+        <div className="w-32 h-32 aspect-square rounded-full overflow-hidden relative border-2 border-black">
           <img src={imageUrl} alt="" className="w-full h-full object-cover " />
           <NavLink
             to="./edit"
@@ -52,7 +52,12 @@ export default function Profile() {
             Edit +
           </NavLink>
         </div>
+        <h1 className="text-3xl mt-8">{orgname}</h1>
       </div>
-    </section>
+      <div className="w-1/2 flex flex-col justify-end gap-3">
+        <h1 className="text-xl font-semibold">My Posted Events</h1>
+        <DataTable />
+      </div>
+    </div>
   );
 }

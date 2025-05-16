@@ -24,7 +24,6 @@ createRoot(document.getElementById("root")!).render(
             path="form"
             element={<Form id={0} onSuccess={function (): void {}} />}
           />
-          <Route path="data" element={<DataTable />} />
           <Route path="" element={<Page />} />
           <Route path="bulletin">
             <Route path=":postId" element={<Bulletin />} />
