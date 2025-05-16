@@ -8,12 +8,14 @@ import Home from "@components/User/Home.tsx";
 import Bulletin from "@components/Bulletin/Bulletin.tsx";
 import Profile from "@components/adminUser/Profile/Profile.tsx";
 import NewProfile from "@components/adminUser/Profile/NewProfile.tsx";
+import { Toaster } from "react-hot-toast";
 
 import Page from "./pageRoot/Page.tsx";
 import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
+    <Toaster />
     <BrowserRouter>
       <Routes>
         <Route element={<Page />}>
