@@ -41,8 +41,8 @@ export default function Profile() {
     fetchpfp();
   }, [User?.email, orgname]);
   return (
-    <div className="flex flex-row justify-between items-start w-screen mt-8 mx-15 gap-8">
-      <div className="flex flex-row gap-4">
+    <div className="flex flex-col md:flex-row justify-between items-start w-screen mt-8 mx-15 gap-8">
+      <div className="flex flex-col md:flex-row gap-4">
         <div className="w-32 h-32 aspect-square rounded-full overflow-hidden relative border-2 border-black">
           <img src={imageUrl} alt="" className="w-full h-full object-cover " />
           <NavLink
@@ -54,7 +54,7 @@ export default function Profile() {
         </div>
         <h1 className="text-3xl mt-8">{orgname}</h1>
       </div>
-      <div className="w-1/2 flex flex-col justify-end gap-3">
+      <div className="w-full md:w-1/2 flex flex-col justify-end gap-3">
         <h1 className="text-xl font-semibold">My Posted Events</h1>
         <DataTable />
       </div>

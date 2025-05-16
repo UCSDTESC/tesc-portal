@@ -3,7 +3,6 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 
 import Form from "@components/adminUser/Form/Form.tsx";
-import DataTable from "@components/adminUser/Data/DataTable.tsx";
 import Home from "@components/User/Home.tsx";
 import Bulletin from "@components/Bulletin/Bulletin.tsx";
 import Profile from "@components/adminUser/Profile/Profile.tsx";

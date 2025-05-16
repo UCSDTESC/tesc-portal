@@ -8,6 +8,9 @@ import { useEditModal } from "@lib/hooks/useEditModal";
 import { useData } from "@lib/hooks/useData";
 import { formdata } from "@lib/constants";
 
+import { EditOutlined } from "@ant-design/icons";
+import { DeleteOutlined } from "@ant-design/icons";
+
 import { extensions } from "../Form/EditorExtensions";
 import Form from "../Form/Form";
 
@@ -30,16 +33,16 @@ export default function DataTable() {
               key={daton.id}
             >
               <button
-                className="absolute right-[-15px] top-[-15px] rounded-lg p-2 text-white bg-red-600 w-fit hover:bg-red-800 cursor-pointer"
+                className="absolute right-[-15px] top-[-15px] rounded-full p-2 w-10 text-white bg-red-700 hover:bg-red-800 cursor-pointer"
                 onClick={() => handleDelete(daton.id)}
               >
-                Delete
+                <DeleteOutlined />
               </button>
               <button
-                className="absolute right-[50px] top-[-15px] rounded-lg p-2 text-black bg-gray-300 w-fit hover:bg-gray-400 cursor-pointer"
+                className="absolute right-[30px] top-[-15px] rounded-full p-2 w-10 text-black bg-gray-300 hover:bg-gray-400 cursor-pointer"
                 onClick={() => openEditModal(daton)}
               >
-                edit
+                <EditOutlined />
               </button>
               <span className="w-full grid grid-cols-[auto_1fr] gap-x-2 ">
                 <DataPair data={daton.title ?? "N/A"}>
@@ -89,7 +92,7 @@ export default function DataTable() {
                   editorProps={{
                     attributes: {
                       class:
-                        "w-full col-span-2 focus:outline-none max-h-[40vh] overflow-y-auto",
+                        "ml-8 w-full col-span-2 focus:outline-none max-h-[40vh] overflow-y-auto",
                     },
                   }}
                 />
