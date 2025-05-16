@@ -2,6 +2,7 @@ import { deleteEvent, fetchEventByOrg } from "@services/event";
 import { useCallback, useEffect, useState } from "react";
 import { User } from "@lib/UserContext";
 import { Event } from "@lib/constants";
+import useToast from '@lib/hooks/useToast'
 // useData custom hook used in DataTable component
 export function useData(User: User | null) {
   const [data, setData] = useState<Event[] | null>(null);
@@ -23,6 +24,7 @@ export function useData(User: User | null) {
     } else if (error) {
       setError(error.message);
       setLoading(false);
+      useToast('Unable to fetch your posted events', 'error')
     }
   }, [User]);
 
@@ -36,9 +38,11 @@ export function useData(User: User | null) {
     const error = await deleteEvent(id);
     if (error) {
       setError(error.message);
+      useToast('Unable to delete event', 'error')
     } else {
       setData(data ? data.filter((daton) => daton.id != id) : null);
       setError("");
+      useToast('Succesfully deleted event', 'success')
     }
   };
 

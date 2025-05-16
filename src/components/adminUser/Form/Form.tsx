@@ -9,6 +9,7 @@ import { createEvent, updateEvent } from "@services/event";
 
 import Editor from "./Editor";
 import { MultipleSelectChip, Dropdown } from "./Dropdowns";
+import useToast from "@lib/hooks/useToast";
 
 // TODO: refactor label and input components into an individual component
 export default function Form({
@@ -43,17 +44,21 @@ export default function Form({
       const error = await updateEvent(id, User.id, formData);
       if (error) {
         setError(error.message);
+        useToast("Unable to update event", "error");
       } else {
         onSuccess();
+        useToast("Succesfully updated event", "success");
       }
     } else if (User?.id) {
       const error = await createEvent(User, formData);
       if (error) {
         setError(error.message);
+        useToast("Unable to create event", "error");
       } else {
         form.current?.reset();
         setFormData(getFormDataDefault());
         navigate("/");
+        useToast("Succesfully created event", "success");
       }
     }
   };
