@@ -5,6 +5,7 @@ import { editRSVP, fetchRSVPAndAttended, logAttendance } from "@services/user";
 import { queryEventsBySearchAndFilters } from "@services/event";
 import UserContext, { User } from "@lib/UserContext";
 import { Event } from "@lib/constants";
+import useToast from "@lib/hooks/useToast";
 
 // custom hook for bulletin component
 export function useBulletin(User: User | null) {
@@ -25,7 +26,8 @@ export function useBulletin(User: User | null) {
       if (events) {
         setOrgs(events);
       } else if (error) {
-        console.log(error);
+        console.error(error.message);
+        useToast('Error fetching organizations', 'error')
       }
     };
     getOrgs();
@@ -38,7 +40,8 @@ export function useBulletin(User: User | null) {
       if (events) {
         setData(events as unknown as Event[]);
       } else {
-        console.log(error);
+        console.error(error?.message);
+        useToast('Error fetching events', 'error')
       }
     };
     fetchEvents();
@@ -53,7 +56,8 @@ export function useBulletin(User: User | null) {
           setRSVP(rsvp);
           setAttendance(attended);
         } else if (error) {
-          console.log(error);
+          console.error(error.message);
+          useToast('Error fetching user history', 'error')
         }
       }
     };
@@ -75,9 +79,11 @@ export function useBulletin(User: User | null) {
       // edit database rsvp array and count
       const error = await editRSVP(id, User.email, remove, currRSVP);
       if (error) {
-        console.log(error);
+        console.error(error.message);
+        useToast(remove === true ? 'Unable to remove RSVP' : 'Unable to RSVP', 'error')
       } else {
         setRSVP(currRSVP);
+        useToast(remove === true ? 'Succesfully removed RSVP' : 'Succesfully RSVP\'d', 'success')
       }
     }
   };
@@ -93,9 +99,11 @@ export function useBulletin(User: User | null) {
       if (filtered && userInput){
         const error = await logAttendance(selection, User.id, userInput);
         if (error) {
-          console.error(error);
+          console.error(error.message);
+          useToast("Error logging attendance", 'error')
         } else {
           setAttendance([...attendance, selection]);
+          useToast('Succesfully logged attendance', 'success')
         }
       }
     }
