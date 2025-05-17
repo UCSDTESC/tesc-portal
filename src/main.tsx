@@ -6,7 +6,6 @@ import Form from "@components/adminUser/Form/Form.tsx";
 import Home from "@components/User/Home.tsx";
 import Bulletin from "@components/Bulletin/Bulletin.tsx";
 import Profile from "@components/adminUser/Profile/Profile.tsx";
-import NewProfile from "@components/adminUser/Profile/NewProfile.tsx";
 import { Toaster } from "react-hot-toast";
 
 import Page from "./pageRoot/Page.tsx";
@@ -30,7 +29,6 @@ createRoot(document.getElementById("root")!).render(
           </Route>
           <Route path="profile">
             <Route path="" element={<Profile />}></Route>
-            <Route path="edit" element={<NewProfile />}></Route>
           </Route>
         </Route>
       </Routes>
