@@ -15,49 +15,28 @@ export function RsvpOrAttendanceButton({
   const currDate = new Date();
   const start = new Date(start_date);
   const end = new Date(end_date);
-  const { RSVP, attendance, handleRSVP, handleAttendance } =
-    useContext(BulletinContext);
+  const { RSVP, attendance, handleRSVP, handleAttendance } = useContext(BulletinContext);
   const buttonClassName = `border px-4 py-2 rounded-lg cursor-pointer w-fit h-fit my-2 ${className}`;
   if (currDate <= start) {
     if (RSVP.includes(selection)) {
       return (
-        <button
-          className={buttonClassName}
-          onClick={() => handleRSVP(selection, true)}
-        >
+        <button className={buttonClassName} onClick={() => handleRSVP(selection, true)}>
           Remove RSVP
         </button>
       );
     } else {
       return (
-        <button
-          className={buttonClassName}
-          onClick={() => handleRSVP(selection, false)}
-        >
+        <button className={buttonClassName} onClick={() => handleRSVP(selection, false)}>
           RSVP
         </button>
       );
     }
   } else if (currDate <= end) {
-    if (attendance.includes(selection)) {
-      return (
-        <button
-          className={buttonClassName}
-          onClick={() => handleAttendance(selection)}
-        >
-          Remove Attendance
-        </button>
-      );
-    } else {
-      return (
-        <button
-          className={buttonClassName}
-          onClick={() => handleAttendance(selection)}
-        >
-          Mark attendance
-        </button>
-      );
-    }
+    return (
+      <button className={buttonClassName} onClick={() => handleAttendance(selection)}>
+        Mark attendance
+      </button>
+    );
   } else {
     return <></>;
   }
