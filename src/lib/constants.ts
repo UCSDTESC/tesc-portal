@@ -1,7 +1,7 @@
 export const tags = ["fundraiser", "social", "workshop", "GBM", "panels/talks", "other"];
 
 export type Event = {
-  password: string | number;
+  password: string;
   tags: string[];
   id: number;
   UID: string;
@@ -16,11 +16,10 @@ export type Event = {
   rsvp: number;
   Users?: { uuid: string; email: string; pfp_str: string };
   org_emails?: { email: string; org_name: string };
-  poster:string
-  
+  poster: string;
 };
 
-export interface formdata {
+export type formdata = {
   title: string;
   start_date: string;
   end_date: string;
@@ -29,10 +28,10 @@ export interface formdata {
   content: string;
   password: string;
   tags: string[];
-  poster: string
-}
+  poster: string;
+};
 
-export const eventFormDataDefault = {
+export const eventFormDataDefault: formdata = {
   title: "",
   password: "",
   start_date: "",
@@ -40,10 +39,11 @@ export const eventFormDataDefault = {
   location: [],
   location_str: "",
   content: "",
-  tags: [""]
+  tags: [""],
+  poster: "",
 };
 
-export const locations : string[] =  [
+export const locations: string[] = [
   "Ballroom East (L2, Room 220)",
   "Ballroom West A (L2, Room 215)",
   "Ballroom West B (L2, Room 216)",
@@ -140,5 +140,5 @@ export const locations : string[] =  [
   "Epstein Family Amphitheater",
   "The Loft",
   "Old Student Center Stages",
-  "Visual Arts Presentation Lab (VAF 201)"
+  "Visual Arts Presentation Lab (VAF 201)",
 ];

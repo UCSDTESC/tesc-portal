@@ -21,7 +21,8 @@ export function useEditModal() {
       location: [],
       location_str: daton.location_str,
       content: daton.content,
-      tags: daton.tags
+      tags: daton.tags,
+      poster: daton.poster,
     });
   };
 
