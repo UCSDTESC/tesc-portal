@@ -42,7 +42,7 @@ export default function Profile() {
       }
     };
     fetchpfp();
-  }, [User?.email, orgname]);
+  }, [User?.email, orgname, editModal]);
 
   const controlEditModal = () => {
     setEditModal(!editModal);

@@ -50,6 +50,8 @@ export default function NewProfile({ controlModal }: Props) {
             .eq("email", User?.email);
           if (error) {
             console.log(error.message);
+          } else {
+            controlModal();
           }
         }
         if (error) {
@@ -63,7 +65,6 @@ export default function NewProfile({ controlModal }: Props) {
       }
     };
     fetchOrgname();
-    controlModal();
   };
 
   return (
@@ -84,11 +85,7 @@ export default function NewProfile({ controlModal }: Props) {
             onChange={imageUpload}
           ></input>
           {picInput.current?.files && (
-            <img
-              src={image}
-              alt=""
-              className="w-[8vw] h-[8vw] object-cover rounded-full"
-            />
+            <img src={image} alt="" className="w-[8vw] h-[8vw] object-cover rounded-full" />
           )}
         </div>
         <button
