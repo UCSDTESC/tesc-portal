@@ -4,38 +4,26 @@ import { createPortal } from "react-dom";
 import UserContext from "@lib/UserContext";
 import LoginModal from "./LoginModal";
 import TESC from "/TESC.png";
+import BasicMenu from "@components/User/BasicMenu";
 export default function Navbar() {
-  const { User, handleSignOut } = useContext(UserContext);
+  const { User } = useContext(UserContext);
   const { showLoginModal, setShowLoginModal } = useContext(UserContext);
 
   return (
     <nav className="w-full h-[10vh] bg-blue text-white text-[3vh] flex justify-between items-center px-10 absolute top-0 z-10">
+      <NavLink to="/">
+        <img src={TESC} alt="" className="h-[40px]" />
+      </NavLink>
       {User && User.id && (
         <>
-          <NavLink to="/">
-            <img src={TESC} alt="" className="h-[40px]" />
-          </NavLink>
           <div className="flex gap-4">
-            <NavLink to="/bulletin">Bulletin</NavLink>
-            {User.role === "internal" && (
-              <>
-                <NavLink to="/form">Form</NavLink>
-                <NavLink to="/profile">Profile</NavLink>
-              </>
-            )}
-            <button
-              className="rounded-2xl px-5 cursor-pointer h-1/2 right-10 bg-navy hover:opacity-80"
-              onClick={handleSignOut}
-            >
-              {User.email}
-            </button>
+            <BasicMenu />
           </div>
         </>
       )}
       {!User ||
         (!User.id && (
           <>
-            <NavLink to="/bulletin">Bulletin</NavLink>
             <button
               className=" border border-black px-5 cursor-pointer h-1/2 right-10 bg-navy rounded-2xl hover:opacity-80"
               onClick={() => {

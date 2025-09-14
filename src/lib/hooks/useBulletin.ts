@@ -5,7 +5,7 @@ import { editRSVP, fetchRSVPAndAttended, logAttendance } from "@services/user";
 import { queryEventsBySearchAndFilters } from "@services/event";
 import UserContext, { User } from "@lib/UserContext";
 import { Event } from "@lib/constants";
-import useToast from "@lib/hooks/useToast";
+import DisplayToast from "@lib/hooks/useToast";
 
 // custom hook for bulletin component
 export function useBulletin(User: User | null) {
@@ -17,7 +17,7 @@ export function useBulletin(User: User | null) {
   const [orgs, setOrgs] = useState<string[]>([]);
   const [tagFilters, setTagFilters] = useState<string[]>([]);
   const [orgFilters, setOrgFilters] = useState<string[]>([]);
-  const [sortMethod, setSortMethod] = useState<string>('');
+  const [sortMethod, setSortMethod] = useState<string>("");
 
   // fetch list of organizations
   useEffect(() => {
@@ -27,7 +27,7 @@ export function useBulletin(User: User | null) {
         setOrgs(events);
       } else if (error) {
         console.error(error.message);
-        useToast('Error fetching organizations', 'error')
+        DisplayToast("Error fetching organizations", "error");
       }
     };
     getOrgs();
@@ -36,12 +36,17 @@ export function useBulletin(User: User | null) {
   // fetch events (with any searches and filters)
   useEffect(() => {
     const fetchEvents = async () => {
-      const { events, error } = await queryEventsBySearchAndFilters(search, tagFilters, orgFilters, sortMethod);
+      const { events, error } = await queryEventsBySearchAndFilters(
+        search,
+        tagFilters,
+        orgFilters,
+        sortMethod
+      );
       if (events) {
         setData(events as unknown as Event[]);
       } else {
         console.error(error?.message);
-        useToast('Error fetching events', 'error')
+        DisplayToast("Error fetching events", "error");
       }
     };
     fetchEvents();
@@ -57,7 +62,7 @@ export function useBulletin(User: User | null) {
           setAttendance(attended);
         } else if (error) {
           console.error(error.message);
-          useToast('Error fetching user history', 'error')
+          DisplayToast("Error fetching user history", "error");
         }
       }
     };
@@ -80,10 +85,13 @@ export function useBulletin(User: User | null) {
       const error = await editRSVP(id, User.email, remove, currRSVP);
       if (error) {
         console.error(error.message);
-        useToast(remove === true ? 'Unable to remove RSVP' : 'Unable to RSVP', 'error')
+        DisplayToast(remove === true ? "Unable to remove RSVP" : "Unable to RSVP", "error");
       } else {
         setRSVP(currRSVP);
-        useToast(remove === true ? 'Succesfully removed RSVP' : 'Succesfully RSVP\'d', 'success')
+        DisplayToast(
+          remove === true ? "Succesfully removed RSVP" : "Succesfully RSVP'd",
+          "success"
+        );
       }
     }
   };
@@ -96,14 +104,14 @@ export function useBulletin(User: User | null) {
       //log attendance
       const userInput = prompt("Please enter password:", "password");
       const filtered = data?.filter((daton) => daton.id === selection)[0];
-      if (filtered && userInput){
+      if (filtered && userInput) {
         const error = await logAttendance(selection, User.id, userInput);
         if (error) {
           console.error(error.message);
-          useToast("Error logging attendance", 'error')
+          DisplayToast("Error logging attendance", "error");
         } else {
           setAttendance([...attendance, selection]);
-          useToast('Succesfully logged attendance', 'success')
+          DisplayToast("Succesfully logged attendance", "success");
         }
       }
     }
@@ -139,11 +147,10 @@ export interface BulletinContextProps {
   setOrgFilters: (orgs: string[]) => void;
   orgs: string[];
   sortMethod: string;
-  setSortMethod: (sortMethod: string) => void
+  setSortMethod: (sortMethod: string) => void;
 }
 
-export const BulletinContext = createContext<BulletinContextProps>(
-  {
+export const BulletinContext = createContext<BulletinContextProps>({
   data: [],
   tagFilters: [],
   RSVP: [],
@@ -155,6 +162,6 @@ export const BulletinContext = createContext<BulletinContextProps>(
   orgFilters: [],
   setOrgFilters: () => {},
   orgs: [],
-  sortMethod: '',
+  sortMethod: "",
   setSortMethod: () => {}
 } as BulletinContextProps);

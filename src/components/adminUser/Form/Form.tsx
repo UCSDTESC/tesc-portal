@@ -9,13 +9,13 @@ import { createEvent, updateEvent } from "@services/event";
 
 import Editor from "./Editor";
 import { MultipleSelectChip, Dropdown } from "./Dropdowns";
-import useToast from "@lib/hooks/useToast";
+import DisplayToast from "@lib/hooks/useToast";
 
 // TODO: refactor label and input components into an individual component
 export default function Form({
   formdata,
   id,
-  onSuccess,
+  onSuccess
 }: {
   formdata?: formdata;
   id: number;
@@ -25,9 +25,7 @@ export default function Form({
   const { User } = useContext(UserContext);
   const navigate = useNavigate();
   const [error, setError] = useState("");
-  const [formData, setFormData] = useState<formdata>(
-    formdata ? formdata : getFormDataDefault()
-  );
+  const [formData, setFormData] = useState<formdata>(formdata ? formdata : getFormDataDefault());
 
   // handle change to form
   const handleChange = <T,>(value: T, cols: string[]): void => {
@@ -44,21 +42,21 @@ export default function Form({
       const error = await updateEvent(id, User.id, formData);
       if (error) {
         setError(error.message);
-        useToast("Unable to update event", "error");
+        DisplayToast("Unable to update event", "error");
       } else {
         onSuccess();
-        useToast("Succesfully updated event", "success");
+        DisplayToast("Succesfully updated event", "success");
       }
     } else if (User?.id) {
       const error = await createEvent(User, formData);
       if (error) {
         setError(error.message);
-        useToast("Unable to create event", "error");
+        DisplayToast("Unable to create event", "error");
       } else {
         form.current?.reset();
         setFormData(getFormDataDefault());
         navigate("/");
-        useToast("Succesfully created event", "success");
+        DisplayToast("Succesfully created event", "success");
       }
     }
   };
@@ -81,9 +79,7 @@ export default function Form({
           placeholder="Title"
           className="border-black border rounded-lg px-3 h-12"
           value={formData.title}
-          onChange={(e) =>
-            setFormData({ ...formData, ["title"]: e.target.value })
-          }
+          onChange={(e) => setFormData({ ...formData, ["title"]: e.target.value })}
           autoFocus
           required
         />
@@ -105,9 +101,7 @@ export default function Form({
             min={formdata ? "" : getCurrentTime()}
             value={formData.start_date}
             required
-            onChange={(e) =>
-              handleChange(e.target.value, ["start_date", "end_date"])
-            }
+            onChange={(e) => handleChange(e.target.value, ["start_date", "end_date"])}
           ></input>
         </div>
         <label htmlFor="EndTime">End Time (date and time): </label>
@@ -138,18 +132,11 @@ export default function Form({
           placeholder=""
           className="border-black border rounded-lg px-3 h-12"
           value={formData.poster}
-          onChange={(e) =>
-            setFormData({ ...formData, ["poster"]: e.target.value })
-          }
+          onChange={(e) => setFormData({ ...formData, ["poster"]: e.target.value })}
           autoFocus
         />
-        {formData.poster && (
-          <img src={formData.poster} alt="" className="rounded-2xl" />
-        )}
-        <Editor
-          content={formData.content}
-          setEditorContent={(e) => handleChange(e, ["content"])}
-        />
+        {formData.poster && <img src={formData.poster} alt="" className="rounded-2xl" />}
+        <Editor content={formData.content} setEditorContent={(e) => handleChange(e, ["content"])} />
         <button
           type="submit"
           className="border border-black bg-red-400 hover:bg-red-500 w-fit rounded-lg px-5 cursor-pointer"
