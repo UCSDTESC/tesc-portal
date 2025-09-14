@@ -73,7 +73,7 @@ export default function BasicMenu() {
             <Grow
               {...TransitionProps}
               style={{
-                transformOrigin: placement === "bottom-end" ? "left top" : "left bottom"
+                transformOrigin: placement === "bottom-end" ? "left top" : "left bottom",
               }}
             >
               <Paper>
@@ -84,13 +84,15 @@ export default function BasicMenu() {
                     aria-labelledby="composition-button"
                     onKeyDown={handleListKeyDown}
                   >
-                    <MenuItem onClick={handleClose}>
-                      <NavLink to="/profile">Profile</NavLink>
-                    </MenuItem>
                     {User?.role === "internal" && (
-                      <MenuItem onClick={handleClose}>
-                        <NavLink to="/form">New Event</NavLink>
-                      </MenuItem>
+                      <>
+                        <MenuItem onClick={handleClose}>
+                          <NavLink to="/profile">Profile</NavLink>
+                        </MenuItem>
+                        <MenuItem onClick={handleClose}>
+                          <NavLink to="/form">New Event</NavLink>
+                        </MenuItem>
+                      </>
                     )}
                     <MenuItem onClick={handleSignOut}>Logout</MenuItem>
                   </MenuList>

@@ -1,15 +1,34 @@
 import { tags } from "@lib/constants";
 import { BulletinContext } from "@lib/hooks/useBulletin";
-import { useContext, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Arrow, FilterIcon, SortIcon } from "./svgIcons";
 import { useOutsideClicks } from "@lib/hooks/useOutsideClick";
-
+import UserContext from "@lib/UserContext";
+import { User } from "@lib/UserContext";
+import supabase from "@server/supabase";
 export default function CheckBoxes() {
   const { setSearch } = useContext(BulletinContext);
+  const { User } = useContext(UserContext);
   const filterRef = useRef(null);
   const sortRef = useRef(null);
   const [filterMenu, setFilterMenu] = useState("");
+  const [userPoints, setUserPoints] = useState(0);
   useOutsideClicks([filterRef, sortRef], () => setFilterMenu(""));
+
+  useEffect(() => {
+    const getUserPoints = async (User: User | null) => {
+      if (!User) return;
+      const { data, error } = await supabase.from("Users").select("points").eq("email", User.email);
+      if (data) {
+        setUserPoints(data[0].points);
+      }
+      if (error) {
+        console.error(error);
+      }
+    };
+    getUserPoints(User);
+  });
+
   return (
     <form className="p-3 w-full flex gap-2">
       <input
@@ -46,7 +65,6 @@ export default function CheckBoxes() {
             </div>
           </div>
         </div>
-
         <div
           className="bg-white w-fit flex items-center gap-1 h-full px-2 rounded-2xl relative cursor-pointer"
           ref={sortRef}
@@ -66,6 +84,11 @@ export default function CheckBoxes() {
           </div>
         </div>
       </div>
+      {User && (
+        <div className="bg-white w-fit flex items-center ml-auto h-full px-2 p-1 rounded-2xl relative">
+          My Points: {userPoints}
+        </div>
+      )}
     </form>
   );
 }
