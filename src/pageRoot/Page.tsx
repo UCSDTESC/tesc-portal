@@ -3,7 +3,7 @@ import { Outlet, useLocation, useNavigate } from "react-router";
 
 import UserContext from "@lib/UserContext";
 import type { User, UserCredentials } from "@lib/UserContext";
-import { signIn, fetchUser, signOut, signUp } from "@services/user";
+import { signIn, fetchUser, signOut, signUp, verifyOTP } from "@services/user";
 
 import Navbar from "./Navbar";
 import DisplayToast from "@lib/hooks/useToast";
@@ -31,17 +31,37 @@ export default function Page() {
 
   // sign up user
   const handleSignUp = async ({ email, password }: UserCredentials, OnSuccess: () => void) => {
-    const { user, error } = await signUp(email, password);
+    const { error } = await signUp(email, password);
     if (error) {
       console.error(error.message);
       DisplayToast("Error signing up", "error");
-    } else if (user && user?.email) {
+    } else {
+      // setUser({
+      //   id: user?.id,
+      //   email: user?.email,
+      //   role: user.role ? user.role : "unknown"
+      // });
+      console.log("navigate to OTP page");
+      OnSuccess();
+      // DisplayToast("Succesfully logged in", "success");
+    }
+  };
+
+  const handleVerifyOTP = async (
+    { email, password: Token, type }: UserCredentials & { type: "email" | "recovery" },
+    onSuccess: () => void
+  ) => {
+    const { user, error } = await verifyOTP(email, Token, type);
+    if (error) {
+      console.error(error.message);
+      DisplayToast("Error verifying OTP", "error");
+    } else {
       setUser({
         id: user?.id,
         email: user?.email,
         role: user.role ? user.role : "unknown"
       });
-      OnSuccess();
+      onSuccess();
       DisplayToast("Succesfully logged in", "success");
     }
   };
@@ -88,7 +108,8 @@ export default function Page() {
           setError,
           handleSignIn,
           handleSignOut,
-          handleSignUp
+          handleSignUp,
+          handleVerifyOTP
         }}
       >
         <Navbar />

@@ -18,6 +18,10 @@ interface UserContext {
   handleSignOut: () => void;
   handleSignIn: (user: UserCredentials, OnSuccess: () => void) => void;
   handleSignUp: (user: UserCredentials, OnSuccess: () => void) => void;
+  handleVerifyOTP: (
+    { email, password, type }: UserCredentials & { type: "email" | "recovery" },
+    OnSuccess: () => void
+  ) => void;
 }
 const UserContext = createContext<UserContext>({
   User: null,
@@ -34,5 +38,12 @@ const UserContext = createContext<UserContext>({
   handleSignUp: (user: UserCredentials) => {
     console.log(user);
   },
+  handleVerifyOTP: ({
+    email,
+    password,
+    type
+  }: UserCredentials & { type: "email" | "recovery" }) => {
+    console.log(email, password, type);
+  }
 });
 export default UserContext;
