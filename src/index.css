@@ -1,10 +1,60 @@
 @import "tailwindcss";
 
+* {
+  interpolate-size: allow-keywords;
+}
 :root {
   font-family: "PT Sans", sans-serif;
 }
-@theme{
-  --color-blue: #296293;
-  --color-navy: #11426B;
+@theme {
+  --color-blue: #11426b;
+  --color-offWhite: #dbdada;
+  --color-white: #fff;
+  --color-navy: #1c2e4a;
+  /* OTHER navbar color: #296293 */
+  --color-lightBlue: #e6f3ff;
+  --color-lightPink: #ffe6e6;
+  --color-gray: #bbb;
+  --color-darkGray: #333;
 
+  --radius-standard: 1rem;
+
+  --text-*: initial;
+}
+
+@keyframes animate-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes soft-pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.98;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-animate-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes navbar-animate {
+  from {
+    height: 0;
+  }
+  to {
+    height: 100vh;
+  }
 }

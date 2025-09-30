@@ -7,6 +7,7 @@ import { signIn, fetchUser, signOut, signUp, verifyOTP } from "@services/user";
 
 import Navbar from "./Navbar";
 import DisplayToast from "@lib/hooks/useToast";
+import Footer from "./Footer";
 
 export default function Page() {
   const [User, setUser] = useState<User>({ id: "", email: "", role: "" });
@@ -59,7 +60,7 @@ export default function Page() {
       setUser({
         id: user?.id,
         email: user?.email,
-        role: user.role ? user.role : "unknown"
+        role: user.role ? user.role : "unknown",
       });
       onSuccess();
       DisplayToast("Succesfully logged in", "success");
@@ -109,13 +110,14 @@ export default function Page() {
           handleSignIn,
           handleSignOut,
           handleSignUp,
-          handleVerifyOTP
+          handleVerifyOTP,
         }}
       >
         <Navbar />
-        <div className="py-[10vh] w-full flex justify-center">
+        <div className="pt-[10vh] w-full flex justify-center">
           <Outlet />
         </div>
+        <Footer />
       </UserContext.Provider>
     </main>
   );
