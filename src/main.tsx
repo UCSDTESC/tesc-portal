@@ -18,13 +18,12 @@ createRoot(document.getElementById("root")!).render(
         <Route element={<Page />}>
           <Route path="" element={<Navigate to="bulletin" />} />
           <Route path="form" element={<Form id={0} onSuccess={function (): void {}} />} />
-          <Route path="" element={<Page />} />
           <Route path="bulletin">
             <Route path=":postId" element={<Bulletin />} />
             <Route path="" element={<Navigate to="-1" />} />
           </Route>
           <Route path="profile">
-            <Route path="" element={<Profile />}></Route>
+            <Route path="" element={<Profile />} />
           </Route>
         </Route>
       </Routes>

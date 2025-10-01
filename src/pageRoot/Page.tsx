@@ -89,7 +89,8 @@ export default function Page() {
           setUser({ id: user.id, email: user.email, role: user.role });
         } else {
           setUser({ id: "", email: "", role: "" });
-          if (location.pathname !== "" && !location.pathname.includes("bulletin")) navigate("");
+          if (location.pathname !== "" && !location.pathname.includes("bulletin"))
+            navigate("bulletin");
         }
       } catch (err) {
         console.error(err);
