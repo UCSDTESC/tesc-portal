@@ -49,7 +49,7 @@ export default function Profile() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row justify-between items-start w-screen mt-8 mx-15 gap-8">
+    <div className="flex flex-col md:flex-row justify-between items-start w-screen min-h-screen mt-8 mx-15 gap-8">
       <div className="flex flex-col md:flex-row gap-4">
         <div className="w-32 h-32 aspect-square rounded-full overflow-hidden relative border-1 border-slate-400">
           <img src={imageUrl} alt="" className="w-full h-full object-cover " />
