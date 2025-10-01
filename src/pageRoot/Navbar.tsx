@@ -30,7 +30,7 @@ export default function Navbar() {
                 setShowLoginModal(true);
               }}
             >
-              Member Log in
+              Log in
             </button>
           </>
         ))}

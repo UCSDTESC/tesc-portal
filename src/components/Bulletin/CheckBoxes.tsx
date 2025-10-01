@@ -48,7 +48,6 @@ export default function CheckBoxes() {
           }}
         >
           <FilterIcon />
-          Filter by
           <Arrow />
           <div
             className={`absolute top-9 w-max -left-18/12 bg-white px-2 rounded-lg border border-navy z-100 indent-0 ${
@@ -73,7 +72,6 @@ export default function CheckBoxes() {
           }}
         >
           <SortIcon />
-          Sort With
           <Arrow />
           <div
             className={`absolute top-9 -left-1 bg-white px-2 w-max rounded-lg border border-navy z-100 indent-0 ${

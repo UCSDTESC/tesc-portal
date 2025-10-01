@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap");
 @import "tailwindcss";
 
 * {
@@ -17,8 +18,7 @@
   --color-darkGray: #333;
 
   --radius-standard: 1rem;
-
-  --text-*: initial;
+  --font-DM: "DM Sans", sans-serif;
 }
 
 @keyframes animate-in {
