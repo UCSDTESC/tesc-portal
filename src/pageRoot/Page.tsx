@@ -58,9 +58,9 @@ export default function Page() {
       DisplayToast("Error verifying OTP", "error");
     } else {
       setUser({
-        id: user?.id,
-        email: user?.email,
-        role: user.role ? user.role : "unknown",
+        id: user?.id ? user?.id : "",
+        email: user?.email ? user?.email : "",
+        role: user?.role ? user.role : "unknown"
       });
       onSuccess();
       DisplayToast("Succesfully logged in", "success");
@@ -110,7 +110,7 @@ export default function Page() {
           handleSignIn,
           handleSignOut,
           handleSignUp,
-          handleVerifyOTP,
+          handleVerifyOTP
         }}
       >
         <Navbar />
