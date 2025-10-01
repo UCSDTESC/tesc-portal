@@ -2,11 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import { BulletinContext } from "@lib/hooks/useBulletin";
 import { RsvpOrAttendanceButton } from "./RsvpOrAttendanceButton";
 import Editor from "./Editor";
-import {
-  DateParser,
-  formatGoogleCalendarEvent,
-  formatGoogleMapsLocation,
-} from "@lib/utils";
+import { DateParser, formatGoogleCalendarEvent, formatGoogleMapsLocation } from "@lib/utils";
 import googleCalendar from "/Google_Calendar_icon_(2020).svg";
 import supabase from "@server/supabase";
 export default function EventDisplay({ selection }: { selection: number }) {
@@ -16,21 +12,14 @@ export default function EventDisplay({ selection }: { selection: number }) {
   // TODO: Code clean-up
   useEffect(() => {
     const filtered = data?.filter((daton) => daton.id === selection);
-    if (
-      !filtered ||
-      filtered.length === 0 ||
-      !filtered[0].Users ||
-      !filtered[0].Users?.pfp_str
-    ) {
+    if (!filtered || filtered.length === 0 || !filtered[0].Users || !filtered[0].Users?.pfp_str) {
       setImageUrl("");
       return;
     }
     console.log(filtered[0].Users?.pfp_str);
     const { data: URL } = supabase.storage
       .from("profile.images")
-      .getPublicUrl(
-        `${filtered[0].org_emails?.org_name}/${filtered[0].Users?.pfp_str}`
-      );
+      .getPublicUrl(`${filtered[0].org_emails?.org_name}/${filtered[0].Users?.pfp_str}`);
     if (URL) {
       setImageUrl(URL.publicUrl);
     } else {
@@ -63,17 +52,13 @@ export default function EventDisplay({ selection }: { selection: number }) {
                   {...{
                     start_date: daton.start_date,
                     end_date: daton.end_date,
-                    selection,
+                    selection
                   }}
-                  className="absolute bottom-0 right-[5%] bg-navy/20 hover:bg-navy/10"
+                  className="absolute bottom-0 right-[5%] bg-lightBlue hover:opacity-80"
                 />
-                <p>
-                  {daton.org_emails?.org_name
-                    ? daton.org_emails.org_name
-                    : "Unknown"}
-                </p>
+                <p>{daton.org_emails?.org_name ? daton.org_emails.org_name : "Unknown"}</p>
               </div>
-              <div className="col-start-2 w-[95%]">
+              <div className="col-start-2 w-[95%] max-w-[800px] mx-auto">
                 {daton.poster ? (
                   <img
                     src={daton.poster}
@@ -83,7 +68,7 @@ export default function EventDisplay({ selection }: { selection: number }) {
                 ) : (
                   <div className="w-full bg-blue/15 animate-pulse aspect-video rounded-lg"></div>
                 )}
-                <div className="grid grid-cols-[2fr_1fr] mt-10">
+                <div className="flex w-full flex-row mt-10 justify-between flex-wrap-reverse gap-10">
                   <span className="w-full">
                     <h1 className=" font-semibold ">
                       {DateParser(daton.start_date)} <br />
@@ -91,7 +76,7 @@ export default function EventDisplay({ selection }: { selection: number }) {
                     </h1>
                     <Editor content={daton.content} />
                   </span>
-                  <div className="w-full flex flex-col gap-2 ">
+                  <div className="w-max flex flex-col gap-2 ">
                     <a
                       href={formatGoogleCalendarEvent(
                         daton.title,
@@ -113,9 +98,7 @@ export default function EventDisplay({ selection }: { selection: number }) {
                     <div className="flex gap-2">
                       {daton.tags.map((tag) => {
                         return (
-                          <div className="bg-navy/40 px-2 rounded-2xl font-semibold">
-                            {tag}
-                          </div>
+                          <div className="bg-navy/40 px-2 rounded-2xl font-semibold">{tag}</div>
                         );
                       })}
                     </div>

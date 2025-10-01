@@ -33,15 +33,15 @@ export default function CheckBoxes() {
     <form className="p-3 w-full flex gap-2">
       <input
         type="Search"
-        placeholder="Search"
+        placeholder="Search..."
         onChange={(e) => {
           setSearch(e.target.value);
         }}
-        className=" rounded-lg w-1/2 h-fit p-1 focus:outline-none bg-white"
+        className="rounded-lg h-fit p-1 min-w-0 w-20 md:w-1/2  focus:outline-none bg-white"
       />
       <div className="flex flex-row gap-3">
         <div
-          className="bg-white w-fit flex items-center gap-1 h-full px-2 rounded-2xl relative cursor-pointer"
+          className="bg-white w-fit flex items-center gap-1 h-full px-2 rounded-2xl relative cursor-pointer indent-[-9999px] md:indent-0"
           ref={filterRef}
           onClick={() => {
             setFilterMenu(filterMenu == "Tags" ? "" : "Tags");
@@ -51,12 +51,12 @@ export default function CheckBoxes() {
           Filter by
           <Arrow />
           <div
-            className={`absolute top-9 w-max -left-1 bg-white px-2 rounded-lg border border-navy z-100 ${
+            className={`absolute top-9 w-max -left-18/12 bg-white px-2 rounded-lg border border-navy z-100 indent-0 ${
               filterMenu === "Tags" ? "block" : "hidden"
             }`}
           >
-            <div className="grid grid-cols-[max-content_max-content] gap-2 h-[40vh]">
-              <div className="">
+            <div className="lg:grid lg:grid-cols-[max-content_max-content] flex flex-col gap-2 h-[40vh] max-w-[200px] md:max-w-none">
+              <div className=" border-b lg:border-0">
                 <TagsCheckboxes />
               </div>
               <div className="h-full overflow-y-scroll">
@@ -66,7 +66,7 @@ export default function CheckBoxes() {
           </div>
         </div>
         <div
-          className="bg-white w-fit flex items-center gap-1 h-full px-2 rounded-2xl relative cursor-pointer"
+          className="bg-white w-fit flex items-center gap-1 h-full px-2 rounded-2xl relative cursor-pointer indent-[-9999px] md:indent-0"
           ref={sortRef}
           onClick={() => {
             setFilterMenu(filterMenu == "Sort" ? "" : "Sort");
@@ -76,7 +76,7 @@ export default function CheckBoxes() {
           Sort With
           <Arrow />
           <div
-            className={`absolute top-9 -left-1 bg-white px-2 w-max rounded-lg border border-navy z-100 ${
+            className={`absolute top-9 -left-1 bg-white px-2 w-max rounded-lg border border-navy z-100 indent-0 ${
               filterMenu === "Sort" ? "block" : "hidden"
             }`}
           >

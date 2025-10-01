@@ -10,7 +10,7 @@ import Stack from "@mui/material/Stack";
 import { useContext } from "react";
 import UserContext from "@lib/UserContext";
 import { NavLink } from "react-router";
-
+import { CgProfile } from "react-icons/cg";
 export default function BasicMenu() {
   const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef<HTMLButtonElement>(null);
@@ -56,9 +56,9 @@ export default function BasicMenu() {
           aria-expanded={open ? "true" : undefined}
           aria-haspopup="true"
           onClick={handleToggle}
-          className="!text-white !text-[3vh] !rounded-2xl !normal-case !px-5 !cursor-pointer !h-1/2 !bg-navy !hover:opacity-80"
+          className="!text-white !text-[3vh]  !px-5 !cursor-pointer !h-1/2  !hover:opacity-80"
         >
-          {User?.email}
+          <CgProfile />
         </Button>
         <Popper
           open={open}
@@ -73,7 +73,7 @@ export default function BasicMenu() {
             <Grow
               {...TransitionProps}
               style={{
-                transformOrigin: placement === "bottom-end" ? "left top" : "left bottom",
+                transformOrigin: placement === "bottom-end" ? "left top" : "left bottom"
               }}
             >
               <Paper>
