@@ -12,7 +12,7 @@ import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <Toaster />
+    <Toaster toastOptions={{ className: "mt-[calc(10vh+3.5rem)] " }} gutter={1} />
     <BrowserRouter>
       <Routes>
         <Route element={<Page />}>
