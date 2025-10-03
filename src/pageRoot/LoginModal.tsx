@@ -94,14 +94,14 @@ export default function LoginModal({ onclose }: { onclose: () => void }) {
               name="password"
               type="password"
               placeholder="🔒 Password"
-              className=" rounded-lg w-3/4 bg-[#EDEDED] grayscale"
+              className=" rounded-lg w-3/4 bg-[#EDEDED] grayscale px-1"
             />
             {register && (
               <input
                 name="confirmPassword"
                 type="password"
                 placeholder="🔒 Confirm Password"
-                className=" rounded-lg w-3/4 bg-[#EDEDED] grayscale"
+                className=" rounded-lg w-3/4 bg-[#EDEDED] grayscale px-1"
               />
             )}
             {Error && <div className="">Error: {Error}</div>}
