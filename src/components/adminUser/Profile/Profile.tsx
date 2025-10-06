@@ -72,8 +72,7 @@ export default function Profile() {
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
       >
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1/2 h-1/2 bg-slate-200 rounded-lg p-4">
-          <h1 className="font-semibold text-lg mb-3">Edit Profile</h1>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-fit h-1/2  rounded-lg p-4">
           <NewProfile controlModal={controlEditModal} />
         </div>
       </Modal>

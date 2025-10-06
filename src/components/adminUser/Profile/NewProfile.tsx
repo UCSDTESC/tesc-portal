@@ -19,7 +19,7 @@ export default function NewProfile({ controlModal }: Props) {
 
     if (file.size > 2 * 1024 * 1024) {
       alert("File size exceeds 2MB limit.");
-      
+
       if (picInput.current) picInput.current.value = "";
       return;
     }
@@ -48,7 +48,7 @@ export default function NewProfile({ controlModal }: Props) {
         .from("profile.images")
         .upload(filePath, file, {
           cacheControl: "3600",
-          upsert: true,
+          upsert: true
         });
 
       if (uploadError) throw uploadError;
@@ -75,15 +75,15 @@ export default function NewProfile({ controlModal }: Props) {
   };
 
   return (
-    <div className="flex items-center justify-center">
+    <div className="flex items-center justify-center w-full h-full">
       <form
         onSubmit={(e) => {
           e.preventDefault();
           handleUploadProfilePicture();
         }}
-        className="flex flex-col items-center gap-6 p-8 bg-white/60 backdrop-blur-md rounded-2xl shadow-xl border border-gray-200 transition-transform duration-300 hover:scale-[1.02]"
+        className="flex flex-col items-center gap-6 p-8 bg-white/60 backdrop-blur-md rounded-2xl shadow-xl border border-gray-200 transition-transform duration-300 hover:scale-[1.02] w-full h-full"
       >
-        <h2 className="text-lg font-semibold text-gray-700 tracking-wide">
+        <h2 className="text-lg font-semibold text-navy tracking-wide">
           Upload New Profile Picture
         </h2>
 
@@ -108,10 +108,9 @@ export default function NewProfile({ controlModal }: Props) {
               </div>
             ) : (
               <div
-                className={`flex flex-col items-center justify-center w-36 h-36 rounded-full border-2 border-dashed ${hovering
-                    ? "border-blue-400 bg-blue-50/50"
-                    : "border-gray-300 bg-white/40"
-                  } text-gray-500 hover:text-blue-600 transition-all duration-300`}
+                className={`flex flex-col items-center justify-center w-36 h-36 rounded-full border-2 border-dashed ${
+                  hovering ? "border-blue-400 bg-blue-50/50" : "border-gray-300 bg-white/40"
+                } text-gray-500 hover:text-blue-600 transition-all duration-300`}
               >
                 <span className="text-3xl font-bold mb-1">+</span>
                 <span className="text-xs font-medium">Add Photo</span>
@@ -148,9 +147,10 @@ export default function NewProfile({ controlModal }: Props) {
           type="submit"
           disabled={loading || !image}
           className={`px-8 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm border border-gray-200
-            ${loading || !image
-              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-            : "bg-gradient-to-r from-blue-800 to-indigo-800 text-white hover:from-blue-900 hover:to-indigo-900 hover:shadow-md"
+            ${
+              loading || !image
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-gradient-to-r from-blue-800 to-indigo-800 text-white hover:from-blue-900 hover:to-indigo-900 hover:shadow-md"
             }`}
         >
           {loading ? "Uploading..." : "Save Changes"}
