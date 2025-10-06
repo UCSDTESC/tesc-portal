@@ -5,94 +5,155 @@ import UserContext from "@lib/UserContext";
 interface Props {
   controlModal: () => void;
 }
-//TODO: code clean-up
+
 export default function NewProfile({ controlModal }: Props) {
   const { User } = useContext(UserContext);
   const picInput = useRef<HTMLInputElement>(null);
-  const [image, setImage] = useState("");
+  const [image, setImage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [hovering, setHovering] = useState(false);
+
   const imageUpload = () => {
-    if (!picInput.current?.files) return;
-    if (picInput.current.files[0].size > 2097152) {
-      alert("File is too big");
-      picInput.current.value = "";
-    } else {
-      setImage(URL.createObjectURL(picInput.current.files[0]));
-      console.log(picInput.current.files[0].type.replace("image/", "."));
+    const file = picInput.current?.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert("File size exceeds 2MB limit.");
+
+      if (picInput.current) picInput.current.value = "";
+      return;
     }
+
+    setImage(URL.createObjectURL(file));
   };
 
   const handleUploadProfilePicture = async () => {
-    const fetchOrgname = async () => {
-      if (!picInput.current?.files) {
-        return;
-      }
+    setLoading(true);
+    try {
+      const file = picInput.current?.files?.[0];
+      if (!file || !User?.email) return;
 
-      const { data: Orgname, error } = await supabase
+      const { data: org, error: orgError } = await supabase
         .from("org_emails")
         .select("org_name")
-        .eq("email", User?.email);
-      if (Orgname) {
-        console.log(Orgname[0].org_name);
-        const { data, error } = await supabase.storage
-          .from("profile.images")
-          .upload(
-            `${Orgname[0].org_name}/${picInput.current.files[0].name}`,
-            picInput.current.files[0],
-            {
-              cacheControl: "3600",
-              upsert: true,
-            }
-          );
-        if (data) {
-          const { error } = await supabase
-            .from("Users")
-            .update({ pfp_str: picInput.current.files[0].name })
-            .eq("email", User?.email);
-          if (error) {
-            console.log(error.message);
-          } else {
-            controlModal();
-          }
-        }
-        if (error) {
-          console.log(error);
-        } else {
-          return;
-        }
+        .eq("email", User.email)
+        .single();
+
+      if (orgError || !org) throw orgError;
+
+      const orgName = org.org_name;
+      const filePath = `${orgName}/${file.name}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("profile.images")
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { error: updateError } = await supabase
+        .from("Users")
+        .update({ pfp_str: file.name })
+        .eq("email", User.email);
+
+      if (updateError) throw updateError;
+
+      controlModal();
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error(err.message);
+        alert(`Upload failed: ${err.message}`);
+      } else {
+        console.error("Unknown error:", err);
+        alert("An unexpected error occurred.");
       }
-      if (error) {
-        console.log(error.message);
-      }
-    };
-    fetchOrgname();
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="w-full h-full relative">
+    <div className="flex items-center justify-center w-full h-full">
       <form
-        action=""
         onSubmit={(e) => {
           e.preventDefault();
           handleUploadProfilePicture();
         }}
+        className="flex flex-col items-center gap-6 p-8 bg-white/60 backdrop-blur-md rounded-2xl shadow-xl border border-gray-200 transition-transform duration-300 hover:scale-[1.02] w-full h-full"
       >
-        <div className="flex flex-row gap-8 items-center">
+        <h2 className="text-lg font-semibold text-navy tracking-wide">
+          Upload New Profile Picture
+        </h2>
+
+        <div
+          className="relative flex flex-col items-center justify-center"
+          onMouseEnter={() => setHovering(true)}
+          onMouseLeave={() => setHovering(false)}
+        >
+          {/* Make both empty & filled states clickable */}
+          <label htmlFor="profilePic" className="cursor-pointer group relative">
+            {image ? (
+              <div className="relative">
+                <img
+                  src={image}
+                  alt="Profile Preview"
+                  className="w-36 h-36 rounded-full object-cover border-4 border-white shadow-md transition-all duration-300 group-hover:brightness-90"
+                />
+                <div className="absolute inset-0 rounded-full flex flex-col items-center justify-center bg-black/40 text-white text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300">
+                  <span className="mb-1">Change</span>
+                  <span className="text-xs">(click to replace)</span>
+                </div>
+              </div>
+            ) : (
+              <div
+                className={`flex flex-col items-center justify-center w-36 h-36 rounded-full border-2 border-dashed ${
+                  hovering ? "border-blue-400 bg-blue-50/50" : "border-gray-300 bg-white/40"
+                } text-gray-500 hover:text-blue-600 transition-all duration-300`}
+              >
+                <span className="text-3xl font-bold mb-1">+</span>
+                <span className="text-xs font-medium">Add Photo</span>
+              </div>
+            )}
+          </label>
+
+          {/* Remove button */}
+          {image && (
+            <button
+              type="button"
+              onClick={() => {
+                setImage(null);
+                if (picInput.current) picInput.current.value = "";
+              }}
+              className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-white text-gray-600 border border-gray-300 shadow-sm flex items-center justify-center font-bold hover:bg-gray-100 transition"
+              title="Remove image"
+            >
+              ×
+            </button>
+          )}
+
           <input
+            id="profilePic"
             type="file"
             accept="image/*"
             ref={picInput}
-            className="px-2 h-fit border border-slate-600 rounded-lg cursor-pointer hover:bg-slate-300"
             onChange={imageUpload}
-          ></input>
-          {picInput.current?.files && (
-            <img src={image} alt="" className="w-[8vw] h-[8vw] object-cover rounded-full" />
-          )}
+            className="hidden"
+          />
         </div>
+
         <button
           type="submit"
-          className="absolute bottom-10 right-0 rounded-lg px-2 py-1 hover:bg-slate-300 border border-slate-500 cursor-pointer"
+          disabled={loading || !image}
+          className={`px-8 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm border border-gray-200
+            ${
+              loading || !image
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-gradient-to-r from-blue-800 to-indigo-800 text-white hover:from-blue-900 hover:to-indigo-900 hover:shadow-md"
+            }`}
         >
-          Done
+          {loading ? "Uploading..." : "Save Changes"}
         </button>
       </form>
     </div>
