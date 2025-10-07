@@ -15,10 +15,12 @@ import DisplayToast from "@lib/hooks/useToast";
 export default function Form({
   formdata,
   id,
-  onSuccess
+  editEvent = false,
+  onSuccess,
 }: {
   formdata?: formdata;
   id: number;
+  editEvent?: boolean;
   onSuccess: () => void;
 }) {
   const form = useRef<HTMLFormElement>(null);
@@ -62,9 +64,19 @@ export default function Form({
   };
 
   return (
-    <div className="w-1/2 mt-20 flex m-auto bg-white z-101">
+    <div className="w-1/2 mt-20 flex flex-col m-auto bg-white z-101">
+      {!editEvent && (
+        <>
+          <h1 className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A]">
+            Create a new Event!
+          </h1>
+          <p className="font-DM text-xl w-3/4 text-balance text-[#262626] hidden md:block">
+            Submit a <strong>New Event</strong> to be displayed on the Bulletin
+          </p>
+        </>
+      )}
       <form
-        className="border border-black p-5 flex flex-col gap-2 w-full h-min"
+        className=" p-5 flex flex-col gap-2 w-full h-min"
         ref={form}
         onSubmit={(e) => {
           e.preventDefault();
@@ -73,7 +85,7 @@ export default function Form({
       >
         <p className="text-red-500">{error}</p>
 
-        <label htmlFor="title">Title: </label>
+        <label htmlFor="title">Event Title </label>
         <input
           name="title"
           placeholder="Title"
@@ -83,17 +95,17 @@ export default function Form({
           autoFocus
           required
         />
-        <label htmlFor="Password">Password: </label>
+        <label htmlFor="Password">Event Code </label>
         <input
           name="Password"
-          placeholder="Password"
+          placeholder="Code"
           className="border-black border rounded-lg px-3 h-12"
           value={formData.password}
           onChange={(e) => handleChange(e.target.value, ["password"])}
           autoFocus
           required
         />
-        <label htmlFor="StartTime">Start Time (date and time):</label>
+        <label htmlFor="StartTime">Start Time (date and time)</label>
         <div className="border-black border rounded-lg px-3 h-12 flex items-center">
           <input
             type="datetime-local"
@@ -104,7 +116,7 @@ export default function Form({
             onChange={(e) => handleChange(e.target.value, ["start_date", "end_date"])}
           ></input>
         </div>
-        <label htmlFor="EndTime">End Time (date and time): </label>
+        <label htmlFor="EndTime">End Time (date and time)</label>
         <div className="border-black border rounded-lg px-3 h-12 flex items-center scroll-smooth">
           <input
             type="datetime-local"
@@ -122,14 +134,14 @@ export default function Form({
           ></input>
         </div>
 
-        <label>Location: </label>
+        <label>Event Location</label>
         <Dropdown formData={formData} handleChange={handleChange} />
-        <label>Tags: </label>
+        <label>Tags</label>
         <MultipleSelectChip formData={formData} handleChange={handleChange} />
-        <label>Poster: </label>
+        <label>Event Poster</label>
         <input
           name="poster"
-          placeholder=""
+          placeholder="https://www.placeholderImage.png"
           className="border-black border rounded-lg px-3 h-12"
           value={formData.poster}
           onChange={(e) => setFormData({ ...formData, ["poster"]: e.target.value })}
@@ -139,9 +151,9 @@ export default function Form({
         <Editor content={formData.content} setEditorContent={(e) => handleChange(e, ["content"])} />
         <button
           type="submit"
-          className="border border-black bg-red-400 hover:bg-red-500 w-fit rounded-lg px-5 cursor-pointer"
+          className="bg-[#6A97BD] border border-[#6A97BD] text-white w-fit rounded-lg px-5 cursor-pointer"
         >
-          Submit
+          Submit New Event
         </button>
       </form>
     </div>

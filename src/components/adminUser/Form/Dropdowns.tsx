@@ -13,7 +13,7 @@ const ITEM_PADDING_TOP = 8;
 const MenuProps = {
   PaperProps: {
     style: {
-      maxHeight: ITEM_HEIGHT * 2 + ITEM_PADDING_TOP,
+      maxHeight: ITEM_HEIGHT * 4 + ITEM_PADDING_TOP,
       width: 250,
     },
   },
@@ -48,9 +48,7 @@ export function MultipleSelectChip({
         const {
           target: { value },
         } = e;
-        handleChange(typeof value === "string" ? value.split(",") : value, [
-          "tags",
-        ]);
+        handleChange(typeof value === "string" ? value.split(",") : value, ["tags"]);
       }}
       MenuProps={MenuProps}
       input={<OutlinedInput />}
@@ -63,11 +61,7 @@ export function MultipleSelectChip({
       )}
     >
       {tags.map((name) => (
-        <MenuItem
-          key={name}
-          value={name}
-          style={getStyles(name, formData.tags, theme)}
-        >
+        <MenuItem key={name} value={name} style={getStyles(name, formData.tags, theme)}>
           {name}
         </MenuItem>
       ))}

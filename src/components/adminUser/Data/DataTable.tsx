@@ -20,8 +20,7 @@ export default function DataTable() {
   const { User } = useContext(UserContext);
   // data hook also returns error and loading state variables to be implemented later for error and loading states
   const { data, handleDelete, fetchData } = useData(User);
-  const { showEditModal, curID, currEdit, setShowEditModal, openEditModal } =
-    useEditModal();
+  const { showEditModal, curID, currEdit, setShowEditModal, openEditModal } = useEditModal();
 
   if (data)
     return (
@@ -54,14 +53,10 @@ export default function DataTable() {
                 <DataPair data={DateParser(daton.created_at ?? "N/A")}>
                   <p className="font-bold text-blue">Time Stamp</p>
                 </DataPair>
-                <DataPair
-                  data={DateParser(daton.start_date ? daton.start_date : "N/A")}
-                >
+                <DataPair data={DateParser(daton.start_date ? daton.start_date : "N/A")}>
                   <p className="font-bold text-blue">Start Date</p>
                 </DataPair>
-                <DataPair
-                  data={DateParser(daton.end_date ? daton.end_date : "N/A")}
-                >
+                <DataPair data={DateParser(daton.end_date ? daton.end_date : "N/A")}>
                   <p className="font-bold text-blue">End Date</p>
                 </DataPair>
                 <DataPair data={daton.location_str ?? "N/A"}>
@@ -137,6 +132,7 @@ function EditModal({
           setShowEditModal(false);
           fetchData();
         }}
+        editEvent={true}
       />
     </div>
   );
