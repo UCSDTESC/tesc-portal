@@ -37,7 +37,7 @@ export default function CheckBoxes() {
         onChange={(e) => {
           setSearch(e.target.value);
         }}
-        className="rounded-lg h-fit p-1 min-w-0 w-20 md:w-1/2  focus:outline-none bg-white"
+        className="rounded-lg h-fit p-1 min-w-0 w-20 md:w-fit  focus:outline-none bg-white"
       />
       <div className="flex flex-row gap-3">
         <div

@@ -60,16 +60,12 @@ export default function EventDisplay({ selection }: { selection: number }) {
               </div>
               <div className="col-start-2 w-[95%] max-w-[800px] mx-auto">
                 {daton.poster ? (
-                  <img
-                    src={daton.poster}
-                    alt=""
-                    className="w-full rounded-lg aspect-video object-cover"
-                  />
+                  <img src={daton.poster} alt="" className="w-full rounded-lg object-cover" />
                 ) : (
                   <div className="w-full bg-blue/15 animate-pulse aspect-video rounded-lg"></div>
                 )}
                 <div className="flex w-full flex-row mt-10 justify-between flex-wrap-reverse gap-10">
-                  <span className="w-full">
+                  <span className="w-fit">
                     <h1 className=" font-semibold ">
                       {DateParser(daton.start_date)} <br />
                       {daton.location_str}
