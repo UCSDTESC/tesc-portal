@@ -5,6 +5,7 @@ import { Arrow, FilterIcon, SortIcon } from "./svgIcons";
 import { useOutsideClicks } from "@lib/hooks/useOutsideClick";
 import UserContext from "@lib/UserContext";
 import { User } from "@lib/UserContext";
+import { FaDiamond } from "react-icons/fa6";
 import supabase from "@server/supabase";
 export default function CheckBoxes() {
   const { setSearch } = useContext(BulletinContext);
@@ -83,8 +84,9 @@ export default function CheckBoxes() {
         </div>
       </div>
       {User && (
-        <div className="bg-white w-fit flex items-center ml-auto h-full px-2 p-1 rounded-2xl relative">
-          My Points: {userPoints}
+        <div className="bg-white borde w-fit flex items-center ml-auto h-full p-1 rounded-2xl relative font-bold gap-1 px-4 text-navy text-xl">
+          <FaDiamond className="text-lightBlue" />
+          {userPoints}
         </div>
       )}
     </form>

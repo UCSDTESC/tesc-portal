@@ -48,7 +48,7 @@ export default function Bulletin() {
         setSortMethod
       }}
     >
-      <div className="grid w-full  h-[calc(100vh-3.5rem)] grid-rows-[3.5rem_1fr]">
+      <div className="grid w-full  h-[calc(100vh-3.5rem)] grid-rows-[3.5rem_1fr] font-DM">
         <div className=" bg-linear-to-r from-0% from-blue via-70% via-[#3B7DB6] to-blue">
           <CheckBoxes />
         </div>

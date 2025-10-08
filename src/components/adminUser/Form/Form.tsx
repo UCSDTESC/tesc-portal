@@ -10,6 +10,8 @@ import { createEvent, updateEvent } from "@services/event";
 import Editor from "./Editor";
 import { MultipleSelectChip, Dropdown } from "./Dropdowns";
 import DisplayToast from "@lib/hooks/useToast";
+import { Tooltip } from "@mui/material";
+import { IoInformationCircleOutline } from "react-icons/io5";
 
 // TODO: refactor label and input components into an individual component
 export default function Form({
@@ -95,7 +97,29 @@ export default function Form({
           autoFocus
           required
         />
-        <label htmlFor="Password">Event Code </label>
+        <div className="flex items-center gap-1">
+          <label htmlFor="Password">Event Code </label>
+          <Tooltip
+            title={
+              "This code is used for Event attendance validation for participants, show this code at your event to track attendance"
+            }
+            placement="bottom"
+            slotProps={{
+              popper: {
+                modifiers: [
+                  {
+                    name: "offset",
+                    options: {
+                      offset: [0, -14]
+                    }
+                  }
+                ]
+              }
+            }}
+          >
+            <IoInformationCircleOutline className="text-sm" />
+          </Tooltip>
+        </div>
         <input
           name="Password"
           placeholder="Code"
@@ -116,16 +140,39 @@ export default function Form({
             onChange={(e) => handleChange(e.target.value, ["start_date", "end_date"])}
           ></input>
         </div>
-        <label htmlFor="EndTime">End Time (date and time)</label>
+        <div className="flex items-center gap-1">
+          <label htmlFor="EndTime">End Time (date and time)</label>
+          <Tooltip
+            title={"Event end must be in the future and also after event start"}
+            placement="bottom"
+            slotProps={{
+              popper: {
+                modifiers: [
+                  {
+                    name: "offset",
+                    options: {
+                      offset: [0, -14]
+                    }
+                  }
+                ]
+              }
+            }}
+          >
+            <IoInformationCircleOutline className="text-sm" />
+          </Tooltip>
+        </div>
         <div className="border-black border rounded-lg px-3 h-12 flex items-center scroll-smooth">
           <input
             type="datetime-local"
             name="EndTime"
             required
-            min={formData.start_date}
+            min={Math.max(new Date(formData.start_date).getTime(), Date.now())}
             value={formData.end_date}
             onChange={(e) => {
-              if (e.target.value < formData.start_date) {
+              if (
+                new Date(e.target.value).getTime() <
+                Math.max(new Date(formData.start_date).getTime(), Date.now())
+              ) {
                 return;
               } else {
                 handleChange(e.target.value, ["end_date"]);
