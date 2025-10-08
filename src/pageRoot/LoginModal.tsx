@@ -22,7 +22,7 @@ export default function LoginModal({ onclose }: { onclose: () => void }) {
       handleSignUp(
         {
           email: ObjectFormdata.email.toString(),
-          password: ObjectFormdata.password.toString(),
+          password: ObjectFormdata.password.toString()
         },
         () => setOTPFlag(true)
       );
@@ -30,7 +30,7 @@ export default function LoginModal({ onclose }: { onclose: () => void }) {
       handleSignIn(
         {
           email: ObjectFormdata.email.toString(),
-          password: ObjectFormdata.password.toString(),
+          password: ObjectFormdata.password.toString()
         },
         onclose
       );
@@ -47,7 +47,7 @@ export default function LoginModal({ onclose }: { onclose: () => void }) {
         className="w-full h-full bg-black opacity-35 absolute top-0 cursor-pointer"
         onClick={onclose}
       />
-      <div className="min-w-80 w-1/2 h-3/4 bg-white rounded-lg z-1 flex justify-center">
+      <div className="min-w-80 w-1/2 h-3/4 max-w-[500px] bg-white rounded-lg z-1 flex justify-center">
         {OTPFlag ? (
           <form
             className=" flex items-center justify-center gap-5 flex-col w-full h-full"
@@ -56,17 +56,23 @@ export default function LoginModal({ onclose }: { onclose: () => void }) {
               handleOTPSubmit();
             }}
           >
+            <h1 className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A]">
+              Check your Email!
+            </h1>
+            <p className="font-DM text-xl w-3/4 text-[#262626] hidden md:block">
+              Please check your <strong>Email</strong> for a one-time 6-digit verification code
+            </p>
             <MuiOtpInput
               value={otp}
               length={6}
               onChange={(e) => setOtp(e)}
-              className="rounded-lg w-3/4 !gap-1 flex"
+              className="rounded-lg w-3/4 !gap-1 flex max-w-[500px]"
             />
             <button
               type="submit"
-              className="cursor-pointer rounded-lg border-black border py-2 px-5 "
+              className={`cursor-pointer rounded-2xl max-w-[500px]  py-1 px-5 w-3/4 bg-white border border-navy  text-navy font-bold`}
             >
-              Submit OTP
+              Register
             </button>
           </form>
         ) : (
@@ -108,7 +114,7 @@ export default function LoginModal({ onclose }: { onclose: () => void }) {
             <div className="w-3/4">
               <button
                 type="button"
-                className="text-navy cursor-pointer mr-auto"
+                className="text-navy cursor-pointer mr-auto underline hover:opacity-80"
                 onClick={() => {
                   setRegister(!register);
                 }}

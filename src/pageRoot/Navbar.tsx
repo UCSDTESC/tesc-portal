@@ -10,7 +10,7 @@ export default function Navbar() {
   const { showLoginModal, setShowLoginModal } = useContext(UserContext);
 
   return (
-    <nav className="w-full h-[10vh] bg-blue text-white text-[3vh] flex justify-between items-center px-10 absolute top-0 z-10">
+    <nav className="w-full h-[10vh] bg-blue text-white text-[3vh] flex justify-between items-center px-4 absolute top-0 z-10">
       <NavLink to="/">
         <img src={TESC} alt="" className="h-[40px]" />
       </NavLink>
@@ -25,7 +25,7 @@ export default function Navbar() {
         (!User.id && (
           <>
             <button
-              className=" border border-black px-5 cursor-pointer h-1/2 right-10 bg-navy rounded-2xl hover:opacity-80"
+              className="  px-5 cursor-pointer h-[40px] right-10 bg-navy rounded-full hover:opacity-80"
               onClick={() => {
                 setShowLoginModal(true);
               }}

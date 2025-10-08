@@ -56,20 +56,18 @@ export default function EventDisplay({ selection }: { selection: number }) {
                   }}
                   className="absolute bottom-0 right-[5%] bg-lightBlue hover:opacity-80"
                 />
-                <p>{daton.org_emails?.org_name ? daton.org_emails.org_name : "Unknown"}</p>
+                <p className="text-lg text-[#898989]">
+                  {daton.org_emails?.org_name ? daton.org_emails.org_name : "Unknown"}
+                </p>
               </div>
               <div className="col-start-2 w-[95%] max-w-[800px] mx-auto">
                 {daton.poster ? (
-                  <img
-                    src={daton.poster}
-                    alt=""
-                    className="w-full rounded-lg aspect-video object-cover"
-                  />
+                  <img src={daton.poster} alt="" className="w-full rounded-lg object-cover" />
                 ) : (
                   <div className="w-full bg-blue/15 animate-pulse aspect-video rounded-lg"></div>
                 )}
-                <div className="flex w-full flex-row mt-10 justify-between flex-wrap-reverse gap-10">
-                  <span className="w-full">
+                <div className="flex w-full flex-row mt-10 justify-between flex-wrap-reverse gap-8">
+                  <span className="w-fit">
                     <h1 className=" font-semibold ">
                       {DateParser(daton.start_date)} <br />
                       {daton.location_str}
@@ -98,7 +96,7 @@ export default function EventDisplay({ selection }: { selection: number }) {
                     <div className="flex gap-2">
                       {daton.tags.map((tag) => {
                         return (
-                          <div className="bg-navy/40 px-2 rounded-2xl font-semibold">{tag}</div>
+                          <div className="bg-lightBlue px-2 rounded-2xl font-semibold">{tag}</div>
                         );
                       })}
                     </div>

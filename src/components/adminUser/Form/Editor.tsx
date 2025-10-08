@@ -4,15 +4,17 @@ import {
   AlignLeftOutlined,
   AlignRightOutlined,
   RedoOutlined,
-  UndoOutlined,
+  UndoOutlined
 } from "@ant-design/icons";
 
 import { extensions } from "./EditorExtensions";
 import "./editor-styles.css";
+import { Tooltip } from "@mui/material";
+import { IoInformationCircleOutline } from "react-icons/io5";
 
 export default function Editor({
   content,
-  setEditorContent,
+  setEditorContent
 }: {
   content: string;
   setEditorContent: (content: string) => void;
@@ -28,8 +30,8 @@ export default function Editor({
       editorProps={{
         attributes: {
           class:
-            "border-black border rounded-lg p-3 min-h-[40vh] focus:outline-none max-h-[70vh] overflow-y-scroll",
-        },
+            "border-black border rounded-lg p-3 min-h-[40vh] focus:outline-none max-h-[70vh] overflow-y-scroll"
+        }
       }}
     ></EditorProvider>
   );
@@ -61,7 +63,7 @@ const MenuBar = () => {
           type="button"
           onClick={() => editor.chain().focus().toggleBold().run()}
           disabled={!editor.can().chain().focus().toggleBold().run()}
-          className={`${editor.isActive("bold") ? "bg-blue/40" : ""} font-bold`}
+          className={`${editor.isActive("bold") ? "bg-lightBlue" : ""} font-bold`}
         >
           B
         </button>
@@ -69,7 +71,7 @@ const MenuBar = () => {
           type="button"
           onClick={() => editor.chain().focus().toggleItalic().run()}
           disabled={!editor.can().chain().focus().toggleItalic().run()}
-          className={`${editor.isActive("italic") ? "bg-blue/40" : ""} italic`}
+          className={`${editor.isActive("italic") ? "bg-lightBlue" : ""} italic`}
         >
           I
         </button>
@@ -77,9 +79,7 @@ const MenuBar = () => {
           type="button"
           onClick={() => editor.chain().focus().toggleStrike().run()}
           disabled={!editor.can().chain().focus().toggleStrike().run()}
-          className={`${
-            editor.isActive("strike") ? "bg-blue/40" : ""
-          } line-through`}
+          className={`${editor.isActive("strike") ? "bg-lightBlue" : ""} line-through`}
         >
           Strike
         </button>
@@ -87,40 +87,28 @@ const MenuBar = () => {
         <button
           type="button"
           onClick={() => editor.chain().focus().setParagraph().run()}
-          className={editor.isActive("paragraph") ? "bg-blue/40" : ""}
+          className={editor.isActive("paragraph") ? "bg-lightBlue" : ""}
         >
           p
         </button>
         <button
           type="button"
-          onClick={() =>
-            editor.chain().focus().toggleHeading({ level: 1 }).run()
-          }
-          className={
-            editor.isActive("heading", { level: 1 }) ? "bg-blue/40" : ""
-          }
+          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+          className={editor.isActive("heading", { level: 1 }) ? "bg-lightBlue" : ""}
         >
           h1
         </button>
         <button
           type="button"
-          onClick={() =>
-            editor.chain().focus().toggleHeading({ level: 2 }).run()
-          }
-          className={
-            editor.isActive("heading", { level: 2 }) ? "bg-blue/40" : ""
-          }
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          className={editor.isActive("heading", { level: 2 }) ? "bg-lightBlue" : ""}
         >
           h2
         </button>
         <button
           type="button"
-          onClick={() =>
-            editor.chain().focus().toggleHeading({ level: 3 }).run()
-          }
-          className={
-            editor.isActive("heading", { level: 3 }) ? "bg-blue/40" : ""
-          }
+          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+          className={editor.isActive("heading", { level: 3 }) ? "bg-lightBlue" : ""}
         >
           h3
         </button>
@@ -128,61 +116,72 @@ const MenuBar = () => {
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`${editor.isActive("bulletList") ? "bg-blue/40" : ""}`}
+          className={`${editor.isActive("bulletList") ? "bg-lightBlue" : ""}`}
         >
-          <li className="list-disc"></li>
+          <li className="list-disc ml-5"></li>
         </button>
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={editor.isActive("orderedList") ? "bg-blue/40" : ""}
+          className={editor.isActive("orderedList") ? "bg-lightBlue" : ""}
         >
-          <li className="list-decimal pl-0 m-0"></li>
+          <li className="list-decimal pl-2 ml-5"></li>
         </button>
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          className={editor.isActive("blockquote") ? "bg-blue/40" : ""}
+          className={editor.isActive("blockquote") ? "bg-lightBlue" : ""}
         >
           Quote
         </button>
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().setHorizontalRule().run()}
-        >
+        <button type="button" onClick={() => editor.chain().focus().setHorizontalRule().run()}>
           Horizontal rule
         </button>
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().setHardBreak().run()}
-        >
+        <button type="button" onClick={() => editor.chain().focus().setHardBreak().run()}>
           break
         </button>
         <button
           type="button"
           onClick={() => editor.chain().focus().setTextAlign("left").run()}
-          className={editor.isActive({ textAlign: "left" }) ? "bg-blue/40" : ""}
+          className={editor.isActive({ textAlign: "left" }) ? "bg-lightBlue" : ""}
         >
           <AlignLeftOutlined />
         </button>
         <button
           type="button"
           onClick={() => editor.chain().focus().setTextAlign("center").run()}
-          className={
-            editor.isActive({ textAlign: "center" }) ? "bg-blue/40" : ""
-          }
+          className={editor.isActive({ textAlign: "center" }) ? "bg-lightBlue" : ""}
         >
           <AlignCenterOutlined />
         </button>
         <button
           type="button"
           onClick={() => editor.chain().focus().setTextAlign("right").run()}
-          className={
-            editor.isActive({ textAlign: "right" }) ? "bg-blue/40" : ""
-          }
+          className={editor.isActive({ textAlign: "right" }) ? "bg-lightBlue" : ""}
         >
           <AlignRightOutlined />
         </button>
+
+        <Tooltip
+          title={
+            "Use this Contents box to customize the text that will be displayed under the poster on the bulletin posting. In the future, there are also plans to allow export functionality for use in weekly newsletters"
+          }
+          placement="bottom"
+          slotProps={{
+            popper: {
+              modifiers: [
+                {
+                  name: "offset",
+                  options: {
+                    offset: [0, -14]
+                  }
+                }
+              ]
+            }
+          }}
+        >
+          <IoInformationCircleOutline className="text-2xl" />
+        </Tooltip>
       </div>
     </div>
   );

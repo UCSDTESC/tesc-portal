@@ -13,23 +13,23 @@ const ITEM_PADDING_TOP = 8;
 const MenuProps = {
   PaperProps: {
     style: {
-      maxHeight: ITEM_HEIGHT * 2 + ITEM_PADDING_TOP,
-      width: 250,
-    },
-  },
+      maxHeight: ITEM_HEIGHT * 4 + ITEM_PADDING_TOP,
+      width: 250
+    }
+  }
 };
 
 function getStyles(name: string, personName: readonly string[], theme: Theme) {
   return {
     fontWeight: personName.includes(name)
       ? theme.typography.fontWeightMedium
-      : theme.typography.fontWeightRegular,
+      : theme.typography.fontWeightRegular
   };
 }
 
 export function MultipleSelectChip({
   formData,
-  handleChange,
+  handleChange
 }: {
   formData: formdata;
   handleChange: (value: string[], cols: string[]) => void;
@@ -46,28 +46,22 @@ export function MultipleSelectChip({
       value={formData.tags}
       onChange={(e) => {
         const {
-          target: { value },
+          target: { value }
         } = e;
-        handleChange(typeof value === "string" ? value.split(",") : value, [
-          "tags",
-        ]);
+        handleChange(typeof value === "string" ? value.split(",") : value, ["tags"]);
       }}
       MenuProps={MenuProps}
       input={<OutlinedInput />}
       renderValue={(selected) => (
         <Box className="flex flex-wrap gap-2">
           {selected.map((value: string) => (
-            <Chip key={value} label={value} />
+            <Chip key={value} label={value} className="!bg-lightBlue font-DM" />
           ))}
         </Box>
       )}
     >
       {tags.map((name) => (
-        <MenuItem
-          key={name}
-          value={name}
-          style={getStyles(name, formData.tags, theme)}
-        >
+        <MenuItem key={name} value={name} style={getStyles(name, formData.tags, theme)}>
           {name}
         </MenuItem>
       ))}
@@ -77,7 +71,7 @@ export function MultipleSelectChip({
 
 export function Dropdown({
   formData,
-  handleChange,
+  handleChange
 }: {
   formData: formdata;
   handleChange: (value: string, cols: string[]) => void;

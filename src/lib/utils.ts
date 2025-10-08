@@ -12,7 +12,7 @@ export const getCurrentTime = () => {
   return currTime;
 };
 
-export const getFormDataDefault = ():formdata => {
+export const getFormDataDefault = (): formdata => {
   const currTime = getCurrentTime();
   return {
     title: "",
@@ -23,12 +23,12 @@ export const getFormDataDefault = ():formdata => {
     location_str: "",
     content: "",
     tags: [],
-    poster:""
+    poster: "https://placehold.co/600x400",
   };
 };
 
 export const DateParser = (date: string) => {
-  console.log(date)
+  console.log(date);
   const parsedDate = date.split(/-|T|:/);
   console.log(parsedDate);
   const correctDate = new Date(

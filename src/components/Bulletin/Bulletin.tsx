@@ -48,13 +48,13 @@ export default function Bulletin() {
         setSortMethod
       }}
     >
-      <div className="grid w-full  h-[calc(100vh-3.5rem)] grid-rows-[3.5rem_1fr]">
+      <div className="grid w-full  h-[calc(100vh-3.5rem)] grid-rows-[3.5rem_1fr] font-DM">
         <div className=" bg-linear-to-r from-0% from-blue via-70% via-[#3B7DB6] to-blue">
           <CheckBoxes />
         </div>
         <div className="flex w-full h-full flex-row relative">
           <div
-            className={`grid grid-rows-[40px_repeat(auto-fill,100px)] h-[calc(100vh-7rem)] overflow-y-scroll bg-gray-200  absolute z-99 opacity-95 md:relative md:grid-rows-[repeat(auto-fill,100px)] ${
+            className={`grid w-[300px] grid-rows-[40px_repeat(auto-fill,100px)] h-[calc(100vh-7rem)] overflow-y-scroll bg-gray-200  absolute z-99 opacity-95 md:relative md:grid-rows-[repeat(auto-fill,100px)] ${
               displaysideBar == true ? "block" : "hidden"
             }`}
           >
