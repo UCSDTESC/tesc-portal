@@ -49,7 +49,7 @@ export default function Profile() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row justify-between items-start w-screen min-h-screen mt-8 mx-15 gap-8">
+    <div className="flex flex-wrap justify-between items-start w-screen min-h-screen mt-8 px-15 gap-8">
       <div className="flex flex-col md:flex-row gap-4">
         <div className="w-32 h-32 aspect-square rounded-full overflow-hidden relative border-1 border-slate-400">
           <img src={imageUrl} alt="" className="w-full h-full object-cover " />
@@ -62,7 +62,7 @@ export default function Profile() {
         </div>
         <h1 className="text-3xl mt-8 text-blue font-bold">{orgname}</h1>
       </div>
-      <div className="w-full md:w-1/2 flex flex-col justify-end gap-3">
+      <div className="w-max flex flex-col justify-end gap-3">
         <h1 className="text-xl font-semibold">My Posted Events</h1>
         <DataTable />
       </div>
@@ -72,7 +72,7 @@ export default function Profile() {
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
       >
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-fit h-1/2  rounded-lg p-4">
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-fit h-fit  rounded-lg p-4">
           <NewProfile controlModal={controlEditModal} />
         </div>
       </Modal>
