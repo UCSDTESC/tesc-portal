@@ -54,7 +54,7 @@ export default function Bulletin() {
         </div>
         <div className="flex w-full h-full flex-row relative">
           <div
-            className={`grid grid-rows-[40px_repeat(auto-fill,100px)] h-[calc(100vh-7rem)] overflow-y-scroll bg-gray-200  absolute z-99 opacity-95 md:relative md:grid-rows-[repeat(auto-fill,100px)] ${
+            className={`grid w-[200px] grid-rows-[40px_repeat(auto-fill,100px)] h-[calc(100vh-7rem)] overflow-y-scroll bg-gray-200  absolute z-99 opacity-95 md:relative md:grid-rows-[repeat(auto-fill,100px)] ${
               displaysideBar == true ? "block" : "hidden"
             }`}
           >
