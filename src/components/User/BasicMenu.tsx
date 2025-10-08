@@ -56,7 +56,7 @@ export default function BasicMenu() {
           aria-expanded={open ? "true" : undefined}
           aria-haspopup="true"
           onClick={handleToggle}
-          className="!text-white !text-[3vh]  !px-5 !cursor-pointer !h-1/2  !hover:opacity-80"
+          className="!text-white !text-[3vh] !cursor-pointer  !hover:opacity-80 !w-fit !h-fit"
         >
           <CgProfile />
         </Button>

@@ -16,7 +16,7 @@ export default function Form({
   formdata,
   id,
   editEvent = false,
-  onSuccess,
+  onSuccess
 }: {
   formdata?: formdata;
   id: number;
