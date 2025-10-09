@@ -117,15 +117,26 @@ export const logAttendance = async (selection: number, id: string, userInput: st
     user_id: id,
   });
   if (!error) {
-    const { data, error } = await supabase.from("Users").select("attended").eq("uuid", id);
-    if (!error) {
-      const currAttended = data[0].attended;
+    const { data: points, error } = await supabase
+      .from("Events")
+      .select("points")
+      .eq("id", selection);
+    if (error) return error;
+    if (points) {
       const { error } = await supabase
-        .from("Users")
-        .update({ attended: [...currAttended, selection] })
-        .eq("uuid", id);
+        .from("Attendance_Log")
+        .insert({ user_id: id, event_id: selection, points: points });
       if (error) return error;
     }
+    // const { data, error } = await supabase.from("Users").select("attended").eq("uuid", id);
+    // if (!error) {
+    //   const currAttended = data[0].attended;
+    //   const { error } = await supabase
+    //     .from("Users")
+    //     .update({ attended: [...currAttended, selection] })
+    //     .eq("uuid", id);
+    //   if (error) return error;
+    // }
   }
   return error;
 };
