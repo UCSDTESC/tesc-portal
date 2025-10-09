@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 
 import UserContext from "@lib/UserContext";
 import { formdata } from "@lib/constants";
-import { getCurrentTime, getFormDataDefault } from "@lib/utils";
+import { getFormDataDefault } from "@lib/utils";
 import { createEvent, updateEvent } from "@services/event";
 
 import Editor from "./Editor";
@@ -18,7 +18,7 @@ export default function Form({
   formdata,
   id,
   editEvent = false,
-  onSuccess
+  onSuccess,
 }: {
   formdata?: formdata;
   id: number;
@@ -110,11 +110,11 @@ export default function Form({
                   {
                     name: "offset",
                     options: {
-                      offset: [0, -14]
-                    }
-                  }
-                ]
-              }
+                      offset: [0, -14],
+                    },
+                  },
+                ],
+              },
             }}
           >
             <IoInformationCircleOutline className="text-sm" />
@@ -134,7 +134,6 @@ export default function Form({
           <input
             type="datetime-local"
             name="StartTime"
-            min={formdata ? "" : getCurrentTime()}
             value={formData.start_date}
             required
             onChange={(e) => handleChange(e.target.value, ["start_date", "end_date"])}
@@ -151,11 +150,11 @@ export default function Form({
                   {
                     name: "offset",
                     options: {
-                      offset: [0, -14]
-                    }
-                  }
-                ]
-              }
+                      offset: [0, -14],
+                    },
+                  },
+                ],
+              },
             }}
           >
             <IoInformationCircleOutline className="text-sm" />
