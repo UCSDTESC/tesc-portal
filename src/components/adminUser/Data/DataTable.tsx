@@ -9,7 +9,7 @@ import { useData } from "@lib/hooks/useData";
 import { formdata } from "@lib/constants";
 
 import { EditOutlined } from "@ant-design/icons";
-import { DeleteOutlined } from "@ant-design/icons";
+// import { DeleteOutlined } from "@ant-design/icons";
 
 import { extensions } from "../Form/EditorExtensions";
 import Form from "../Form/Form";
@@ -19,7 +19,7 @@ import Form from "../Form/Form";
 export default function DataTable() {
   const { User } = useContext(UserContext);
   // data hook also returns error and loading state variables to be implemented later for error and loading states
-  const { data, handleDelete, fetchData } = useData(User);
+  const { data, fetchData } = useData(User);
   const { showEditModal, curID, currEdit, setShowEditModal, openEditModal } = useEditModal();
 
   if (data)
@@ -31,14 +31,14 @@ export default function DataTable() {
               className="border-slate-400 border bg-slate-100 rounded-lg w-full p-5 relative shadow-2xl"
               key={daton.id}
             >
-              <button
+              {/* <button
                 className="absolute right-[-15px] top-[-15px] rounded-full p-2 w-10 text-white bg-red-700 hover:bg-red-800 cursor-pointer"
                 onClick={() => handleDelete(daton.id)}
               >
                 <DeleteOutlined />
-              </button>
+              </button> */}
               <button
-                className="absolute right-[30px] top-[-15px] rounded-full p-2 w-10 text-black bg-gray-300 hover:bg-gray-400 cursor-pointer"
+                className="absolute right-[-15px] top-[-15px] rounded-full p-2 w-10 text-black bg-gray-300 hover:bg-gray-400 cursor-pointer"
                 onClick={() => openEditModal(daton)}
               >
                 <EditOutlined />
@@ -87,8 +87,8 @@ export default function DataTable() {
                   editorProps={{
                     attributes: {
                       class:
-                        "ml-8 w-full col-span-2 focus:outline-none max-h-[40vh] overflow-y-auto",
-                    },
+                        "ml-8 w-full col-span-2 focus:outline-none max-h-[40vh] overflow-y-auto"
+                    }
                   }}
                 />
               )}
@@ -110,7 +110,7 @@ function EditModal({
   setShowEditModal,
   fetchData,
   currEdit,
-  curID,
+  curID
 }: {
   setShowEditModal: (ShowEditModal: boolean) => void;
   currEdit: formdata;
@@ -142,7 +142,7 @@ function EditModal({
 function DataPair({
   children,
   data,
-  className,
+  className
 }: {
   children: ReactNode;
   data: string | number | undefined;
