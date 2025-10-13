@@ -1,4 +1,5 @@
 # TESC-Portal
+
 - [TESC-Portal](#tesc-portal)
 - [Links](#links)
 - [About the project:](#about-the-project)
@@ -11,6 +12,7 @@
 - [Dependencies](#dependencies)
 
 # Links
+
 - Site home page (under construction :construction:)
 - [TESC home page](https://www.tescucsd.org/)
 - [TESC tech project ideas doc (for future reference)](https://docs.google.com/document/d/1xEh9ouP2Oy8VpzhOcRKAuuFwGSi-LR7W6LXuGpPliAc/edit?tab=t.0)
@@ -52,7 +54,7 @@ In creating this portal, we wish to:
 
 ## Installation
 
-1. Clone the repo with `git clone https://github.com/ucsdds3/main-site.git`
+1. Clone the repo with `git clone https://github.com/UCSDTESC/tesc-portal.git`
 2. Open the repo in your preferred code editor
 3. Run `npm install` to install dependencies
 4. Run `npm run dev` to start the development server
