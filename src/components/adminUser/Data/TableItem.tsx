@@ -6,6 +6,7 @@ import { FaRegEye, FaRegEyeSlash } from "react-icons/fa6";
 import { extensions } from "../Form/EditorExtensions";
 import { Event } from "@lib/constants";
 import supabase from "@server/supabase";
+import { CopyButton } from "@components/ui/shadcn-io/copy-button";
 export default function TableItem({
   daton,
   handleDelete,
@@ -20,6 +21,7 @@ export default function TableItem({
   const toggleAttendees = () => {
     setDisplayAttendees(!displayAttendees);
     if (attendees.length === 0) fetchAttendees();
+    console.log(attendees.map((attendee) => attendee.Users.email).join("\n"));
   };
 
   const fetchAttendees = async () => {
@@ -75,17 +77,31 @@ export default function TableItem({
           <p className="font-bold text-blue">Attendance</p>
         </DataPair>
         <div className="font-bold text-blue"> Attendees</div>
-        <label className="w-1/2 border border-lightBlue rounded-full flex items-center px-2 ">
-          <div className="line-clamp-1 h-7">
+        <label className="w-1/2 border border-lightBlue rounded-full flex items-center px-2">
+          <div className="line-clamp-1 h-7 overflow-x-clip w-min">
             {displayAttendees &&
               attendees.map((attendee) => {
                 return <>{attendee.Users.email + ", "}</>;
               })}
           </div>
-          <button className="ml-auto cursor-pointer" onClick={toggleAttendees}>
-            {displayAttendees ? <FaRegEye /> : <FaRegEyeSlash />}
-          </button>
+          <div className="ml-auto flex items-center">
+            {displayAttendees && (
+              <CopyButton
+                content={attendees.map((attendee) => attendee.Users.email).join("\n")}
+                variant="ghost"
+                size="sm"
+              />
+            )}
+            <button className=" cursor-pointer w-min" onClick={toggleAttendees}>
+              {displayAttendees ? (
+                <FaRegEye className="pointer-events-none" />
+              ) : (
+                <FaRegEyeSlash className="pointer-events-none" />
+              )}
+            </button>
+          </div>
         </label>
+
         <DataPair data={daton.tags ? daton.tags.join(", ") : "N/A"}>
           <p className="font-bold text-blue">Tags</p>
         </DataPair>
