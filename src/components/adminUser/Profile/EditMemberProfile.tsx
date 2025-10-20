@@ -14,19 +14,6 @@ import {
   SelectValue
 } from "@components/components/ui/select";
 import { majors } from "@lib/constants";
-/**
- * EditProfileForm — production‑ready, accessible form to edit Major, Graduation Year, and Resume Link.
- *
- * Props
- * - majors: string[] — list of available majors (displayed in a searchable select fallback).
- * - initialMajor?: string
- * - initialGradYear?: number
- * - initialResumeUrl?: string
- * - onSubmit: (data: { major: string; gradYear: number; resumeUrl: string }) => void
- * - onCancel?: () => void
- *
- * Styling: Tailwind + shadcn/ui. Animation: framer‑motion.
- */
 
 export type EditProfileFormProps = {
   initialMajor?: string;
@@ -49,19 +36,58 @@ function currentYear() {
   return new Date().getFullYear();
 }
 
+function getPdfPreviewUrl(url: string): { previewUrl: string | null; note?: string } {
+  if (!url) return { previewUrl: null };
+  try {
+    const u = new URL(url);
+    const href = u.href;
+
+    if (/\.pdf($|\?|#)/i.test(href)) {
+      return { previewUrl: href };
+    }
+
+    if (u.hostname.includes("drive.google.com")) {
+      const fileIdMatch = href.match(/\/d\/([^/]+)/) || href.match(/[?&]id=([^&]+)/);
+      const fileId = fileIdMatch?.[1];
+      if (fileId) {
+        return { previewUrl: `https://drive.google.com/file/d/${fileId}/preview` };
+      }
+      return {
+        previewUrl: `https://drive.google.com/viewerng/viewer?embedded=true&url=${encodeURIComponent(
+          href
+        )}`
+      };
+    }
+
+    if (u.hostname.includes("dropbox.com")) {
+      const raw = href.replace(/\?dl=0$/, "?raw=1");
+      return { previewUrl: raw };
+    }
+
+    if (u.hostname.includes("onedrive.live.com")) {
+      return { previewUrl: href.replace("redir?", "embed?") };
+    }
+
+    return { previewUrl: null };
+  } catch {
+    return { previewUrl: null };
+  }
+}
+
 export default function EditProfileForm({
   initialMajor = "",
   initialGradYear,
   initialResumeUrl = "",
-  onSubmit
+  onSubmit,
+  onCancel
 }: EditProfileFormProps) {
   const [major, setMajor] = useState(initialMajor);
   const [gradYear, setGradYear] = useState<string>(initialGradYear ? String(initialGradYear) : "");
   const [resumeUrl, setResumeUrl] = useState(initialResumeUrl);
   const [touched, setTouched] = useState<{ [k: string]: boolean }>({});
 
-  const yearMin = currentYear() - 1; // allow near‑term backdating
-  const yearMax = currentYear() + 15; // reasonable planning horizon
+  const yearMin = currentYear() - 1;
+  const yearMax = currentYear() + 15;
 
   const errors = useMemo(() => {
     const e: { major?: string; gradYear?: string; resumeUrl?: string } = {};
@@ -91,29 +117,27 @@ export default function EditProfileForm({
     if (Object.keys(errors).length === 0) {
       onSubmit({ major, gradYear: Number(gradYear), resumeUrl });
     } else {
-      // mark all touched to reveal errors
       setTouched({ major: true, gradYear: true, resumeUrl: true });
     }
   }
 
+  const { previewUrl } = getPdfPreviewUrl(resumeUrl);
+
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="w-full">
-      <Card className="max-w-2xl mx-auto shadow-lg w-fit">
-        <CardHeader>
-          <CardTitle className="text-2xl">Edit Profile</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Update your <span className="font-medium">major</span>,
-            <span className="font-medium"> graduation year</span>, and
-            <span className="font-medium"> resume link</span>.
-          </p>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="flex items-start gap-4">
-              {/* Major */}
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+      <div className="flex flex-col lg:flex-row gap-6 max-w-6xl mx-auto">
+        {/* Left: Edit Card */}
+        <Card className="flex-1 shadow-lg h-fit">
+          <CardHeader>
+            <CardTitle className="text-2xl">Edit Profile</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Update your major, graduation year, and resume link.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid gap-2">
                 <Label htmlFor="major">Major</Label>
-                {/* shadcn Select */}
                 <Select value={major} onValueChange={setMajor}>
                   <SelectTrigger id="major" aria-invalid={!!(touched.major && errors.major)}>
                     <SelectValue placeholder="Select your major" />
@@ -134,14 +158,12 @@ export default function EditProfileForm({
                 )}
               </div>
 
-              {/* Graduation Year */}
-              <div className="grid gap-2 ">
+              <div className="grid gap-2">
                 <Label htmlFor="gradYear">Graduation Year</Label>
                 <Input
                   id="gradYear"
                   type="number"
                   inputMode="numeric"
-                  className="w-fit"
                   min={yearMin}
                   max={yearMax}
                   placeholder={`${yearMin}–${yearMax}`}
@@ -157,51 +179,54 @@ export default function EditProfileForm({
                   <p className="text-sm text-destructive">{errors.gradYear}</p>
                 )}
               </div>
-            </div>
 
-            {/* Resume Link */}
-            <div className="grid gap-2 w-fit">
-              <Label htmlFor="resumeUrl">Resume Link</Label>
-              <Input
-                id="resumeUrl"
-                type="url"
-                placeholder="https://... (PDF, Drive, Dropbox, personal site)"
-                value={resumeUrl}
-                onChange={(e) => setResumeUrl(e.target.value)}
-                onBlur={() => setTouched((t) => ({ ...t, resumeUrl: true }))}
-                aria-invalid={!!(touched.resumeUrl && errors.resumeUrl)}
+              <div className="grid gap-2">
+                <Label htmlFor="resumeUrl">Resume Link</Label>
+                <Input
+                  id="resumeUrl"
+                  type="url"
+                  placeholder="https://... (PDF, Drive, Dropbox, personal site)"
+                  value={resumeUrl}
+                  onChange={(e) => setResumeUrl(e.target.value)}
+                  onBlur={() => setTouched((t) => ({ ...t, resumeUrl: true }))}
+                  aria-invalid={!!(touched.resumeUrl && errors.resumeUrl)}
+                />
+                {touched.resumeUrl && errors.resumeUrl && (
+                  <p className="text-sm text-destructive">{errors.resumeUrl}</p>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <Button type="submit" disabled={Object.keys(errors).length > 0 || !isDirty}>
+                  Save changes
+                </Button>
+                <Button type="button" variant="secondary" onClick={() => onCancel?.()}>
+                  Cancel
+                </Button>
+                <span className="ml-auto text-xs text-muted-foreground">
+                  {isDirty ? "Unsaved changes" : "All changes saved"}
+                </span>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Right: PDF Preview */}
+        {resumeUrl && isValidUrl(resumeUrl) && previewUrl && (
+          <Card className="flex-1 shadow-lg h-full">
+            <CardHeader>
+              <CardTitle className="text-lg">Resume Preview</CardTitle>
+            </CardHeader>
+            <CardContent className="h-full">
+              <iframe
+                src={previewUrl}
+                title="Resume PDF preview"
+                className=" h-[640px] aspect-[1/1.2] border rounded-md"
               />
-              {resumeUrl && isValidUrl(resumeUrl) && (
-                <a
-                  href={resumeUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-xs underline text-muted-foreground truncate"
-                >
-                  Preview resume link
-                </a>
-              )}
-              {touched.resumeUrl && errors.resumeUrl && (
-                <p className="text-sm text-destructive">{errors.resumeUrl}</p>
-              )}
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center gap-3 pt-2">
-              <Button
-                type="submit"
-                disabled={Object.keys(errors).length > 0 || !isDirty}
-                className="bg-blue cursor-pointer hover:bg-blue/90"
-              >
-                Save changes
-              </Button>
-              <span className="ml-auto text-xs text-muted-foreground">
-                {isDirty ? "Unsaved changes" : "All changes saved"}
-              </span>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </motion.div>
   );
 }
