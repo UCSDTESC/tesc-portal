@@ -42,7 +42,6 @@ export default function Page() {
       //   email: user?.email,
       //   role: user.role ? user.role : "unknown"
       // });
-      console.log("navigate to OTP page");
       OnSuccess();
       // DisplayToast("Succesfully logged in", "success");
     }
