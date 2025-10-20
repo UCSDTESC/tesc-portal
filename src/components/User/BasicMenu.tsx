@@ -84,11 +84,11 @@ export default function BasicMenu() {
                     aria-labelledby="composition-button"
                     onKeyDown={handleListKeyDown}
                   >
+                    <MenuItem onClick={handleClose}>
+                      <NavLink to="/profile">Profile</NavLink>
+                    </MenuItem>
                     {User?.role === "internal" && (
                       <>
-                        <MenuItem onClick={handleClose}>
-                          <NavLink to="/profile">Profile</NavLink>
-                        </MenuItem>
                         <MenuItem onClick={handleClose}>
                           <NavLink to="/form">New Event</NavLink>
                         </MenuItem>
