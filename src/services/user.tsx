@@ -61,7 +61,6 @@ export const verifyOTP = async (email: string, token: string, type: "email" | "r
 
   // add user to user table
   if (data.user) {
-    console.log(data.user);
     const { error } = await supabase
       .from("Users")
       .insert({ uuid: data.user?.id, email: data.user?.email });

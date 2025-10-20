@@ -6,7 +6,7 @@ import { useEffect, useRef, RefObject } from "react";
  * @typeParam T – HTMLElement subtype shared by all protected nodes.
  */
 export function useOutsideClicks<T extends HTMLElement>(
-  refs: Array<RefObject<T|null>>,
+  refs: Array<RefObject<T | null>>,
   onOutside: (e: PointerEvent) => void
 ): void {
   /** Keep the latest callback without re‑attaching listeners */
@@ -21,7 +21,9 @@ export function useOutsideClicks<T extends HTMLElement>(
       const clickedInsideSomeRef = refs.some(
         (r) => r.current && r.current.contains(e.target as Node)
       );
-      if (clickedInsideSomeRef) return;
+      if (clickedInsideSomeRef) {
+        return;
+      }
 
       latest.current(e);
     };
@@ -30,6 +32,5 @@ export function useOutsideClicks<T extends HTMLElement>(
     return () => {
       document.removeEventListener("pointerdown", listener);
     };
-
-  }, [ refs]);
+  }, [refs]);
 }

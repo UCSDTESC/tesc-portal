@@ -21,7 +21,6 @@ export default function TableItem({
   const toggleAttendees = () => {
     setDisplayAttendees(!displayAttendees);
     if (attendees.length === 0) fetchAttendees();
-    console.log(attendees.map((attendee) => attendee.Users.email).join("\n"));
   };
 
   const fetchAttendees = async () => {

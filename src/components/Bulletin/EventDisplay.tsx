@@ -16,7 +16,6 @@ export default function EventDisplay({ selection }: { selection: number }) {
       setImageUrl("");
       return;
     }
-    console.log(filtered[0].Users?.pfp_str);
     const { data: URL } = supabase.storage
       .from("profile.images")
       .getPublicUrl(`${filtered[0].org_emails?.org_name}/${filtered[0].Users?.pfp_str}`);

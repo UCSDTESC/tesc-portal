@@ -45,6 +45,7 @@ export default function CheckBoxes() {
           className="bg-white w-fit flex items-center gap-1 h-full px-2 rounded-2xl relative cursor-pointer indent-[-9999px] md:indent-0"
           ref={filterRef}
           onClick={() => {
+            console.log("Parent clicked");
             setFilterMenu(filterMenu == "Tags" ? "" : "Tags");
           }}
         >
@@ -54,6 +55,7 @@ export default function CheckBoxes() {
             className={`absolute top-9 w-max -left-18/12 bg-white px-2 rounded-lg border border-navy z-100 indent-0 ${
               filterMenu === "Tags" ? "block" : "hidden"
             }`}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="lg:grid lg:grid-cols-[max-content_max-content] flex flex-col gap-2 h-[40vh] max-w-[200px] md:max-w-none">
               <div className=" border-b lg:border-0">
@@ -78,6 +80,7 @@ export default function CheckBoxes() {
             className={`absolute top-9 -left-1 bg-white px-2 w-max rounded-lg border border-navy z-100 indent-0 ${
               filterMenu === "Sort" ? "block" : "hidden"
             }`}
+            onClick={(e) => e.stopPropagation()}
           >
             <SortCheckboxes />
           </div>
