@@ -13,10 +13,12 @@ import EventDisplay from "./EventDisplay";
 export default function Bulletin() {
   const { User } = useContext(UserContext);
   const postId = useParams();
-  const [selection, setSelection] = useState<number>(Number(postId.postId));
+  const [selection, setSelection] = useState<string>(String(postId.postId));
   const [displaysideBar, setDisplaySideBar] = useState(true);
   const {
     data,
+    People,
+    gradYears,
     tagFilters,
     RSVP,
     attendance,
@@ -34,6 +36,8 @@ export default function Bulletin() {
     <BulletinContext.Provider
       value={{
         data,
+        gradYears,
+        People,
         tagFilters,
         RSVP,
         attendance,

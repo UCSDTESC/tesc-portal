@@ -1,13 +1,13 @@
-import { Event } from "@lib/constants";
+import { Event, Member } from "@lib/constants";
 import supabase from "@server/supabase";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-export default function SidebarItem({
+export function SidebarClub({
   daton,
   setSelection
 }: {
   daton: Event;
-  setSelection: (selection: number) => void;
+  setSelection: (selection: string) => void;
 }) {
   const [imageURL, setImageURL] = useState("");
   const navigate = useNavigate();
@@ -35,7 +35,7 @@ export default function SidebarItem({
       className=" cursor-pointer flex flex-col p-1 h-[100px] font-DM"
       onClick={() => {
         navigate(`/bulletin/${daton.id}`);
-        setSelection(daton.id);
+        setSelection(String(daton.id));
       }}
     >
       <div className="flex flex-col justify-between rounded-lg bg-white h-full w-full p-1">
@@ -69,6 +69,45 @@ export default function SidebarItem({
           <p className="w-full text-left text-[12px] line-clamp-1 font-bold">
             {daton.location_str ? daton.location_str : "N/A"}
           </p>
+        </span>
+      </div>
+    </button>
+  );
+}
+
+export function SidebarCompany({
+  daton,
+  setSelection
+}: {
+  daton: Member;
+  setSelection: (selection: string) => void;
+}) {
+  const navigate = useNavigate();
+  return (
+    <button
+      key={daton.uuid}
+      className=" cursor-pointer flex flex-col p-1 h-[100px] font-DM"
+      onClick={() => {
+        navigate(`/bulletin/${daton.uuid}`);
+        setSelection(daton.uuid);
+      }}
+    >
+      <div className="flex flex-col rounded-lg bg-white h-full w-full px-4">
+        <div className="flex gap-2 w-full h-1/2">
+          <div className="flex flex-col">
+            <div className="font-bold text-[20px] w-full line-clamp-1 text-left">
+              {daton.first_name && daton.last_name
+                ? daton.first_name + " " + daton.last_name
+                : "Unknown"}
+            </div>
+            <div className="text-[12px] opacity-70 w-full text-left">
+              {daton.major} | {daton.expected_grad}
+            </div>
+          </div>
+        </div>
+        <span className="w-full flex flex-col items-start">
+          <p className="text-[12px] line-clamp-1">Events Attended: {daton.points}</p>
+          <p className="w-full text-left text-[12px] line-clamp-1 font-bold">{daton.email}</p>
         </span>
       </div>
     </button>

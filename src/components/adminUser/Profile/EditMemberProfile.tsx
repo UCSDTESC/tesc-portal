@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useContext, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@components/components/ui/card";
 import { Label } from "@components/components/ui/label";
 import { Input } from "@components/components/ui/input";
 import { Button } from "@components/components/ui/button";
+import UserContext from "@lib/UserContext";
 import {
   Select,
   SelectContent,
@@ -15,82 +16,51 @@ import {
 } from "@components/components/ui/select";
 import { majors } from "@lib/constants";
 
+import { isValidUrl, currentYear, getPdfPreviewUrl } from "@lib/utils";
+import supabase from "@server/supabase";
+import DisplayToast from "@lib/hooks/useToast";
+import { useNavigate } from "react-router";
+
 export type EditProfileFormProps = {
+  initialFirstName?: string;
+  initialLastName?: string;
   initialMajor?: string;
   initialGradYear?: number;
   initialResumeUrl?: string;
-  onSubmit: (data: { major: string; gradYear: number; resumeUrl: string }) => void;
   onCancel?: () => void;
 };
 
-function isValidUrl(url: string) {
-  try {
-    const u = new URL(url);
-    return u.protocol === "https:" || u.protocol === "http:";
-  } catch {
-    return false;
-  }
-}
-
-function currentYear() {
-  return new Date().getFullYear();
-}
-
-function getPdfPreviewUrl(url: string): { previewUrl: string | null; note?: string } {
-  if (!url) return { previewUrl: null };
-  try {
-    const u = new URL(url);
-    const href = u.href;
-
-    if (/\.pdf($|\?|#)/i.test(href)) {
-      return { previewUrl: href };
-    }
-
-    if (u.hostname.includes("drive.google.com")) {
-      const fileIdMatch = href.match(/\/d\/([^/]+)/) || href.match(/[?&]id=([^&]+)/);
-      const fileId = fileIdMatch?.[1];
-      if (fileId) {
-        return { previewUrl: `https://drive.google.com/file/d/${fileId}/preview` };
-      }
-      return {
-        previewUrl: `https://drive.google.com/viewerng/viewer?embedded=true&url=${encodeURIComponent(
-          href
-        )}`
-      };
-    }
-
-    if (u.hostname.includes("dropbox.com")) {
-      const raw = href.replace(/\?dl=0$/, "?raw=1");
-      return { previewUrl: raw };
-    }
-
-    if (u.hostname.includes("onedrive.live.com")) {
-      return { previewUrl: href.replace("redir?", "embed?") };
-    }
-
-    return { previewUrl: null };
-  } catch {
-    return { previewUrl: null };
-  }
-}
-
 export default function EditProfileForm({
+  initialFirstName = "",
+  initialLastName = "",
   initialMajor = "",
   initialGradYear,
   initialResumeUrl = "",
-  onSubmit,
   onCancel
 }: EditProfileFormProps) {
+  const [firstName, setFirstName] = useState(initialFirstName);
+  const [lastName, setLastName] = useState(initialLastName);
   const [major, setMajor] = useState(initialMajor);
   const [gradYear, setGradYear] = useState<string>(initialGradYear ? String(initialGradYear) : "");
   const [resumeUrl, setResumeUrl] = useState(initialResumeUrl);
   const [touched, setTouched] = useState<{ [k: string]: boolean }>({});
-
+  const { User } = useContext(UserContext);
   const yearMin = currentYear() - 1;
   const yearMax = currentYear() + 15;
+  const navigate = useNavigate();
 
   const errors = useMemo(() => {
-    const e: { major?: string; gradYear?: string; resumeUrl?: string } = {};
+    const e: {
+      firstName?: string;
+      lastName?: string;
+      major?: string;
+      gradYear?: string;
+      resumeUrl?: string;
+    } = {};
+
+    if (!firstName.trim()) e.firstName = "Please enter your first name.";
+    if (!lastName.trim()) e.lastName = "Please enter your last name.";
+
     if (!major) e.major = "Please select your major.";
 
     const gy = Number(gradYear);
@@ -103,23 +73,64 @@ export default function EditProfileForm({
     else if (!isValidUrl(resumeUrl)) e.resumeUrl = "Enter a valid URL (http/https).";
 
     return e;
-  }, [major, gradYear, resumeUrl, yearMin, yearMax]);
+  }, [firstName, lastName, major, gradYear, resumeUrl, yearMin, yearMax]);
 
   const isDirty = useMemo(() => {
-    const a = initialMajor ?? "";
-    const b = initialGradYear ? String(initialGradYear) : "";
-    const c = initialResumeUrl ?? "";
-    return major !== a || gradYear !== b || resumeUrl !== c;
-  }, [major, gradYear, resumeUrl, initialMajor, initialGradYear, initialResumeUrl]);
+    const a = initialFirstName ?? "";
+    const b = initialLastName ?? "";
+    const c = initialMajor ?? "";
+    const d = initialGradYear ? String(initialGradYear) : "";
+    const e = initialResumeUrl ?? "";
+    return firstName !== a || lastName !== b || major !== c || gradYear !== d || resumeUrl !== e;
+  }, [
+    firstName,
+    lastName,
+    major,
+    gradYear,
+    resumeUrl,
+    initialFirstName,
+    initialLastName,
+    initialMajor,
+    initialGradYear,
+    initialResumeUrl
+  ]);
 
-  function handleSubmit(e: React.FormEvent) {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (Object.keys(errors).length === 0) {
-      onSubmit({ major, gradYear: Number(gradYear), resumeUrl });
-    } else {
-      setTouched({ major: true, gradYear: true, resumeUrl: true });
+      const { error } = await supabase
+        .from("Users")
+        .update({
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          resume_link: resumeUrl,
+          major: major,
+          expected_grad: Number(gradYear)
+        })
+        .eq("email", User?.email);
+      if (error) {
+        setTouched({
+          firstName: true,
+          lastName: true,
+          major: true,
+          gradYear: true,
+          resumeUrl: true
+        });
+        DisplayToast("Error updating profile info", "error");
+      } else {
+        DisplayToast("Successfully updated profile info", "success");
+        navigate("/");
+      }
+    } else {                                                                                                                                                                              
+      setTouched({
+        firstName: true,
+        lastName: true,
+        major: true,
+        gradYear: true,
+        resumeUrl: true
+      });
     }
-  }
+  };
 
   const { previewUrl } = getPdfPreviewUrl(resumeUrl);
 
@@ -131,11 +142,41 @@ export default function EditProfileForm({
           <CardHeader>
             <CardTitle className="text-2xl">Edit Profile</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Update your major, graduation year, and resume link.
+              Update your name, major, graduation year, and resume link.
             </p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Name fields */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="firstName">First name</Label>
+                  <Input
+                    id="firstName"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    onBlur={() => setTouched((t) => ({ ...t, firstName: true }))}
+                    aria-invalid={!!(touched.firstName && errors.firstName)}
+                  />
+                  {touched.firstName && errors.firstName && (
+                    <p className="text-sm text-destructive">{errors.firstName}</p>
+                  )}
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="lastName">Last name</Label>
+                  <Input
+                    id="lastName"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    onBlur={() => setTouched((t) => ({ ...t, lastName: true }))}
+                    aria-invalid={!!(touched.lastName && errors.lastName)}
+                  />
+                  {touched.lastName && errors.lastName && (
+                    <p className="text-sm text-destructive">{errors.lastName}</p>
+                  )}
+                </div>
+              </div>
+
               <div className="grid gap-2">
                 <Label htmlFor="major">Major</Label>
                 <Select value={major} onValueChange={setMajor}>
@@ -197,7 +238,11 @@ export default function EditProfileForm({
               </div>
 
               <div className="flex items-center gap-3 pt-2">
-                <Button type="submit" disabled={Object.keys(errors).length > 0 || !isDirty}>
+                <Button
+                  type="submit"
+                  disabled={Object.keys(errors).length > 0 || !isDirty}
+                  className="bg-blue"
+                >
                   Save changes
                 </Button>
                 <Button type="button" variant="secondary" onClick={() => onCancel?.()}>
@@ -215,13 +260,13 @@ export default function EditProfileForm({
         {resumeUrl && isValidUrl(resumeUrl) && previewUrl && (
           <Card className="flex-1 shadow-lg h-full">
             <CardHeader>
-              <CardTitle className="text-lg">Resume Preview</CardTitle>
+              <CardTitle className="text-2xl">Resume Preview</CardTitle>
             </CardHeader>
             <CardContent className="h-full">
               <iframe
                 src={previewUrl}
                 title="Resume PDF preview"
-                className=" h-[640px] aspect-[1/1.2] border rounded-md"
+                className="h-[640px] aspect-[1/1.2] border rounded-md"
               />
             </CardContent>
           </Card>

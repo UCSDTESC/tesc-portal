@@ -9,7 +9,7 @@ export function RsvpOrAttendanceButton({
 }: {
   start_date: string;
   end_date: string;
-  selection: number;
+  selection: string;
   className?: string;
 }) {
   const currDate = new Date();

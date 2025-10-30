@@ -83,7 +83,7 @@ export default function Profile() {
   else
     return (
       <div className="flex flex-wrap justify-center w-screen min-h-screen mt-8 px-15 gap-8">
-        <EditProfileForm onSubmit={() => {}} />
+        <EditProfileForm />
       </div>
     );
 }
