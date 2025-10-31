@@ -85,11 +85,11 @@ export function SidebarCompany({
   const navigate = useNavigate();
   return (
     <button
-      key={daton.uuid}
+      key={daton.email}
       className=" cursor-pointer flex flex-col p-1 h-[100px] font-DM"
       onClick={() => {
-        navigate(`/bulletin/${daton.uuid}`);
-        setSelection(daton.uuid);
+        navigate(`/bulletin/${daton.email}`);
+        setSelection(daton.email);
       }}
     >
       <div className="flex flex-col rounded-lg bg-white h-full w-full px-4">

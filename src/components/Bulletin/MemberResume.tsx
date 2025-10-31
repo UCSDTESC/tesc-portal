@@ -7,11 +7,11 @@ import { FaDiamond } from "react-icons/fa6";
 
 export default function MemberResume({ selection }: { selection: string }) {
   const { People } = useContext(BulletinContext);
-  console.log(People);
+
   return (
     <>
       {People?.map((daton) => {
-        if (daton.uuid.toString() === selection)
+        if (daton.email.toString() === selection)
           return (
             <span className="w-full grid grid-cols-[70px_1fr] grid-rows-[70px_1fr] gap-4">
               <img

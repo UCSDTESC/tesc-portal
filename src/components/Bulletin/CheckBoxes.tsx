@@ -4,19 +4,19 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { Arrow, FilterIcon, SortIcon } from "./svgIcons";
 import { useOutsideClicks } from "@lib/hooks/useOutsideClick";
 import UserContext from "@lib/UserContext";
-import { User } from "@lib/UserContext";
 import { FaDiamond } from "react-icons/fa6";
 import supabase from "@server/supabase";
 import { majors } from "@lib/constants";
+import { CSVLink } from "react-csv";
 export default function CheckBoxes() {
-  const { setSearch } = useContext(BulletinContext);
+  const { setSearch, People } = useContext(BulletinContext);
   const { User } = useContext(UserContext);
   const filterRef = useRef(null);
   const sortRef = useRef(null);
   const [filterMenu, setFilterMenu] = useState("");
   const [userPoints, setUserPoints] = useState(0);
   useOutsideClicks([filterRef, sortRef], () => setFilterMenu(""));
-
+  console.log(People);
   useEffect(() => {
     const getUserPoints = async () => {
       if (!User) return;
@@ -94,10 +94,18 @@ export default function CheckBoxes() {
         </div>
       </div>
       {User && User.role !== "company" && (
-        <div className="bg-white borde w-fit flex items-center ml-auto h-full p-1 rounded-2xl relative font-bold gap-1 px-4 text-navy text-xl">
+        <div className="bg-white  w-fit flex items-center ml-auto h-full p-1 rounded-2xl relative font-bold gap-1 px-4 text-navy text-xl">
           <FaDiamond className="text-lightBlue" />
           {userPoints}
         </div>
+      )}
+      {User && User.role === "company" && (
+        <CSVLink
+          data={People ? People : []}
+          className="bg-white w-fit flex items-center ml-auto h-full p-1 rounded-2xl relative gap-1 px-4 text-navy text-md"
+        >
+          Export csv
+        </CSVLink>
       )}
     </form>
   );

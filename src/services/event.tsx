@@ -93,10 +93,9 @@ export const queryPeopleBySearchAndFilters = async (
 ) => {
   let query = supabase
     .from("Users")
-    .select("uuid,email,created_at,points,resume_link,expected_grad,major,first_name,last_name")
+    .select("email,created_at,points,resume_link,expected_grad,major,first_name,last_name")
     .or(`first_name.ilike.%${keyword}%, last_name.ilike.%${keyword}%, email.ilike.%${keyword}%`)
     .not("resume_link", "is", null);
-  console.log(tagFilters);
   if (tagFilters.length > 0) query = query.in("expected_grad", tagFilters);
 
   if (orgFilters.length > 0) {
