@@ -282,7 +282,16 @@ export const container = {
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.15
+      staggerChildren: 0.2
+    }
+  }
+};
+export const container_login = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.01
     }
   }
 };
