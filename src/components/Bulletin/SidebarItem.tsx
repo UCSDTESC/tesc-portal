@@ -4,10 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 export function SidebarClub({
   daton,
-  setSelection
+  setSelection,
+  selection
 }: {
   daton: Event;
   setSelection: (selection: string) => void;
+  selection: string;
 }) {
   const [imageURL, setImageURL] = useState("");
   const navigate = useNavigate();
@@ -34,8 +36,8 @@ export function SidebarClub({
       key={daton.id}
       className=" cursor-pointer flex flex-col p-1 h-[100px] font-DM"
       onClick={() => {
-        navigate(`/bulletin/${daton.id}`);
-        setSelection(String(daton.id));
+        navigate(selection ? "/bulletin/-1" : `/bulletin/${daton.id}`);
+        setSelection(selection ? "" : String(daton.id));
       }}
     >
       <div className="flex flex-col justify-between rounded-lg bg-white h-full w-full p-1">
@@ -77,19 +79,23 @@ export function SidebarClub({
 
 export function SidebarCompany({
   daton,
-  setSelection
+  setSelection,
+  selection
 }: {
   daton: Member;
   setSelection: (selection: string) => void;
+  selection: string;
 }) {
   const navigate = useNavigate();
   return (
     <button
       key={daton.email}
-      className=" cursor-pointer flex flex-col p-1 h-[100px] font-DM"
+      className={` cursor-pointer flex flex-col p-1 h-[100px] font-DM ${
+        selection !== daton.email ? "opacity-80" : ""
+      }`}
       onClick={() => {
-        navigate(`/bulletin/${daton.email}`);
-        setSelection(daton.email);
+        setSelection(selection ? "" : daton.email);
+        navigate(selection ? "/bulletin/-1" : `/bulletin/${daton.email}`);
       }}
     >
       <div className="flex flex-col rounded-lg bg-white h-full w-full px-4">
