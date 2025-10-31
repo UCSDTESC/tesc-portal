@@ -8,7 +8,7 @@ import { FaArrowRightToBracket } from "react-icons/fa6";
 import { FaArrowRightFromBracket } from "react-icons/fa6";
 import CheckBoxes from "./CheckBoxes";
 import { EventsList } from "./EventsList";
-import EventDisplay from "./EventDisplay";
+import BulletinDisplay from "./BulletinDisplay";
 
 export default function Bulletin() {
   const { User } = useContext(UserContext);
@@ -75,7 +75,7 @@ export default function Bulletin() {
             />
           )}
           <div className="flex w-full justify-center p-2 overflow-y-scroll h-[calc(100vh-7rem)]">
-            <EventDisplay selection={selection} />
+            <BulletinDisplay selection={selection} />
           </div>
         </div>
       </div>

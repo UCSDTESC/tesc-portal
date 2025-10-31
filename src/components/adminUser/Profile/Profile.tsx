@@ -27,7 +27,7 @@ export default function Profile() {
       }
     };
     fetchOrgname();
-  });
+  }, [User?.email]);
 
   useEffect(() => {
     const fetchpfp = async () => {

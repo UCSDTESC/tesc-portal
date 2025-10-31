@@ -18,8 +18,9 @@ export default function CheckBoxes() {
   useOutsideClicks([filterRef, sortRef], () => setFilterMenu(""));
 
   useEffect(() => {
-    const getUserPoints = async (User: User | null) => {
+    const getUserPoints = async () => {
       if (!User) return;
+      if (User.role === "company") return;
       const { data, error } = await supabase.from("Users").select("points").eq("email", User.email);
       if (data) {
         setUserPoints(data[0].points);
@@ -28,8 +29,8 @@ export default function CheckBoxes() {
         console.error(error);
       }
     };
-    getUserPoints(User);
-  });
+    getUserPoints();
+  }, [User]);
 
   return (
     <form className="p-3 w-full flex gap-2">

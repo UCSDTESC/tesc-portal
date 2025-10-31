@@ -33,7 +33,7 @@ export const createEvent = async (User: User, formData: formdata) => {
   }
 };
 
-export const deleteEvent = async (id: number) => {
+export const deleteEvent = async (id: string) => {
   const { error } = await supabase.from("Events").update({ deleted: true }).eq("id", id);
   return error;
 };
@@ -96,8 +96,8 @@ export const queryPeopleBySearchAndFilters = async (
     .select("uuid,email,created_at,points,resume_link,expected_grad,major,first_name,last_name")
     .or(`first_name.ilike.%${keyword}%, last_name.ilike.%${keyword}%, email.ilike.%${keyword}%`)
     .not("resume_link", "is", null);
-
-  if (tagFilters.length > 0) query = query.overlaps("expected_grad", tagFilters);
+  console.log(tagFilters);
+  if (tagFilters.length > 0) query = query.in("expected_grad", tagFilters);
 
   if (orgFilters.length > 0) {
     query = query.in("major", orgFilters);
