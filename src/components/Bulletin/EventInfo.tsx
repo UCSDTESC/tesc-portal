@@ -6,7 +6,7 @@ import { DateParser, formatGoogleCalendarEvent, formatGoogleMapsLocation } from 
 import googleCalendar from "/Google_Calendar_icon_(2020).svg";
 import supabase from "@server/supabase";
 import UserContext from "@lib/UserContext";
-import WelcomePage from "./WecomePage";
+import { WelcomePage } from "./WecomePage";
 import { motion } from "motion/react";
 import { container, item } from "@lib/constants";
 
@@ -14,6 +14,12 @@ export default function EventInfo({ selection }: { selection: string }) {
   const { data } = useContext(BulletinContext);
   const { User } = useContext(UserContext);
   const [imageUrl, setImageUrl] = useState("");
+  useEffect(() => {
+    const name = data?.filter((daton) => daton.id.toString() === selection);
+    document.title = `${
+      name && name[0] ? name[0].title.toString() + " | TESC Portal" : "Welcome | TESC Portal"
+    }`;
+  }, [data, selection]);
 
   useEffect(() => {
     if (User?.role === "company") return;

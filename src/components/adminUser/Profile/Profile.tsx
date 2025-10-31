@@ -12,7 +12,9 @@ export default function Profile() {
   const [orgname, setOrgname] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [editModal, setEditModal] = useState(false);
-
+  useEffect(() => {
+    document.title = "My Profile | TESC Portal";
+  }, []);
   useEffect(() => {
     const fetchOrgname = async () => {
       const { data, error } = await supabase

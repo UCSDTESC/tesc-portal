@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useContext } from "react";
 import { useNavigate } from "react-router";
 
@@ -31,6 +31,9 @@ export default function Form({
   const [error, setError] = useState("");
   const [formData, setFormData] = useState<formdata>(formdata ? formdata : getFormDataDefault());
 
+  useEffect(() => {
+    document.title = "New Event | TESC Portal";
+  }, []);
   // handle change to form
   const handleChange = <T,>(value: T, cols: string[]): void => {
     let currform = formData;
