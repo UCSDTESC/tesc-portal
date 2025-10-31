@@ -22,8 +22,8 @@ export default function WelcomePage() {
             <p className="text-sm uppercase tracking-wide opacity-80">Member Bulletin Board</p>
             <h1 className="text-3xl font-bold tracking-tight">Welcome to the TESC Portal</h1>
             <p className=" text-lg opacity-80">
-              This is your space to share updates, post announcements, and keep members informed.
-              Use the bulletin to post meeting notes, forms, volunteer signups, or quick reminders.
+              This is your space to find events, announcements, and information regarding our
+              engineering orgs.
             </p>
           </div>
         </motion.div>
