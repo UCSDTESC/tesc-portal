@@ -58,20 +58,40 @@ export const signUp = async (email: string, password: string) => {
 export const verifyOTP = async (email: string, token: string, type: "email" | "recovery") => {
   const { data, error } = await supabase.auth.verifyOtp({ email: email, token: token, type: type });
   if (error) return { user: null, error };
-
-  // add user to user table
+  // For email verification (signup), add user to Users table.
+  // For recovery, verification will sign the user in (session) and we don't need to insert into Users.
   if (data.user) {
-    const { error } = await supabase
-      .from("Users")
-      .insert({ uuid: data.user?.id, email: data.user?.email });
-    const { data: role } = await supabase.from("Users").select("role").eq("email", data.user.email);
+    if (type === "email") {
+      const { error } = await supabase.from("Users").insert({ uuid: data.user?.id, email: data.user?.email });
+      const { data: role } = await supabase.from("Users").select("role").eq("email", data.user.email);
+      const user = {
+        id: data.user.id,
+        email: data.user.email,
+        role: role ? role[0].role : "unknown"
+      };
+      return { user, error };
+    }
+    // recovery or other types: return user info without inserting
     const user = {
       id: data.user.id,
       email: data.user.email,
-      role: role ? role[0].role : "unknown"
+      role: "unknown"
     };
-    return { user, error };
-  } else return { user: null, error };
+    return { user, error: null };
+  }
+  return { user: null, error };
+};
+
+export const sendPasswordRecovery = async (email: string) => {
+  // triggers Supabase recovery email/OTP
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email);
+  return { data, error };
+};
+
+export const updatePassword = async (password: string) => {
+  // updates the currently-authenticated user's password
+  const { error } = await supabase.auth.updateUser({ password });
+  return error;
 };
 export const fetchRSVPAndAttended = async (email: string) => {
   const { data, error } = await supabase.from("Users").select("rsvp,attended").eq("email", email);
