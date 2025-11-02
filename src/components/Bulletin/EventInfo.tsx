@@ -6,11 +6,20 @@ import { DateParser, formatGoogleCalendarEvent, formatGoogleMapsLocation } from 
 import googleCalendar from "/Google_Calendar_icon_(2020).svg";
 import supabase from "@server/supabase";
 import UserContext from "@lib/UserContext";
+import { WelcomePage } from "./WecomePage";
+import { motion } from "motion/react";
+import { container, item } from "@lib/constants";
 
 export default function EventInfo({ selection }: { selection: string }) {
   const { data } = useContext(BulletinContext);
   const { User } = useContext(UserContext);
   const [imageUrl, setImageUrl] = useState("");
+  useEffect(() => {
+    const name = data?.filter((daton) => daton.id.toString() === selection);
+    document.title = `${
+      name && name[0] ? name[0].title.toString() + " | TESC Portal" : "Welcome | TESC Portal"
+    }`;
+  }, [data, selection]);
 
   useEffect(() => {
     if (User?.role === "company") return;
@@ -34,22 +43,34 @@ export default function EventInfo({ selection }: { selection: string }) {
       {data?.map((daton) => {
         if (daton.id.toString() === selection)
           return (
-            <span className="w-full grid grid-cols-[70px_1fr] grid-rows-[70px_1fr] gap-4">
+            <motion.span
+              className="w-full grid grid-cols-[70px_1fr] grid-rows-[70px_1fr] gap-4"
+              variants={container}
+              initial="hidden"
+              animate="show"
+            >
               {imageUrl ? (
-                <img
+                <motion.img
+                  variants={item}
                   src={imageUrl}
                   alt=""
                   className="h-full rounded-full object-cover aspect-square"
                 />
               ) : (
-                <img
+                <motion.img
+                  variants={item}
                   src="https://placehold.co/600x600"
                   alt=""
                   className="h-full rounded-full object-cover aspect-square"
                 />
               )}
-              <div className="flex flex-col h-full justify-center relative">
-                <h1 className="font-bold text-4xl">{daton.title}</h1>
+              <motion.div
+                className="flex flex-col h-full justify-center relative"
+                variants={container}
+              >
+                <motion.h1 variants={item} className="font-bold text-4xl">
+                  {daton.title}
+                </motion.h1>
                 <RsvpOrAttendanceButton
                   {...{
                     start_date: daton.start_date,
@@ -58,11 +79,11 @@ export default function EventInfo({ selection }: { selection: string }) {
                   }}
                   className="absolute bottom-0 right-[5%] bg-lightBlue hover:opacity-80"
                 />
-                <p className="text-lg text-[#898989]">
+                <motion.p className="text-lg text-[#898989]" variants={item}>
                   {daton.org_emails?.org_name ? daton.org_emails.org_name : "Unknown"}
-                </p>
-              </div>
-              <div className="col-start-2 w-[95%] max-w-[800px] mx-auto">
+                </motion.p>
+              </motion.div>
+              <motion.div className="col-start-2 w-[95%] max-w-[800px] mx-auto" variants={item}>
                 {daton.poster ? (
                   <img src={daton.poster} alt="" className="w-full rounded-lg object-cover" />
                 ) : (
@@ -104,9 +125,12 @@ export default function EventInfo({ selection }: { selection: string }) {
                     </div>
                   </div>
                 </div>
-              </div>
-            </span>
+              </motion.div>
+            </motion.span>
           );
+        else {
+          return <WelcomePage />;
+        }
       })}
     </>
   );

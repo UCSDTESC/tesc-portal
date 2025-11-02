@@ -3,6 +3,8 @@ import { FormEvent, useContext, useState } from "react";
 import UserContext from "@lib/UserContext";
 import { MuiOtpInput } from "mui-one-time-password-input";
 import DisplayToast from "@lib/hooks/useToast";
+import { motion } from "motion/react";
+import { container_login, item } from "@lib/constants";
 export default function LoginModal({ onclose }: { onclose: () => void }) {
   const [register, setRegister] = useState(false);
   const [OTPFlag, setOTPFlag] = useState(false);
@@ -49,54 +51,77 @@ export default function LoginModal({ onclose }: { onclose: () => void }) {
       />
       <div className="min-w-80 w-1/2 h-3/4 max-w-[500px] bg-white rounded-lg z-1 flex justify-center">
         {OTPFlag ? (
-          <form
+          <motion.form
+            variants={container_login}
+            initial="hidden"
+            animate="show"
             className=" flex items-center justify-center gap-5 flex-col w-full h-full"
             onSubmit={(e) => {
               e.preventDefault();
               handleOTPSubmit();
             }}
           >
-            <h1 className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A]">
+            <motion.h1
+              className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A]"
+              variants={item}
+            >
               Check your Email!
-            </h1>
-            <p className="font-DM text-xl w-3/4 text-[#262626] hidden md:block">
+            </motion.h1>
+            <motion.p
+              className="font-DM text-xl w-3/4 text-[#262626] hidden md:block"
+              variants={item}
+            >
               Please check your <strong>Email</strong> for a one-time 6-digit verification code
-            </p>
-            <MuiOtpInput
-              value={otp}
-              length={6}
-              onChange={(e) => setOtp(e)}
-              className="rounded-lg w-3/4 !gap-1 flex max-w-[500px]"
-            />
-            <button
+            </motion.p>
+            <motion.div variants={item}>
+              <MuiOtpInput
+                value={otp}
+                length={6}
+                onChange={(e) => setOtp(e)}
+                className="rounded-lg w-3/4 !gap-1 flex max-w-[500px]"
+              />
+            </motion.div>
+            <motion.button
+              variants={item}
               type="submit"
               className={`cursor-pointer rounded-2xl max-w-[500px]  py-1 px-5 w-3/4 bg-white border border-navy  text-navy font-bold`}
             >
               Register
-            </button>
-          </form>
+            </motion.button>
+          </motion.form>
         ) : (
-          <form
+          <motion.form
+            variants={container_login}
+            initial="hidden"
+            animate="show"
             onSubmit={(e) => {
               e.preventDefault();
               handleSubmit(e);
             }}
             className=" flex items-center justify-center gap-5 flex-col w-full h-full"
           >
-            <h1 className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A]">
+            <motion.h1
+              className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A]"
+              variants={item}
+            >
               Welcome to TESC!
-            </h1>
-            <p className="font-DM text-xl w-3/4 text-center text-balance text-[#262626] hidden md:block">
+            </motion.h1>
+            <motion.p
+              className="font-DM text-xl w-3/4 text-center text-balance text-[#262626] hidden md:block"
+              variants={item}
+            >
               Whether you are a <strong>returning member</strong> or a <strong>new member</strong>,
               we're glad to have you!
-            </p>
-            <input
+            </motion.p>
+            <motion.input
+              variants={item}
               name="email"
               type="text"
               placeholder="✉ UCSD email"
               className=" rounded-lg w-3/4 bg-[#EDEDED] px-1"
             />
-            <input
+            <motion.input
+              variants={item}
               name="password"
               type="password"
               placeholder="🔒 Password"
@@ -111,7 +136,7 @@ export default function LoginModal({ onclose }: { onclose: () => void }) {
               />
             )}
             {Error && <div className="">Error: {Error}</div>}
-            <div className="w-3/4">
+            <motion.div className="w-3/4" variants={item}>
               <button
                 type="button"
                 className="text-navy cursor-pointer mr-auto underline hover:opacity-80"
@@ -121,16 +146,17 @@ export default function LoginModal({ onclose }: { onclose: () => void }) {
               >
                 {register ? "Already a user? Log in" : "Register a new account"}
               </button>
-            </div>
-            <button
+            </motion.div>
+            <motion.button
+              variants={item}
               type="submit"
               className={`cursor-pointer rounded-2xl  py-1 px-5 w-3/4 ${
                 register ? "bg-white border border-navy" : "bg-[#6A97BD] border border-[#6A97BD]"
               } text-navy font-bold`}
             >
               {register ? "Sign up" : "Sign in"}
-            </button>
-          </form>
+            </motion.button>
+          </motion.form>
         )}
       </div>
     </div>

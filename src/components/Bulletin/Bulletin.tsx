@@ -66,7 +66,7 @@ export default function Bulletin() {
               className="rotate-180 ml-auto w-[3.5rem] text-[20px] mr-2 mt-2 text-gray md:hidden"
               onClick={() => setDisplaySideBar(false)}
             />
-            <EventsList {...{ setSelection }} />
+            <EventsList {...{ setSelection, selection }} />
           </div>
           {!displaysideBar && (
             <FaArrowRightToBracket

@@ -16,7 +16,6 @@ export default function CheckBoxes() {
   const [filterMenu, setFilterMenu] = useState("");
   const [userPoints, setUserPoints] = useState(0);
   useOutsideClicks([filterRef, sortRef], () => setFilterMenu(""));
-  console.log(People);
   useEffect(() => {
     const getUserPoints = async () => {
       if (!User) return;

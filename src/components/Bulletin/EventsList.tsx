@@ -3,9 +3,11 @@ import { memo, useContext } from "react";
 import { SidebarClub, SidebarCompany } from "./SidebarItem";
 import UserContext from "@lib/UserContext";
 export const EventsList = memo(function ({
-  setSelection
+  setSelection,
+  selection
 }: {
   setSelection: (selection: string) => void;
+  selection: string;
 }) {
   const { data, People } = useContext(BulletinContext);
   const { User } = useContext(UserContext);
@@ -13,7 +15,7 @@ export const EventsList = memo(function ({
     return (
       <>
         {People?.map((daton) => {
-          return <SidebarCompany {...{ daton, setSelection }} />;
+          return <SidebarCompany {...{ daton, setSelection, selection }} />;
         })}
       </>
     );
@@ -21,7 +23,7 @@ export const EventsList = memo(function ({
   return (
     <>
       {data?.map((daton) => {
-        return <SidebarClub {...{ daton, setSelection }} />;
+        return <SidebarClub {...{ daton, setSelection, selection }} />;
       })}
     </>
   );
