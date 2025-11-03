@@ -5,7 +5,7 @@ import { useNavigate } from "react-router";
 export function SidebarClub({
   daton,
   setSelection,
-  selection,
+  selection
 }: {
   daton: Event;
   setSelection: (selection: string) => void;
@@ -38,7 +38,7 @@ export function SidebarClub({
         selection !== String(daton.id) ? "opacity-80" : ""
       }`}
       onClick={() => {
-        navigate(selection ? "/bulletin/-1" : `/bulletin/${daton.id}`);
+        navigate(selection != "-1" ? "/bulletin/-1" : `/bulletin/${daton.id}`);
         setSelection(selection != "-1" ? "-1" : String(daton.id));
       }}
     >
@@ -82,7 +82,7 @@ export function SidebarClub({
 export function SidebarCompany({
   daton,
   setSelection,
-  selection,
+  selection
 }: {
   daton: Member;
   setSelection: (selection: string) => void;
