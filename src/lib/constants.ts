@@ -291,7 +291,7 @@ export const container_login = {
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.01
+      staggerChildren: 0.02
     }
   }
 };
