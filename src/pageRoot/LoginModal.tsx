@@ -115,7 +115,7 @@ export default function LoginModal({ onclose }: { onclose: () => void }) {
             <h1 className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A]">
               Check your Email!
             </h1>
-            <p className="font-DM text-xl w-3/4 text-[#262626] hidden md:block" variants={item}>
+            <p className="font-DM text-xl w-3/4 text-[#262626] hidden md:block">
               Please check your <strong>Email</strong> for a one-time 6-digit verification code
             </p>
             <div className="w-full flex justify-center">
@@ -207,29 +207,34 @@ export default function LoginModal({ onclose }: { onclose: () => void }) {
               className="rounded-lg w-3/4 bg-[#EDEDED] px-1"
               required
             />
-
-            {/* hide password fields in forgot flow */}
-            {!forgot && (
-              <>
-                <input
-                  name="password"
-                  type="password"
-                  placeholder="🔒 Password"
-                  className="rounded-lg w-3/4 bg-[#EDEDED] grayscale px-1"
-                  required
-                />
-
-                {register && (
+            <motion.div
+              variants={item}
+              className={`w-3/4 gap-5 flex flex-col h-fit ${forgot ? "hidden" : "block"}`}
+            >
+              {/* hide password fields in forgot flow */}
+              {!forgot && (
+                <>
                   <input
-                    name="confirmPassword"
+                    key="password"
+                    name="password"
                     type="password"
-                    placeholder="🔒 Confirm Password"
-                    className="rounded-lg w-3/4 bg-[#EDEDED] grayscale px-1"
+                    placeholder="🔒 Password"
+                    className="rounded-lg w-full bg-[#EDEDED] grayscale px-1"
                     required
                   />
-                )}
-              </>
-            )}
+
+                  {register && (
+                    <input
+                      name="confirmPassword"
+                      type="password"
+                      placeholder="🔒 Confirm Password"
+                      className="rounded-lg w-full bg-[#EDEDED] grayscale px-1"
+                      required
+                    />
+                  )}
+                </>
+              )}
+            </motion.div>
 
             {Error && <div className="text-red-600 text-sm">Error: {Error}</div>}
 
