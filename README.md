@@ -13,8 +13,8 @@
 
 # Links
 
-- Site home page (under construction :construction:)
-- [TESC home page](https://www.tescucsd.org/)
+- [Site home page](https://portal.tescatucsd.org/)
+- [TESC home page](https://www.tescatucsd.org/)
 - [TESC tech project ideas doc (for future reference)](https://docs.google.com/document/d/1xEh9ouP2Oy8VpzhOcRKAuuFwGSi-LR7W6LXuGpPliAc/edit?tab=t.0)
 
 # About the project:
@@ -34,7 +34,7 @@ In creating this portal, we wish to:
 - **Basic requirements**
 
   - [x] User log in and management
-  - [ ] Different views for TESC internal members, club principal members and general club members
+  - [x] Different views for TESC internal members, club principal members and general club members
 
 - **Membership requirements**
   - [x] Student points management
@@ -43,7 +43,7 @@ In creating this portal, we wish to:
   - [x] Principal members of clubs able to post and edit events and set passwords for events
   - [x] Principal members able to view events they've posted
   - [x] Manage user RSVP and attendance status
-  - [ ] Sort, Search and filter functionality
+  - [x] Sort, Search and filter functionality
 
 # Getting Started
 
