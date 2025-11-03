@@ -34,7 +34,7 @@ export function useData(User: User | null) {
   }, [fetchData]);
 
   // delete event
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     const error = await deleteEvent(id);
     if (error) {
       setError(error.message);

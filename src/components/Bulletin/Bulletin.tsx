@@ -8,15 +8,17 @@ import { FaArrowRightToBracket } from "react-icons/fa6";
 import { FaArrowRightFromBracket } from "react-icons/fa6";
 import CheckBoxes from "./CheckBoxes";
 import { EventsList } from "./EventsList";
-import EventDisplay from "./EventDisplay";
+import BulletinDisplay from "./BulletinDisplay";
 
 export default function Bulletin() {
   const { User } = useContext(UserContext);
   const postId = useParams();
-  const [selection, setSelection] = useState<number>(Number(postId.postId));
+  const [selection, setSelection] = useState<string>(String(postId.postId));
   const [displaysideBar, setDisplaySideBar] = useState(true);
   const {
     data,
+    People,
+    gradYears,
     tagFilters,
     RSVP,
     attendance,
@@ -34,6 +36,8 @@ export default function Bulletin() {
     <BulletinContext.Provider
       value={{
         data,
+        gradYears,
+        People,
         tagFilters,
         RSVP,
         attendance,
@@ -62,7 +66,7 @@ export default function Bulletin() {
               className="rotate-180 ml-auto w-[3.5rem] text-[20px] mr-2 mt-2 text-gray md:hidden"
               onClick={() => setDisplaySideBar(false)}
             />
-            <EventsList {...{ setSelection }} />
+            <EventsList {...{ setSelection, selection }} />
           </div>
           {!displaysideBar && (
             <FaArrowRightToBracket
@@ -71,7 +75,7 @@ export default function Bulletin() {
             />
           )}
           <div className="flex w-full justify-center p-2 overflow-y-scroll h-[calc(100vh-7rem)]">
-            <EventDisplay selection={selection} />
+            <BulletinDisplay selection={selection} />
           </div>
         </div>
       </div>

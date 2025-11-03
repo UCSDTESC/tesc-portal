@@ -13,7 +13,7 @@ export default function TableItem({
   openEditModal
 }: {
   daton: Event;
-  handleDelete: (id: number) => Promise<void>;
+  handleDelete: (id: string) => Promise<void>;
   openEditModal: (daton: Event) => void;
 }) {
   const [attendees, setAttendees] = useState<{ user_id: string; Users: { email: string } }[]>([]);
