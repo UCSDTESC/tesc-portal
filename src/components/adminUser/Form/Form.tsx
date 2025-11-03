@@ -21,7 +21,7 @@ export default function Form({
   onSuccess
 }: {
   formdata?: formdata;
-  id: number;
+  id: string;
   editEvent?: boolean;
   onSuccess: () => void;
 }) {
@@ -202,7 +202,7 @@ export default function Form({
           type="submit"
           className="bg-[#6A97BD] border border-[#6A97BD] text-white w-fit rounded-lg px-5 cursor-pointer"
         >
-          Submit New Event
+          {editEvent ? "Edit Event" : "Submit New Event"}
         </button>
       </form>
     </div>

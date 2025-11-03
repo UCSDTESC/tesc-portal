@@ -38,7 +38,7 @@ export const deleteEvent = async (id: string) => {
   return error;
 };
 
-export const updateEvent = async (eventId: number, uid: string, formData: formdata) => {
+export const updateEvent = async (eventId: string, uid: string, formData: formdata) => {
   const { error } = await supabase
     .from("Events")
     .update({

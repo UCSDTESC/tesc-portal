@@ -6,7 +6,7 @@ import { toISO } from "@lib/utils";
 // custom hook managing the edit modal in the DataTable component
 export function useEditModal() {
   const [showEditModal, setShowEditModal] = useState(false);
-  const [curID, setCurrID] = useState(0);
+  const [curID, setCurrID] = useState("");
   const [currEdit, setCurrEdit] = useState<formdata>(eventFormDataDefault);
 
   // Open the Edit Modal with the corresponding data inserted in

@@ -43,7 +43,7 @@ function EditModal({
   setShowEditModal: (ShowEditModal: boolean) => void;
   currEdit: formdata;
   fetchData: () => void;
-  curID: number;
+  curID: string;
 }) {
   return (
     <div className="w-screen h-screen fixed top-0 flex justify-center items-center z-100 overflow-scroll">
