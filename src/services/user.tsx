@@ -104,7 +104,7 @@ export const fetchRSVPAndAttended = async (email: string) => {
   } else return { rsvp: null, attended: null, error };
 };
 
-export const editRSVP = async (id: number, email: string, remove: boolean, currRSVP: number[]) => {
+export const editRSVP = async (id: string, email: string, remove: boolean, currRSVP: string[]) => {
   // update rsvp array in user table
   const { error } = await supabase.from("Users").update({ rsvp: currRSVP }).eq("email", email);
 
@@ -129,7 +129,7 @@ export const editRSVP = async (id: number, email: string, remove: boolean, currR
   return null;
 };
 
-export const logAttendance = async (selection: number, id: string, userInput: string | null) => {
+export const logAttendance = async (selection: string, id: string, userInput: string | null) => {
   const { error } = await supabase.rpc("validate_attendance", {
     event_id: selection,
     input: userInput,

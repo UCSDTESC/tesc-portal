@@ -23,7 +23,7 @@ export const getFormDataDefault = (): formdata => {
     location_str: "",
     content: "",
     tags: [],
-    poster: "https://placehold.co/600x400",
+    poster: "https://placehold.co/600x400"
   };
 };
 
@@ -63,3 +63,54 @@ export const formatGoogleCalendarEvent = (
     start_date
   )}/${formatDate(end_date)}&ctz=America/Los_Angeles`;
 };
+
+export function getPdfPreviewUrl(url: string): { previewUrl: string | null; note?: string } {
+  if (!url) return { previewUrl: null };
+  try {
+    const u = new URL(url);
+    const href = u.href;
+
+    if (/\.pdf($|\?|#)/i.test(href)) {
+      return { previewUrl: href };
+    }
+
+    if (u.hostname.includes("drive.google.com")) {
+      const fileIdMatch = href.match(/\/d\/([^/]+)/) || href.match(/[?&]id=([^&]+)/);
+      const fileId = fileIdMatch?.[1];
+      if (fileId) {
+        return { previewUrl: `https://drive.google.com/file/d/${fileId}/preview` };
+      }
+      return {
+        previewUrl: `https://drive.google.com/viewerng/viewer?embedded=true&url=${encodeURIComponent(
+          href
+        )}`
+      };
+    }
+
+    if (u.hostname.includes("dropbox.com")) {
+      const raw = href.replace(/\?dl=0$/, "?raw=1");
+      return { previewUrl: raw };
+    }
+
+    if (u.hostname.includes("onedrive.live.com")) {
+      return { previewUrl: href.replace("redir?", "embed?") };
+    }
+
+    return { previewUrl: null };
+  } catch {
+    return { previewUrl: null };
+  }
+}
+
+export function currentYear() {
+  return new Date().getFullYear();
+}
+
+export function isValidUrl(url: string) {
+  try {
+    const u = new URL(url);
+    return u.protocol === "https:" || u.protocol === "http:";
+  } catch {
+    return false;
+  }
+}

@@ -33,7 +33,7 @@ export const createEvent = async (User: User, formData: formdata) => {
   }
 };
 
-export const deleteEvent = async (id: number) => {
+export const deleteEvent = async (id: string) => {
   const { error } = await supabase.from("Events").update({ deleted: true }).eq("id", id);
   return error;
 };
@@ -83,4 +83,31 @@ export const queryEventsBySearchAndFilters = async (
 
   const { data, error } = await query;
   return { events: data, error };
+};
+
+export const queryPeopleBySearchAndFilters = async (
+  keyword: string,
+  tagFilters: string[],
+  orgFilters: string[],
+  sortMethod: string
+) => {
+  let query = supabase
+    .from("Users")
+    .select("email,created_at,points,resume_link,expected_grad,major,first_name,last_name")
+    .or(`first_name.ilike.%${keyword}%, last_name.ilike.%${keyword}%, email.ilike.%${keyword}%`)
+    .not("resume_link", "is", null);
+  if (tagFilters.length > 0) query = query.in("expected_grad", tagFilters);
+
+  if (orgFilters.length > 0) {
+    query = query.in("major", orgFilters);
+  }
+
+  if (sortMethod === "Events attended") query = query.order("points", { ascending: true });
+  else if (sortMethod == "First Name (A-Z)")
+    query = query.order("first_name", { ascending: false });
+  else if (sortMethod == "Last Name (A-Z)") query = query.order("last_name", { ascending: false });
+  else query = query.order("created_at", { ascending: false });
+
+  const { data, error } = await query;
+  return { People: data, error };
 };

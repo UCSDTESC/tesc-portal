@@ -1,9 +1,9 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useContext } from "react";
 import { useNavigate } from "react-router";
 
 import UserContext from "@lib/UserContext";
-import { formdata } from "@lib/constants";
+import { formdata, profile_picture_src } from "@lib/constants";
 import { getFormDataDefault } from "@lib/utils";
 import { createEvent, updateEvent } from "@services/event";
 
@@ -18,7 +18,7 @@ export default function Form({
   formdata,
   id,
   editEvent = false,
-  onSuccess,
+  onSuccess
 }: {
   formdata?: formdata;
   id: number;
@@ -31,6 +31,9 @@ export default function Form({
   const [error, setError] = useState("");
   const [formData, setFormData] = useState<formdata>(formdata ? formdata : getFormDataDefault());
 
+  useEffect(() => {
+    document.title = "New Event | TESC Portal";
+  }, []);
   // handle change to form
   const handleChange = <T,>(value: T, cols: string[]): void => {
     let currform = formData;
@@ -110,11 +113,11 @@ export default function Form({
                   {
                     name: "offset",
                     options: {
-                      offset: [0, -14],
-                    },
-                  },
-                ],
-              },
+                      offset: [0, -14]
+                    }
+                  }
+                ]
+              }
             }}
           >
             <IoInformationCircleOutline className="text-sm" />
@@ -150,11 +153,11 @@ export default function Form({
                   {
                     name: "offset",
                     options: {
-                      offset: [0, -14],
-                    },
-                  },
-                ],
-              },
+                      offset: [0, -14]
+                    }
+                  }
+                ]
+              }
             }}
           >
             <IoInformationCircleOutline className="text-sm" />
@@ -187,7 +190,7 @@ export default function Form({
         <label>Event Poster</label>
         <input
           name="poster"
-          placeholder="https://www.placeholderImage.png"
+          placeholder={profile_picture_src}
           className="border-black border rounded-lg px-3 h-12"
           value={formData.poster}
           onChange={(e) => setFormData({ ...formData, ["poster"]: e.target.value })}

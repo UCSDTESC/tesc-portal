@@ -5,6 +5,7 @@ import UserContext from "@lib/UserContext";
 import LoginModal from "./LoginModal";
 import TESC from "/TESC.png";
 import BasicMenu from "@components/User/BasicMenu";
+import { Button } from "@components/components/ui/button";
 export default function Navbar() {
   const { User } = useContext(UserContext);
   const { showLoginModal, setShowLoginModal } = useContext(UserContext);
@@ -24,14 +25,15 @@ export default function Navbar() {
       {!User ||
         (!User.id && (
           <>
-            <button
-              className="  px-5 cursor-pointer h-[40px] right-10 bg-navy rounded-full hover:opacity-80"
+            <Button
+              // className="rounded-full h-8 px-4 text-sm"
+              className="font-DM text-lg font-semibold  px-5 cursor-pointer h-[40px] right-10 bg-navy rounded-full"
               onClick={() => {
                 setShowLoginModal(true);
               }}
             >
               Log in
-            </button>
+            </Button>
           </>
         ))}
       {showLoginModal &&

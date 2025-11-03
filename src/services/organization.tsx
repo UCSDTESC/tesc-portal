@@ -8,3 +8,15 @@ export const fetchOrgs = async () => {
   }
   return { events: null, error };
 };
+
+export const fetchGradYears = async () => {
+  const { data, error } = await supabase.from("Users").select("expected_grad");
+  if (data) {
+    const events = data
+      .filter((item) => item.expected_grad !== null && item.expected_grad !== undefined)
+      .map((item) => item.expected_grad);
+    const unique = [...new Set(events)];
+    return { gradYears: unique, error };
+  }
+  return { gradYears: null, error };
+};

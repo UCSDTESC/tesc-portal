@@ -1,26 +1,36 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
-import { fetchOrgs } from "@services/organization";
+import { fetchGradYears, fetchOrgs } from "@services/organization";
 import { editRSVP, fetchRSVPAndAttended, logAttendance } from "@services/user";
-import { queryEventsBySearchAndFilters } from "@services/event";
+import { queryEventsBySearchAndFilters, queryPeopleBySearchAndFilters } from "@services/event";
 import UserContext, { User } from "@lib/UserContext";
-import { Event } from "@lib/constants";
+import { Event, Member } from "@lib/constants";
 import DisplayToast from "@lib/hooks/useToast";
 
 // custom hook for bulletin component
 export function useBulletin(User: User | null) {
   const { setShowLoginModal } = useContext(UserContext);
   const [data, setData] = useState<Event[]>();
-  const [RSVP, setRSVP] = useState<number[]>([]);
-  const [attendance, setAttendance] = useState<number[]>([]);
+  const [People, setPeople] = useState<Member[]>();
+  const [RSVP, setRSVP] = useState<string[]>([]);
+  const [attendance, setAttendance] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [orgs, setOrgs] = useState<string[]>([]);
   const [tagFilters, setTagFilters] = useState<string[]>([]);
   const [orgFilters, setOrgFilters] = useState<string[]>([]);
   const [sortMethod, setSortMethod] = useState<string>("");
-
+  const [gradYears, setGradYears] = useState<string[]>([]);
   // fetch list of organizations
   useEffect(() => {
+    const getGradYears = async () => {
+      const { gradYears, error } = await fetchGradYears();
+      if (gradYears) {
+        setGradYears(gradYears);
+      } else {
+        console.error(error?.message);
+        DisplayToast("Error Fetching Grad Years", "error");
+      }
+    };
     const getOrgs = async () => {
       const { events, error } = await fetchOrgs();
       if (events) {
@@ -31,26 +41,41 @@ export function useBulletin(User: User | null) {
       }
     };
     getOrgs();
+    getGradYears();
   }, []);
 
   // fetch events (with any searches and filters)
   useEffect(() => {
     const fetchEvents = async () => {
-      const { events, error } = await queryEventsBySearchAndFilters(
-        search,
-        tagFilters,
-        orgFilters,
-        sortMethod
-      );
-      if (events) {
-        setData(events as unknown as Event[]);
+      if (User?.role === "company") {
+        const { People, error } = await queryPeopleBySearchAndFilters(
+          search,
+          tagFilters,
+          orgFilters,
+          sortMethod
+        );
+        if (People) {
+          setPeople(People as unknown as Member[]);
+        } else {
+          console.error(error?.message);
+        }
       } else {
-        console.error(error?.message);
-        DisplayToast("Error fetching events", "error");
+        const { events, error } = await queryEventsBySearchAndFilters(
+          search,
+          tagFilters,
+          orgFilters,
+          sortMethod
+        );
+        if (events) {
+          setData(events as unknown as Event[]);
+        } else {
+          console.error(error?.message);
+          DisplayToast("Error fetching events", "error");
+        }
       }
     };
     fetchEvents();
-  }, [search, tagFilters, orgFilters, sortMethod]);
+  }, [search, tagFilters, orgFilters, sortMethod, User]);
 
   // fetch RSVP and attended events
   useEffect(() => {
@@ -69,7 +94,7 @@ export function useBulletin(User: User | null) {
     fetchRSVPAndAttendedEvents();
   }, [User]);
 
-  const handleRSVP = async (id: number, remove: boolean) => {
+  const handleRSVP = async (id: string, remove: boolean) => {
     // if user is not logged in, show login modal
     if (!User?.id) {
       setShowLoginModal(true);
@@ -96,8 +121,9 @@ export function useBulletin(User: User | null) {
     }
   };
 
-  const handleAttendance = async (selection: number) => {
+  const handleAttendance = async (selection: string) => {
     // if user is not logged in, show login modal
+
     if (!User?.id) {
       setShowLoginModal(true);
     } else {
@@ -119,7 +145,9 @@ export function useBulletin(User: User | null) {
 
   return {
     data,
+    People,
     tagFilters,
+    gradYears,
     RSVP,
     attendance,
     handleAttendance,
@@ -136,11 +164,13 @@ export function useBulletin(User: User | null) {
 
 export interface BulletinContextProps {
   data: Event[] | undefined;
+  People: Member[] | undefined;
   tagFilters: string[];
-  RSVP: number[];
-  attendance: number[];
-  handleAttendance: (selection: number) => void;
-  handleRSVP: (selection: number, remove: boolean) => void;
+  gradYears: string[];
+  RSVP: string[];
+  attendance: string[];
+  handleAttendance: (selection: string) => void;
+  handleRSVP: (selection: string, remove: boolean) => void;
   setTagFilters: (tags: string[]) => void;
   setSearch: (search: string) => void;
   orgFilters: string[];
@@ -152,7 +182,9 @@ export interface BulletinContextProps {
 
 export const BulletinContext = createContext<BulletinContextProps>({
   data: [],
+  People: [],
   tagFilters: [],
+  gradYears: [],
   RSVP: [],
   attendance: [],
   handleAttendance: () => {},

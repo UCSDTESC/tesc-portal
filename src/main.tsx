@@ -16,7 +16,7 @@ createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
       <Routes>
         <Route element={<Page />}>
-          <Route path="" element={<Navigate to="bulletin" />} />
+          <Route path="" element={<Navigate to="bulletin/-1" />} />
           <Route path="form" element={<Form id={0} onSuccess={function (): void {}} />} />
           <Route path="bulletin">
             <Route path=":postId" element={<Bulletin />} />

@@ -4,7 +4,8 @@ import { useNavigate } from "react-router";
 import UserContext from "@lib/UserContext";
 import { MuiOtpInput } from "mui-one-time-password-input";
 import DisplayToast from "@lib/hooks/useToast";
-
+import { motion } from "motion/react";
+import { container_login, item } from "@lib/constants";
 export default function LoginModal({ onclose }: { onclose: () => void }) {
   const [register, setRegister] = useState(false);
   const [OTPFlag, setOTPFlag] = useState(false);
@@ -105,35 +106,50 @@ export default function LoginModal({ onclose }: { onclose: () => void }) {
 
         {/* ----- OTP ENTRY (signup or recovery) ----- */}
         {OTPFlag || forgotOTPFlag ? (
-          <form
+          <motion.form
+            variants={container_login}
+            initial="hidden"
+            animate="show"
             className="flex items-center justify-center gap-5 flex-col w-full h-full"
             onSubmit={(e) => {
               e.preventDefault();
               handleOTPSubmit();
             }}
           >
-            <h1 className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A]">
+            <motion.h1
+              className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A]"
+              variants={item}
+            >
               Check your Email!
-            </h1>
-            <p className="font-DM text-xl w-3/4 text-[#262626] hidden md:block">
-              Please check your <strong>Email</strong> for a one-time 6-digit verification code.
-            </p>
-            <MuiOtpInput
-              value={otp}
-              length={6}
-              onChange={(val) => setOtp(val)}
-              className="rounded-lg w-3/4 !gap-1 flex max-w-[500px]"
-            />
-            <button
+            </motion.h1>
+            <motion.p
+              className="font-DM text-xl w-3/4 text-[#262626] hidden md:block"
+              variants={item}
+            >
+              Please check your <strong>Email</strong> for a one-time 6-digit verification code
+            </motion.p>
+            <motion.div variants={item}>
+              <MuiOtpInput
+                value={otp}
+                length={6}
+                onChange={(val) => setOtp(val)}
+                className="rounded-lg w-3/4 !gap-1 flex max-w-[500px]"
+              />
+            </motion.div>
+            <motion.button
+              variants={item}
               type="submit"
               className="cursor-pointer rounded-2xl max-w-[500px] py-1 px-5 w-3/4 bg-white border border-navy text-navy font-bold"
             >
               Submit Code
-            </button>
-          </form>
+            </motion.button>
+          </motion.form>
         ) : resetFlag ? (
           /* ----- RESET PASSWORD AFTER RECOVERY OTP ----- */
-          <form
+          <motion.form
+            variants={container_login}
+            initial="hidden"
+            animate="show"
             onSubmit={handleResetSubmit}
             className="flex items-center justify-center gap-5 flex-col w-full h-full"
           >
