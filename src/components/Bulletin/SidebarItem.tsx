@@ -5,7 +5,7 @@ import { useNavigate } from "react-router";
 export function SidebarClub({
   daton,
   setSelection,
-  selection
+  selection,
 }: {
   daton: Event;
   setSelection: (selection: string) => void;
@@ -60,7 +60,7 @@ export function SidebarClub({
             />
           )}
           <div className="flex flex-col">
-            <div className="font-bold text-[19px] w-full line-clamp-1">{daton.title}</div>
+            <div className="font-bold text-[19px] w-full line-clamp-1 text-left">{daton.title}</div>
             <div className="text-[12px] opacity-70 w-full text-left">
               {daton.org_emails ? daton.org_emails.org_name : "unknown"}
             </div>
@@ -82,7 +82,7 @@ export function SidebarClub({
 export function SidebarCompany({
   daton,
   setSelection,
-  selection
+  selection,
 }: {
   daton: Member;
   setSelection: (selection: string) => void;
