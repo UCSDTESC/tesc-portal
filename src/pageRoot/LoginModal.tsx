@@ -103,47 +103,36 @@ export default function LoginModal({ onclose }: { onclose: () => void }) {
         onClick={onclose}
       />
       <div className="min-w-80 w-1/2 h-3/4 max-w-[500px] bg-white rounded-lg z-1 flex justify-center">
-
         {/* ----- OTP ENTRY (signup or recovery) ----- */}
         {OTPFlag || forgotOTPFlag ? (
-          <motion.form
-            variants={container_login}
-            initial="hidden"
-            animate="show"
+          <form
             className="flex items-center justify-center gap-5 flex-col w-full h-full"
             onSubmit={(e) => {
               e.preventDefault();
               handleOTPSubmit();
             }}
           >
-            <motion.h1
-              className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A]"
-              variants={item}
-            >
+            <h1 className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A]">
               Check your Email!
-            </motion.h1>
-            <motion.p
-              className="font-DM text-xl w-3/4 text-[#262626] hidden md:block"
-              variants={item}
-            >
+            </h1>
+            <p className="font-DM text-xl w-3/4 text-[#262626] hidden md:block" variants={item}>
               Please check your <strong>Email</strong> for a one-time 6-digit verification code
-            </motion.p>
-            <motion.div variants={item}>
+            </p>
+            <div className="w-full flex justify-center">
               <MuiOtpInput
                 value={otp}
                 length={6}
                 onChange={(val) => setOtp(val)}
                 className="rounded-lg w-3/4 !gap-1 flex max-w-[500px]"
               />
-            </motion.div>
-            <motion.button
-              variants={item}
+            </div>
+            <button
               type="submit"
               className="cursor-pointer rounded-2xl max-w-[500px] py-1 px-5 w-3/4 bg-white border border-navy text-navy font-bold"
             >
               Submit Code
-            </motion.button>
-          </motion.form>
+            </button>
+          </form>
         ) : resetFlag ? (
           /* ----- RESET PASSWORD AFTER RECOVERY OTP ----- */
           <motion.form
@@ -178,32 +167,40 @@ export default function LoginModal({ onclose }: { onclose: () => void }) {
             >
               Submit
             </button>
-          </form>
+          </motion.form>
         ) : (
           /* ----- DEFAULT LOGIN / REGISTER / FORGOT ----- */
-          <form
+          <motion.form
+            variants={container_login}
+            initial="hidden"
+            animate="show"
             onSubmit={handleSubmit}
             className="flex items-center justify-center gap-5 flex-col w-full h-full"
           >
-            <h1 className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A] text-center">
-              {forgot
-                ? "Reset your password"
-                : "Welcome to TESC!"}
-            </h1>
+            <motion.h1
+              className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A] text-center"
+              variants={item}
+            >
+              {forgot ? "Reset your password" : "Welcome to TESC!"}
+            </motion.h1>
 
-            <p className="font-DM text-xl w-3/4 text-center text-balance text-[#262626] hidden md:block">
-              {forgot
-                ? "Enter your UCSD email and we'll send you a 6-digit recovery code."
-                : (
-                  <>
-                    Whether you are a <strong>returning member</strong> or a{" "}
-                    <strong>new member</strong>, we're glad to have you!
-                  </>
-                )}
-            </p>
+            <motion.p
+              className="font-DM text-xl w-3/4 text-center text-balance text-[#262626] hidden md:block"
+              variants={item}
+            >
+              {forgot ? (
+                "Enter your UCSD email and we'll send you a 6-digit recovery code."
+              ) : (
+                <>
+                  Whether you are a <strong>returning member</strong> or a{" "}
+                  <strong>new member</strong>, we're glad to have you!
+                </>
+              )}
+            </motion.p>
 
             {/* always need email */}
-            <input
+            <motion.input
+              variants={item}
               name="email"
               type="text"
               placeholder="✉ UCSD email"
@@ -236,9 +233,8 @@ export default function LoginModal({ onclose }: { onclose: () => void }) {
 
             {Error && <div className="text-red-600 text-sm">Error: {Error}</div>}
 
-            <div className="w-3/4">
+            <motion.div className="w-3/4" variants={item}>
               <div className="flex items-center justify-between">
-
                 {/* left link: register toggle OR back-to-login */}
                 <button
                   type="button"
@@ -259,7 +255,9 @@ export default function LoginModal({ onclose }: { onclose: () => void }) {
                 >
                   {forgot
                     ? "Back to sign in"
-                    : (register ? "Already a user? Log in" : "Register a new account")}
+                    : register
+                    ? "Already a user? Log in"
+                    : "Register a new account"}
                 </button>
 
                 {/* right link: forgot password (only show on login) */}
@@ -278,23 +276,23 @@ export default function LoginModal({ onclose }: { onclose: () => void }) {
                   </button>
                 )}
               </div>
-            </div>
+            </motion.div>
 
-            <button
+            <motion.button
+              variants={item}
               type="submit"
               className={`cursor-pointer rounded-2xl py-1 px-5 w-3/4 text-navy font-bold ${
                 forgot
                   ? "bg-white border border-navy"
-                  : (register
-                      ? "bg-white border border-navy"
-                      : "bg-[#6A97BD] border border-[#6A97BD]")}
+                  : register
+                  ? "bg-white border border-navy"
+                  : "bg-[#6A97BD] border border-[#6A97BD]"
+              }
               `}
             >
-              {forgot
-                ? "Send Recovery Code"
-                : (register ? "Sign up" : "Sign in")}
-            </button>
-          </form>
+              {forgot ? "Send Recovery Code" : register ? "Sign up" : "Sign in"}
+            </motion.button>
+          </motion.form>
         )}
       </div>
     </div>
