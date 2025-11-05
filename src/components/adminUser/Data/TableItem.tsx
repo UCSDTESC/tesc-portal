@@ -6,17 +6,24 @@ import { FaRegEye, FaRegEyeSlash } from "react-icons/fa6";
 import { extensions } from "../Form/EditorExtensions";
 import { Event } from "@lib/constants";
 import supabase from "@server/supabase";
-import { CopyButton } from "@components/ui/shadcn-io/copy-button";
+import { CSVLink } from "react-csv";
+import { IoMdDownload } from "react-icons/io";
+import { motion } from "motion/react";
 export default function TableItem({
   daton,
   handleDelete,
-  openEditModal
+  openEditModal,
 }: {
   daton: Event;
   handleDelete: (id: string) => Promise<void>;
   openEditModal: (daton: Event) => void;
 }) {
-  const [attendees, setAttendees] = useState<{ user_id: string; Users: { email: string } }[]>([]);
+  const [attendees, setAttendees] = useState<
+    {
+      user_id: string;
+      Users: { email: string; first_name: string; last_name: string; major: string };
+    }[]
+  >([]);
   const [displayAttendees, setDisplayAttendees] = useState(false);
   const toggleAttendees = () => {
     setDisplayAttendees(!displayAttendees);
@@ -26,10 +33,15 @@ export default function TableItem({
   const fetchAttendees = async () => {
     const { data } = await supabase
       .from("Attendance_Log")
-      .select("user_id, Users (email)")
+      .select("user_id, Users (email, first_name,last_name,major)")
       .eq("event_id", daton.id);
     if (data) {
-      setAttendees(data as object as { user_id: string; Users: { email: string } }[]);
+      setAttendees(
+        data as object as {
+          user_id: string;
+          Users: { email: string; first_name: string; last_name: string; major: string };
+        }[]
+      );
     }
   };
   return (
@@ -80,16 +92,39 @@ export default function TableItem({
           <div className="line-clamp-1 h-7 overflow-x-clip w-min">
             {displayAttendees &&
               attendees.map((attendee) => {
-                return <>{attendee.Users.email + ", "}</>;
+                return (
+                  <>
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      {attendee.Users.email + ", "}
+                    </motion.div>
+                  </>
+                );
               })}
           </div>
-          <div className="ml-auto flex items-center">
+          <div className="ml-auto flex items-center gap-1">
             {displayAttendees && (
-              <CopyButton
-                content={attendees.map((attendee) => attendee.Users.email).join("\n")}
-                variant="ghost"
-                size="sm"
-              />
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2, delay: 0.1 }}
+              >
+                <CSVLink
+                  data={attendees.map((attendee) => ({
+                    user_id: attendee.user_id,
+                    email: attendee.Users.email,
+                    first_name: attendee.Users.first_name,
+                    last_name: attendee.Users.last_name,
+                    major: attendee.Users.major,
+                  }))}
+                  className="opacity-50 hover:opacity-95"
+                >
+                  <IoMdDownload />
+                </CSVLink>
+              </motion.div>
             )}
             <button className=" cursor-pointer w-min" onClick={toggleAttendees}>
               {displayAttendees ? (
@@ -119,8 +154,8 @@ export default function TableItem({
           editable={false}
           editorProps={{
             attributes: {
-              class: "ml-8 w-full col-span-2 focus:outline-none max-h-[40vh] overflow-y-auto"
-            }
+              class: "ml-8 w-full col-span-2 focus:outline-none max-h-[40vh] overflow-y-auto",
+            },
           }}
         />
       )}
@@ -131,7 +166,7 @@ export default function TableItem({
 function DataPair({
   children,
   data,
-  className
+  className,
 }: {
   children: ReactNode;
   data: string | number | undefined;
