@@ -88,8 +88,8 @@ export default function TableItem({
           <p className="font-bold text-blue">Attendance</p>
         </DataPair>
         <div className="font-bold text-blue"> Attendees</div>
-        <label className="w-1/2 border border-lightBlue rounded-full flex items-center px-2">
-          <div className="line-clamp-1 h-7 overflow-x-clip w-min">
+        <div className="w-1/2 border border-lightBlue overflow-auto flex items-center px-2 pr-4 h-7 resize-y">
+          <div className="overflow-clip w-min h-full">
             {displayAttendees &&
               attendees.map((attendee) => {
                 return (
@@ -126,7 +126,7 @@ export default function TableItem({
                 </CSVLink>
               </motion.div>
             )}
-            <button className=" cursor-pointer w-min" onClick={toggleAttendees}>
+            <button className="cursor-pointer w-min" onClick={toggleAttendees}>
               {displayAttendees ? (
                 <FaRegEye className="pointer-events-none" />
               ) : (
@@ -134,7 +134,7 @@ export default function TableItem({
               )}
             </button>
           </div>
-        </label>
+        </div>
 
         <DataPair data={daton.tags ? daton.tags.join(", ") : "N/A"}>
           <p className="font-bold text-blue">Tags</p>
