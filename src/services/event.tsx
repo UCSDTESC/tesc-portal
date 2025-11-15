@@ -16,6 +16,7 @@ export const createEvent = async (User: User, formData: formdata) => {
     .select("org_name")
     .eq("email", User.email);
   if (org_name) {
+    console.log("----------INSERT NEW EVENT-----------");
     const { error } = await supabase.from("Events").insert({
       UID: User.id,
       title: formData.title,
@@ -34,6 +35,7 @@ export const createEvent = async (User: User, formData: formdata) => {
 };
 
 export const deleteEvent = async (id: string) => {
+  console.log("-------------DELETE EVENT-------------");
   const { error } = await supabase.from("Events").update({ deleted: true }).eq("id", id);
   return error;
 };

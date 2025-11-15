@@ -16,6 +16,7 @@ export function SidebarClub({
   const imageRef = useRef(null);
   useEffect(() => {
     const fetchPfpImage = async () => {
+      console.log("------------FETCH PROFILE PICTURE IMAGE FOR SIDEBAR ITEM---------");
       const { data: pfpString, error } = await supabase
         .from("Users")
         .select("pfp_str")
@@ -39,7 +40,7 @@ export function SidebarClub({
       }`}
       onClick={() => {
         navigate(selection != "-1" ? "/bulletin/-1" : `/bulletin/${daton.id}`);
-        setSelection(selection != "-1" ? "-1" : String(daton.id));
+        setSelection(selection != "-1" && selection == String(daton.id) ? "-1" : String(daton.id));
       }}
     >
       <div className="flex flex-col justify-between rounded-lg bg-white h-full w-full p-1">
@@ -97,7 +98,7 @@ export function SidebarCompany({
       }`}
       onClick={() => {
         navigate(selection != "-1" ? "/bulletin/-1" : `/bulletin/${daton.email}`);
-        setSelection(selection != "-1" ? "-1" : daton.email);
+        setSelection(selection != "-1" && selection == daton.email ? "-1" : daton.email);
       }}
     >
       <div className="flex flex-col rounded-lg bg-white h-full w-full px-4">

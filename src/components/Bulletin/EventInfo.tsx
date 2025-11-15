@@ -6,7 +6,7 @@ import { DateParser, formatGoogleCalendarEvent, formatGoogleMapsLocation } from 
 import googleCalendar from "/Google_Calendar_icon_(2020).svg";
 import supabase from "@server/supabase";
 import UserContext from "@lib/UserContext";
-import { WelcomePage } from "./WecomePage";
+import { WelcomePage } from "./WelcomePage";
 import { motion } from "motion/react";
 import { container, item } from "@lib/constants";
 
@@ -28,16 +28,17 @@ export default function EventInfo({ selection }: { selection: string }) {
       setImageUrl("");
       return;
     }
+    console.log("-------GET EVENT SPECIFIC ORG PROFILE PIC---------")
     const { data: URL } = supabase.storage
       .from("profile.images")
       .getPublicUrl(`${filtered[0].org_emails?.org_name}/${filtered[0].Users?.pfp_str}`);
     if (URL) {
       setImageUrl(URL.publicUrl);
-      console.log(URL.publicUrl);
     } else {
       setImageUrl("");
     }
   }, [data, selection, User?.role]);
+
   return (
     <>
       {selection != "-1" ? (
@@ -49,6 +50,7 @@ export default function EventInfo({ selection }: { selection: string }) {
                 variants={container}
                 initial="hidden"
                 animate="show"
+                key={daton.id}
               >
                 {imageUrl ? (
                   <motion.img
@@ -120,7 +122,9 @@ export default function EventInfo({ selection }: { selection: string }) {
                       <div className="flex gap-2">
                         {daton.tags.map((tag) => {
                           return (
-                            <div className="bg-lightBlue px-2 rounded-2xl font-semibold">{tag}</div>
+                            <div key={tag} className="bg-lightBlue px-2 rounded-2xl font-semibold">
+                              {tag}
+                            </div>
                           );
                         })}
                       </div>
