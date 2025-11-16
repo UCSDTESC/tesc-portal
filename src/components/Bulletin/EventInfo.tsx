@@ -4,7 +4,6 @@ import { RsvpOrAttendanceButton } from "./RsvpOrAttendanceButton";
 import Editor from "./Editor";
 import { DateParser, formatGoogleCalendarEvent, formatGoogleMapsLocation } from "@lib/utils";
 import googleCalendar from "/Google_Calendar_icon_(2020).svg";
-import supabase from "@server/supabase";
 import UserContext from "@lib/UserContext";
 import { WelcomePage } from "./WelcomePage";
 import { motion } from "motion/react";
@@ -28,15 +27,9 @@ export default function EventInfo({ selection }: { selection: string }) {
       setImageUrl("");
       return;
     }
-    console.log("-------GET EVENT SPECIFIC ORG PROFILE PIC---------")
-    const { data: URL } = supabase.storage
-      .from("profile.images")
-      .getPublicUrl(`${filtered[0].org_emails?.org_name}/${filtered[0].Users?.pfp_str}`);
-    if (URL) {
-      setImageUrl(URL.publicUrl);
-    } else {
-      setImageUrl("");
-    }
+    setImageUrl(
+      `https://mxbwjmjpevvyejnugisy.supabase.co/storage/v1/object/public/profile.images/${filtered[0].org_emails?.org_name}/${filtered[0].Users?.pfp_str}`
+    );
   }, [data, selection, User?.role]);
 
   return (

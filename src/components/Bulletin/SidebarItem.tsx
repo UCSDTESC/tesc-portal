@@ -1,5 +1,4 @@
 import { Event, Member } from "@lib/constants";
-import supabase from "@server/supabase";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 export function SidebarClub({
@@ -15,22 +14,9 @@ export function SidebarClub({
   const navigate = useNavigate();
   const imageRef = useRef(null);
   useEffect(() => {
-    const fetchPfpImage = async () => {
-      console.log("------------FETCH PROFILE PICTURE IMAGE FOR SIDEBAR ITEM---------");
-      const { data: pfpString, error } = await supabase
-        .from("Users")
-        .select("pfp_str")
-        .eq("uuid", daton.UID);
-      if (pfpString && pfpString[0].pfp_str) {
-        setImageURL(
-          `https://mxbwjmjpevvyejnugisy.supabase.co/storage/v1/object/public/profile.images/${daton.org_emails?.org_name}/${pfpString[0].pfp_str}`
-        );
-      }
-      if (error) {
-        console.log(error);
-      }
-    };
-    fetchPfpImage();
+    setImageURL(
+      `https://mxbwjmjpevvyejnugisy.supabase.co/storage/v1/object/public/profile.images/${daton.org_emails?.org_name}/${daton.Users?.pfp_str}`
+    );
   }, []);
   return (
     <button

@@ -1,7 +1,9 @@
 import supabase from "@server/supabase";
 import { formdata } from "@lib/constants";
 import { User } from "@lib/UserContext";
+
 export const fetchEventByOrg = async (uid: string) => {
+  console.log("FETCH EVENTS");
   const { data, error } = await supabase
     .from("Events")
     .select()
