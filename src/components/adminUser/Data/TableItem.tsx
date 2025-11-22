@@ -107,7 +107,7 @@ export default function TableItem({
           <p className="font-bold text-blue">Attendance</p>
         </DataPair>
         <div className="font-bold text-blue"> Attendees</div>
-        <div className="w-1/2 border border-lightBlue overflow-auto flex items-center px-2 pr-4 h-7 resize-y">
+        <div className="w-1/2 border border-lightBlue overflow-auto flex items-center px-2 pr-4 min-h-7 h-7 resize-y">
           <div className="overflow-clip w-min h-full">
             {displayAttendees &&
               attendees.map((attendee) => {
