@@ -9,10 +9,11 @@ import supabase from "@server/supabase";
 import { CSVLink } from "react-csv";
 import { IoMdDownload } from "react-icons/io";
 import { motion } from "motion/react";
+import { DeleteConfirmationModal } from "./DeleteConfirmationModal";
 export default function TableItem({
   daton,
   handleDelete,
-  openEditModal,
+  openEditModal
 }: {
   daton: Event;
   handleDelete: (id: string) => Promise<void>;
@@ -25,6 +26,16 @@ export default function TableItem({
     }[]
   >([]);
   const [displayAttendees, setDisplayAttendees] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const DeleteAction = async () => {
+    setIsDeleting(true);
+    try {
+      handleDelete(daton.id);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const toggleAttendees = () => {
     setDisplayAttendees(!displayAttendees);
     if (attendees.length === 0) fetchAttendees();
@@ -49,12 +60,17 @@ export default function TableItem({
       className="border-slate-400 border bg-slate-100 rounded-lg w-full p-5 relative shadow-2xl"
       key={daton.id}
     >
-      <button
-        className="absolute right-[-15px] top-[-15px] rounded-full p-2 w-10 text-white bg-red-700 hover:bg-red-800 cursor-pointer"
-        onClick={() => handleDelete(daton.id)}
-      >
-        <DeleteOutlined />
-      </button>
+      <DeleteConfirmationModal
+        itemName="this post"
+        isDeleting={isDeleting}
+        onConfirm={DeleteAction}
+        trigger={
+          <button className="absolute right-[-15px] top-[-15px] rounded-full p-2 w-10 text-white bg-red-700 hover:bg-red-800 cursor-pointer">
+            <DeleteOutlined />
+          </button>
+        }
+      />
+
       <button
         className="absolute right-[30px] top-[-15px] rounded-full p-2 w-10 text-black bg-gray-300 hover:bg-gray-400 cursor-pointer"
         onClick={() => openEditModal(daton)}
@@ -121,7 +137,7 @@ export default function TableItem({
                     email: attendee.Users.email,
                     first_name: attendee.Users.first_name,
                     last_name: attendee.Users.last_name,
-                    major: attendee.Users.major,
+                    major: attendee.Users.major
                   }))}
                   className="opacity-50 hover:opacity-95"
                 >
@@ -157,8 +173,8 @@ export default function TableItem({
           editable={false}
           editorProps={{
             attributes: {
-              class: "ml-8 w-full col-span-2 focus:outline-none max-h-[40vh] overflow-y-auto",
-            },
+              class: "ml-8 w-full col-span-2 focus:outline-none max-h-[40vh] overflow-y-auto"
+            }
           }}
         />
       )}
@@ -169,7 +185,7 @@ export default function TableItem({
 function DataPair({
   children,
   data,
-  className,
+  className
 }: {
   children: ReactNode;
   data: string | number | undefined;
