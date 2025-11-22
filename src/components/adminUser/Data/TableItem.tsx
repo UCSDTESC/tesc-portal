@@ -83,6 +83,9 @@ export default function TableItem({
         <DataPair data={daton.rsvp}>
           <p className="font-bold text-blue">RSVP Count</p>
         </DataPair>
+        <DataPair data={daton.attendance_cap}>
+          <p className="font-bold text-blue">Max RSVP </p>
+        </DataPair>
 
         <DataPair data={daton.attendance}>
           <p className="font-bold text-blue">Attendance</p>

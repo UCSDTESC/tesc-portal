@@ -185,6 +185,12 @@ export default function Form({
 
         <label>Event Location</label>
         <Dropdown formData={formData} handleChange={handleChange} />
+        <label htmlFor="StartTime">Attendance cap</label>
+        <input
+          value={formData.attendance_cap}
+          className="border-black border rounded-lg px-3 h-12 flex items-center"
+          onChange={(e) => handleChange(e.target.value, ["attendance_cap"])}
+        />
         <label>Tags</label>
         <MultipleSelectChip formData={formData} handleChange={handleChange} />
         <label>Event Poster</label>

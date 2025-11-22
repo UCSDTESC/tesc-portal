@@ -55,7 +55,8 @@ export const updateEvent = async (eventId: string, uid: string, formData: formda
       location_str: formData.location_str,
       content: formData.content,
       tags: formData.tags,
-      poster: formData.poster
+      poster: formData.poster,
+      attendance_cap: formData.attendance_cap ? Number(formData.attendance_cap) : null
     })
     .eq("id", eventId);
   return error;
@@ -70,7 +71,7 @@ export const queryEventsBySearchAndFilters = async (
   let query = supabase
     .from("Events")
     .select(
-      "UID,content,created_at,end_date,id,location_str,start_date,tags,title,attendance,poster,rsvp,Users (uuid,email,pfp_str), org_emails (email,org_name)"
+      "UID,content,created_at,end_date,id,location_str,start_date,tags,title,attendance,poster,rsvp,Users (uuid,email,pfp_str), org_emails (email,org_name),attendance_cap"
     )
     .ilike("title", `%${keyword}%`)
     .eq("deleted", false);
