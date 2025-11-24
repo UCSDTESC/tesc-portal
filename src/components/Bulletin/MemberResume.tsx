@@ -5,7 +5,7 @@ import { Card, CardContent } from "@mui/material";
 import { motion } from "motion/react";
 import { useContext, useEffect } from "react";
 import { FaDiamond } from "react-icons/fa6";
-import { WelcomePageCompany } from "./WecomePage";
+import { WelcomePageCompany } from "./WelcomePage";
 
 export default function MemberResume({ selection }: { selection: string }) {
   const { People } = useContext(BulletinContext);

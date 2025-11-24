@@ -48,6 +48,15 @@ export function WelcomePage() {
                 <li>View upcoming events being hosted by engineering orgs all over campus</li>
                 <li>Get connected with potential employers</li>
                 <li>Earn points by attending events</li>
+                <li>
+                  Any feedback is welcome&nbsp;
+                  <a
+                    href="https://docs.google.com/forms/d/e/1FAIpQLSfVzJQ8li2d8is_hpj3btZbfrYGp1FZR00_OojU5uG5YZ4yuA/viewform?usp=dialog"
+                    className="text-blue hover:underline"
+                  >
+                    here on this feedback form
+                  </a>
+                </li>
               </ul>
 
               <Separator />

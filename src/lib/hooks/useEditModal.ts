@@ -23,6 +23,7 @@ export function useEditModal() {
       content: daton.content,
       tags: daton.tags,
       poster: daton.poster,
+      attendance_cap: daton.attendance_cap
     });
   };
 

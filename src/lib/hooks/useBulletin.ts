@@ -47,6 +47,7 @@ export function useBulletin(User: User | null) {
   // fetch events (with any searches and filters)
   useEffect(() => {
     const fetchEvents = async () => {
+      console.log("----FETCH EVENTS---");
       if (User?.role === "company") {
         const { People, error } = await queryPeopleBySearchAndFilters(
           search,

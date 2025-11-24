@@ -5,7 +5,7 @@ import linkedInIcon from "/social-icons/LinkedIn.png";
 import twitterIcon from "/social-icons/Twitter.png";
 const Footer = () => {
   const contactIcons = (
-    <div className="flex m-0 p-0 h-[39px] items-center gap-[25px]">
+    <div className="flex m-0 p-0 h-[39px] items-center gap-[25px] ">
       <a
         href="mailto:contact@tesc.ucsd.edu"
         className="text-white text-[clamp(20px,2vw,26px)] leading-[39px]"
@@ -53,6 +53,15 @@ const Footer = () => {
             involved.
           </p>
           {contactIcons}
+          <p className="text-white mt-5">
+            Have an issue or a suggestion to report? &nbsp;
+            <a
+              href="https://docs.google.com/forms/d/e/1FAIpQLSfVzJQ8li2d8is_hpj3btZbfrYGp1FZR00_OojU5uG5YZ4yuA/viewform?usp=dialog"
+              className="text-lightBlue hover:underline"
+            >
+              Click here to give us feedback
+            </a>
+          </p>
         </div>
       </footer>
     </>

@@ -4,9 +4,8 @@ import { RsvpOrAttendanceButton } from "./RsvpOrAttendanceButton";
 import Editor from "./Editor";
 import { DateParser, formatGoogleCalendarEvent, formatGoogleMapsLocation } from "@lib/utils";
 import googleCalendar from "/Google_Calendar_icon_(2020).svg";
-import supabase from "@server/supabase";
 import UserContext from "@lib/UserContext";
-import { WelcomePage } from "./WecomePage";
+import { WelcomePage } from "./WelcomePage";
 import { motion } from "motion/react";
 import { container, item } from "@lib/constants";
 
@@ -28,16 +27,11 @@ export default function EventInfo({ selection }: { selection: string }) {
       setImageUrl("");
       return;
     }
-    const { data: URL } = supabase.storage
-      .from("profile.images")
-      .getPublicUrl(`${filtered[0].org_emails?.org_name}/${filtered[0].Users?.pfp_str}`);
-    if (URL) {
-      setImageUrl(URL.publicUrl);
-      console.log(URL.publicUrl);
-    } else {
-      setImageUrl("");
-    }
+    setImageUrl(
+      `https://mxbwjmjpevvyejnugisy.supabase.co/storage/v1/object/public/profile.images/${filtered[0].org_emails?.org_name}/${filtered[0].Users?.pfp_str}`
+    );
   }, [data, selection, User?.role]);
+
   return (
     <>
       {selection != "-1" ? (
@@ -49,6 +43,7 @@ export default function EventInfo({ selection }: { selection: string }) {
                 variants={container}
                 initial="hidden"
                 animate="show"
+                key={daton.id}
               >
                 {imageUrl ? (
                   <motion.img
@@ -72,14 +67,22 @@ export default function EventInfo({ selection }: { selection: string }) {
                   <motion.h1 variants={item} className="font-bold text-4xl">
                     {daton.title}
                   </motion.h1>
-                  <RsvpOrAttendanceButton
-                    {...{
-                      start_date: daton.start_date,
-                      end_date: daton.end_date,
-                      selection
-                    }}
-                    className="absolute bottom-0 right-[5%] bg-lightBlue hover:opacity-80"
-                  />
+                  {daton.attendance_cap != null &&
+                    (daton.attendance < daton.attendance_cap &&
+                    daton.rsvp < daton.attendance_cap ? (
+                      <RsvpOrAttendanceButton
+                        {...{
+                          start_date: daton.start_date,
+                          end_date: daton.end_date,
+                          selection
+                        }}
+                        className="absolute bottom-0 right-[5%] bg-lightBlue hover:opacity-80"
+                      />
+                    ) : (
+                      <div className="text-red-600 underline bold px-4 py-2 rounded-lg cursor-pointer w-fit h-fit absolute bottom-0 right-0 ">
+                        Event attendance cap reached
+                      </div>
+                    ))}
                   <motion.p className="text-lg text-[#898989]" variants={item}>
                     {daton.org_emails?.org_name ? daton.org_emails.org_name : "Unknown"}
                   </motion.p>
@@ -120,7 +123,9 @@ export default function EventInfo({ selection }: { selection: string }) {
                       <div className="flex gap-2">
                         {daton.tags.map((tag) => {
                           return (
-                            <div className="bg-lightBlue px-2 rounded-2xl font-semibold">{tag}</div>
+                            <div key={tag} className="bg-lightBlue px-2 rounded-2xl font-semibold">
+                              {tag}
+                            </div>
                           );
                         })}
                       </div>

@@ -33,11 +33,14 @@ export default function Profile() {
 
   useEffect(() => {
     const fetchpfp = async () => {
+      console.log("------FETCHING PROFILE PICTURE-------");
+      console.log("getting profile picture path from Users");
       const { data: pfp_name } = await supabase
         .from("Users")
         .select("pfp_str")
         .eq("email", User?.email);
       if (pfp_name) {
+        console.log("pulling profile picture link from storage");
         const { data: URL } = supabase.storage
           .from("profile.images")
           .getPublicUrl(`${orgname}/${pfp_name[0].pfp_str}`);
