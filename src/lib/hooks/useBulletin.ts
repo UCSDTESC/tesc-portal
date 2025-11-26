@@ -130,7 +130,7 @@ export function useBulletin(User: User | null) {
     } else {
       //log attendance
       const userInput = prompt("Please enter password:", "password");
-      const filtered = data?.filter((daton) => daton.id === selection)[0];
+      const filtered = data?.filter((daton) => String(daton.id) === String(selection))[0];
       if (filtered && userInput) {
         const error = await logAttendance(selection, User.id, userInput);
         if (error) {
