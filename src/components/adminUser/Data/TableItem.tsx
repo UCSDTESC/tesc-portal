@@ -57,11 +57,11 @@ export default function TableItem({
   };
   return (
     <div
-      className="border-slate-400 border bg-slate-100 rounded-lg w-full p-5 relative shadow-2xl"
+      className="border-slate-400 border bg-slate-100 rounded-lg w-full p-5 relative shadow-2xl min-w-[max(40vw,300px)]"
       key={daton.id}
     >
       <DeleteConfirmationModal
-        itemName="this post"
+        itemName={daton.title}
         isDeleting={isDeleting}
         onConfirm={DeleteAction}
         trigger={
