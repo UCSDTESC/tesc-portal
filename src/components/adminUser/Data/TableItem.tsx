@@ -6,7 +6,10 @@ import { FaRegEye, FaRegEyeSlash } from "react-icons/fa6";
 import { extensions } from "../Form/EditorExtensions";
 import { Event } from "@lib/constants";
 import supabase from "@server/supabase";
-import { CopyButton } from "@components/ui/shadcn-io/copy-button";
+import { CSVLink } from "react-csv";
+import { IoMdDownload } from "react-icons/io";
+import { motion } from "motion/react";
+import { DeleteConfirmationModal } from "./DeleteConfirmationModal";
 export default function TableItem({
   daton,
   handleDelete,
@@ -16,8 +19,23 @@ export default function TableItem({
   handleDelete: (id: string) => Promise<void>;
   openEditModal: (daton: Event) => void;
 }) {
-  const [attendees, setAttendees] = useState<{ user_id: string; Users: { email: string } }[]>([]);
+  const [attendees, setAttendees] = useState<
+    {
+      user_id: string;
+      Users: { email: string; first_name: string; last_name: string; major: string };
+    }[]
+  >([]);
   const [displayAttendees, setDisplayAttendees] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const DeleteAction = async () => {
+    setIsDeleting(true);
+    try {
+      handleDelete(daton.id);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const toggleAttendees = () => {
     setDisplayAttendees(!displayAttendees);
     if (attendees.length === 0) fetchAttendees();
@@ -26,10 +44,15 @@ export default function TableItem({
   const fetchAttendees = async () => {
     const { data } = await supabase
       .from("Attendance_Log")
-      .select("user_id, Users (email)")
+      .select("user_id, Users (email, first_name,last_name,major)")
       .eq("event_id", daton.id);
     if (data) {
-      setAttendees(data as object as { user_id: string; Users: { email: string } }[]);
+      setAttendees(
+        data as object as {
+          user_id: string;
+          Users: { email: string; first_name: string; last_name: string; major: string };
+        }[]
+      );
     }
   };
   return (
@@ -37,12 +60,17 @@ export default function TableItem({
       className="border-slate-400 border bg-slate-100 rounded-lg w-full p-5 relative shadow-2xl"
       key={daton.id}
     >
-      <button
-        className="absolute right-[-15px] top-[-15px] rounded-full p-2 w-10 text-white bg-red-700 hover:bg-red-800 cursor-pointer"
-        onClick={() => handleDelete(daton.id)}
-      >
-        <DeleteOutlined />
-      </button>
+      <DeleteConfirmationModal
+        itemName="this post"
+        isDeleting={isDeleting}
+        onConfirm={DeleteAction}
+        trigger={
+          <button className="absolute right-[-15px] top-[-15px] rounded-full p-2 w-10 text-white bg-red-700 hover:bg-red-800 cursor-pointer">
+            <DeleteOutlined />
+          </button>
+        }
+      />
+
       <button
         className="absolute right-[30px] top-[-15px] rounded-full p-2 w-10 text-black bg-gray-300 hover:bg-gray-400 cursor-pointer"
         onClick={() => openEditModal(daton)}
@@ -71,27 +99,53 @@ export default function TableItem({
         <DataPair data={daton.rsvp}>
           <p className="font-bold text-blue">RSVP Count</p>
         </DataPair>
+        <DataPair data={daton.attendance_cap}>
+          <p className="font-bold text-blue">Max RSVP </p>
+        </DataPair>
 
         <DataPair data={daton.attendance}>
           <p className="font-bold text-blue">Attendance</p>
         </DataPair>
         <div className="font-bold text-blue"> Attendees</div>
-        <label className="w-1/2 border border-lightBlue rounded-full flex items-center px-2">
-          <div className="line-clamp-1 h-7 overflow-x-clip w-min">
+        <div className="w-1/2 border border-lightBlue overflow-auto flex items-center px-2 pr-4 min-h-7 h-7 resize-y">
+          <div className="overflow-clip w-min h-full">
             {displayAttendees &&
               attendees.map((attendee) => {
-                return <>{attendee.Users.email + ", "}</>;
+                return (
+                  <>
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      {attendee.Users.email + ", "}
+                    </motion.div>
+                  </>
+                );
               })}
           </div>
-          <div className="ml-auto flex items-center">
+          <div className="ml-auto flex items-center gap-1">
             {displayAttendees && (
-              <CopyButton
-                content={attendees.map((attendee) => attendee.Users.email).join("\n")}
-                variant="ghost"
-                size="sm"
-              />
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2, delay: 0.1 }}
+              >
+                <CSVLink
+                  data={attendees.map((attendee) => ({
+                    user_id: attendee.user_id,
+                    email: attendee.Users.email,
+                    first_name: attendee.Users.first_name,
+                    last_name: attendee.Users.last_name,
+                    major: attendee.Users.major
+                  }))}
+                  className="opacity-50 hover:opacity-95"
+                >
+                  <IoMdDownload />
+                </CSVLink>
+              </motion.div>
             )}
-            <button className=" cursor-pointer w-min" onClick={toggleAttendees}>
+            <button className="cursor-pointer w-min" onClick={toggleAttendees}>
               {displayAttendees ? (
                 <FaRegEye className="pointer-events-none" />
               ) : (
@@ -99,7 +153,7 @@ export default function TableItem({
               )}
             </button>
           </div>
-        </label>
+        </div>
 
         <DataPair data={daton.tags ? daton.tags.join(", ") : "N/A"}>
           <p className="font-bold text-blue">Tags</p>

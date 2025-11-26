@@ -22,6 +22,8 @@ interface UserContext {
     { email, password, type }: UserCredentials & { type: "email" | "recovery" },
     OnSuccess: () => void
   ) => void;
+  handleSendRecovery: (email: string, OnSuccess: () => void) => void;
+  handleUpdatePassword: (password: string, OnSuccess: () => void) => void;
 }
 const UserContext = createContext<UserContext>({
   User: null,
@@ -44,6 +46,13 @@ const UserContext = createContext<UserContext>({
     type
   }: UserCredentials & { type: "email" | "recovery" }) => {
     console.log(email, password, type);
+  },
+  handleSendRecovery: (email: string, OnSuccess: () => void) => {
+    OnSuccess?.();
+    console.log(email);
+  },
+  handleUpdatePassword: (password: string, OnSuccess: () => void) => {
+    OnSuccess?.();
   }
 });
 export default UserContext;

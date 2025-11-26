@@ -21,7 +21,7 @@ export default function Form({
   onSuccess
 }: {
   formdata?: formdata;
-  id: number;
+  id: string;
   editEvent?: boolean;
   onSuccess: () => void;
 }) {
@@ -185,6 +185,12 @@ export default function Form({
 
         <label>Event Location</label>
         <Dropdown formData={formData} handleChange={handleChange} />
+        <label htmlFor="StartTime">Attendance cap</label>
+        <input
+          value={formData.attendance_cap}
+          className="border-black border rounded-lg px-3 h-12 flex items-center"
+          onChange={(e) => handleChange(e.target.value, ["attendance_cap"])}
+        />
         <label>Tags</label>
         <MultipleSelectChip formData={formData} handleChange={handleChange} />
         <label>Event Poster</label>
@@ -202,7 +208,7 @@ export default function Form({
           type="submit"
           className="bg-[#6A97BD] border border-[#6A97BD] text-white w-fit rounded-lg px-5 cursor-pointer"
         >
-          Submit New Event
+          {editEvent ? "Edit Event" : "Submit New Event"}
         </button>
       </form>
     </div>

@@ -28,11 +28,13 @@ export default function NewProfile({ controlModal }: Props) {
   };
 
   const handleUploadProfilePicture = async () => {
+    console.log("-----UPLOAD PROFILE PICTURE-----");
     setLoading(true);
     try {
       const file = picInput.current?.files?.[0];
       if (!file || !User?.email) return;
 
+      console.log("fetching org name from org_emails");
       const { data: org, error: orgError } = await supabase
         .from("org_emails")
         .select("org_name")
@@ -44,6 +46,7 @@ export default function NewProfile({ controlModal }: Props) {
       const orgName = org.org_name;
       const filePath = `${orgName}/${file.name}`;
 
+      console.log("uploading profile picture to storage");
       const { error: uploadError } = await supabase.storage
         .from("profile.images")
         .upload(filePath, file, {
@@ -53,6 +56,7 @@ export default function NewProfile({ controlModal }: Props) {
 
       if (uploadError) throw uploadError;
 
+      console.log("update profile picture path on Users");
       const { error: updateError } = await supabase
         .from("Users")
         .update({ pfp_str: file.name })

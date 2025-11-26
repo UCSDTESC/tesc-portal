@@ -1,7 +1,9 @@
 import supabase from "@server/supabase";
 import { formdata } from "@lib/constants";
 import { User } from "@lib/UserContext";
+
 export const fetchEventByOrg = async (uid: string) => {
+  console.log("FETCH EVENTS");
   const { data, error } = await supabase
     .from("Events")
     .select()
@@ -16,6 +18,7 @@ export const createEvent = async (User: User, formData: formdata) => {
     .select("org_name")
     .eq("email", User.email);
   if (org_name) {
+    console.log("----------INSERT NEW EVENT-----------");
     const { error } = await supabase.from("Events").insert({
       UID: User.id,
       title: formData.title,
@@ -34,11 +37,12 @@ export const createEvent = async (User: User, formData: formdata) => {
 };
 
 export const deleteEvent = async (id: string) => {
+  console.log("-------------DELETE EVENT-------------");
   const { error } = await supabase.from("Events").update({ deleted: true }).eq("id", id);
   return error;
 };
 
-export const updateEvent = async (eventId: number, uid: string, formData: formdata) => {
+export const updateEvent = async (eventId: string, uid: string, formData: formdata) => {
   const { error } = await supabase
     .from("Events")
     .update({
@@ -51,7 +55,8 @@ export const updateEvent = async (eventId: number, uid: string, formData: formda
       location_str: formData.location_str,
       content: formData.content,
       tags: formData.tags,
-      poster: formData.poster
+      poster: formData.poster,
+      attendance_cap: formData.attendance_cap ? Number(formData.attendance_cap) : null
     })
     .eq("id", eventId);
   return error;
@@ -66,7 +71,7 @@ export const queryEventsBySearchAndFilters = async (
   let query = supabase
     .from("Events")
     .select(
-      "UID,content,created_at,end_date,id,location_str,start_date,tags,title,attendance,poster,rsvp,Users (uuid,email,pfp_str), org_emails (email,org_name)"
+      "UID,content,created_at,end_date,id,location_str,start_date,tags,title,attendance,poster,rsvp,Users (uuid,email,pfp_str), org_emails (email,org_name),attendance_cap"
     )
     .ilike("title", `%${keyword}%`)
     .eq("deleted", false);

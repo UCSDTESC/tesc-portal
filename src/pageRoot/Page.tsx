@@ -3,7 +3,15 @@ import { Outlet, useLocation, useNavigate } from "react-router";
 
 import UserContext from "@lib/UserContext";
 import type { User, UserCredentials } from "@lib/UserContext";
-import { signIn, fetchUser, signOut, signUp, verifyOTP } from "@services/user";
+import {
+  signIn,
+  fetchUser,
+  signOut,
+  signUp,
+  verifyOTP,
+  sendPasswordRecovery,
+  updatePassword
+} from "@services/user";
 
 import Navbar from "./Navbar";
 import DisplayToast from "@lib/hooks/useToast";
@@ -79,8 +87,33 @@ export default function Page() {
     }
   };
 
+  // send recovery OTP to email
+  const handleSendRecovery = async (email: string, OnSuccess: () => void) => {
+    const { error } = await sendPasswordRecovery(email);
+    if (error) {
+      console.error(error.message);
+      DisplayToast("Error sending recovery OTP", "error");
+    } else {
+      OnSuccess();
+      DisplayToast("Recovery OTP sent", "success");
+    }
+  };
+
+  // update password for authenticated user (after verifying OTP)
+  const handleUpdatePassword = async (password: string, OnSuccess: () => void) => {
+    const error = await updatePassword(password);
+    if (error) {
+      console.error(error.message);
+      DisplayToast("Error updating password", "error");
+    } else {
+      OnSuccess();
+      DisplayToast("Password updated", "success");
+    }
+  };
+
   // get current user
   useEffect(() => {
+    if (location.pathname.includes("bulletin")) return;
     const getUser = async () => {
       try {
         const user = await fetchUser();
@@ -110,7 +143,9 @@ export default function Page() {
           handleSignIn,
           handleSignOut,
           handleSignUp,
-          handleVerifyOTP
+          handleVerifyOTP,
+          handleSendRecovery,
+          handleUpdatePassword
         }}
       >
         <Navbar />

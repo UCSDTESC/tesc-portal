@@ -19,6 +19,7 @@ export type Event = {
   Users?: { uuid: string; email: string; pfp_str: string };
   org_emails?: { email: string; org_name: string };
   poster: string;
+  attendance_cap?: number;
 };
 export type Member = {
   uuid: string;
@@ -42,6 +43,7 @@ export type formdata = {
   password: string;
   tags: string[];
   poster: string;
+  attendance_cap?: number;
 };
 
 export const eventFormDataDefault: formdata = {
@@ -291,7 +293,7 @@ export const container_login = {
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.01
+      staggerChildren: 0.02
     }
   }
 };

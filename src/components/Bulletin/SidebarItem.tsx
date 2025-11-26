@@ -1,5 +1,4 @@
 import { Event, Member } from "@lib/constants";
-import supabase from "@server/supabase";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 export function SidebarClub({
@@ -15,21 +14,9 @@ export function SidebarClub({
   const navigate = useNavigate();
   const imageRef = useRef(null);
   useEffect(() => {
-    const fetchPfpImage = async () => {
-      const { data: pfpString, error } = await supabase
-        .from("Users")
-        .select("pfp_str")
-        .eq("uuid", daton.UID);
-      if (pfpString && pfpString[0].pfp_str) {
-        setImageURL(
-          `https://mxbwjmjpevvyejnugisy.supabase.co/storage/v1/object/public/profile.images/${daton.org_emails?.org_name}/${pfpString[0].pfp_str}`
-        );
-      }
-      if (error) {
-        console.log(error);
-      }
-    };
-    fetchPfpImage();
+    setImageURL(
+      `https://mxbwjmjpevvyejnugisy.supabase.co/storage/v1/object/public/profile.images/${daton.org_emails?.org_name}/${daton.Users?.pfp_str}`
+    );
   }, []);
   return (
     <button
@@ -38,8 +25,8 @@ export function SidebarClub({
         selection !== String(daton.id) ? "opacity-80" : ""
       }`}
       onClick={() => {
-        navigate(selection ? "/bulletin/-1" : `/bulletin/${daton.id}`);
-        setSelection(selection != "-1" ? "-1" : String(daton.id));
+        navigate(selection != "-1" ? "/bulletin/-1" : `/bulletin/${daton.id}`);
+        setSelection(selection != "-1" && selection == String(daton.id) ? "-1" : String(daton.id));
       }}
     >
       <div className="flex flex-col justify-between rounded-lg bg-white h-full w-full p-1">
@@ -60,7 +47,7 @@ export function SidebarClub({
             />
           )}
           <div className="flex flex-col">
-            <div className="font-bold text-[19px] w-full line-clamp-1">{daton.title}</div>
+            <div className="font-bold text-[19px] w-full line-clamp-1 text-left">{daton.title}</div>
             <div className="text-[12px] opacity-70 w-full text-left">
               {daton.org_emails ? daton.org_emails.org_name : "unknown"}
             </div>
@@ -97,7 +84,7 @@ export function SidebarCompany({
       }`}
       onClick={() => {
         navigate(selection != "-1" ? "/bulletin/-1" : `/bulletin/${daton.email}`);
-        setSelection(selection != "-1" ? "-1" : daton.email);
+        setSelection(selection != "-1" && selection == daton.email ? "-1" : daton.email);
       }}
     >
       <div className="flex flex-col rounded-lg bg-white h-full w-full px-4">
