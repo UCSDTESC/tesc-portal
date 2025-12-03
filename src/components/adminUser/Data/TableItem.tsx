@@ -13,7 +13,7 @@ import { DeleteConfirmationModal } from "./DeleteConfirmationModal";
 export default function TableItem({
   daton,
   handleDelete,
-  openEditModal
+  openEditModal,
 }: {
   daton: Event;
   handleDelete: (id: string) => Promise<void>;
@@ -22,7 +22,7 @@ export default function TableItem({
   const [attendees, setAttendees] = useState<
     {
       user_id: string;
-      Users: { email: string; first_name: string; last_name: string; major: string };
+      users: { email: string; first_name: string; last_name: string; major: string };
     }[]
   >([]);
   const [displayAttendees, setDisplayAttendees] = useState(false);
@@ -43,14 +43,16 @@ export default function TableItem({
 
   const fetchAttendees = async () => {
     const { data } = await supabase
-      .from("Attendance_Log")
-      .select("user_id, Users (email, first_name,last_name,major)")
-      .eq("event_id", daton.id);
+      .from("events_log")
+      .select("user_id, users (email, first_name,last_name,major)")
+      .eq("event_id", daton.id)
+      .eq("attended", true);
+    console.log(data);
     if (data) {
       setAttendees(
         data as object as {
           user_id: string;
-          Users: { email: string; first_name: string; last_name: string; major: string };
+          users: { email: string; first_name: string; last_name: string; major: string };
         }[]
       );
     }
@@ -118,7 +120,7 @@ export default function TableItem({
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.2 }}
                     >
-                      {attendee.Users.email + ", "}
+                      {attendee.users.email + ", "}
                     </motion.div>
                   </>
                 );
@@ -134,10 +136,10 @@ export default function TableItem({
                 <CSVLink
                   data={attendees.map((attendee) => ({
                     user_id: attendee.user_id,
-                    email: attendee.Users.email,
-                    first_name: attendee.Users.first_name,
-                    last_name: attendee.Users.last_name,
-                    major: attendee.Users.major
+                    email: attendee.users.email,
+                    first_name: attendee.users.first_name,
+                    last_name: attendee.users.last_name,
+                    major: attendee.users.major,
                   }))}
                   className="opacity-50 hover:opacity-95"
                 >
@@ -173,8 +175,8 @@ export default function TableItem({
           editable={false}
           editorProps={{
             attributes: {
-              class: "ml-8 w-full col-span-2 focus:outline-none max-h-[40vh] overflow-y-auto"
-            }
+              class: "ml-8 w-full col-span-2 focus:outline-none max-h-[40vh] overflow-y-auto",
+            },
           }}
         />
       )}
@@ -185,7 +187,7 @@ export default function TableItem({
 function DataPair({
   children,
   data,
-  className
+  className,
 }: {
   children: ReactNode;
   data: string | number | undefined;

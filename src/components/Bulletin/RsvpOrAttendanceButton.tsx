@@ -5,7 +5,7 @@ export function RsvpOrAttendanceButton({
   start_date,
   end_date,
   selection,
-  className
+  className,
 }: {
   start_date: string;
   end_date: string;
@@ -17,6 +17,7 @@ export function RsvpOrAttendanceButton({
   const end = new Date(end_date.replace("+00:00", ""));
   const { RSVP, attendance, handleRSVP, handleAttendance } = useContext(BulletinContext);
   const buttonClassName = `border border-blue px-4 py-2 rounded-lg cursor-pointer w-fit h-fit my-2 ${className} `;
+  console.log("RSVP", RSVP);
   if (attendance.includes(selection)) return;
   if (currDate <= start) {
     if (RSVP.includes(selection)) {

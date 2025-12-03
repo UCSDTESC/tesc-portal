@@ -15,40 +15,60 @@ export default function Profile() {
   useEffect(() => {
     document.title = "My Profile | TESC Portal";
   }, []);
+
   useEffect(() => {
     const fetchOrgname = async () => {
       const { data, error } = await supabase
-        .from("org_emails")
-        .select("org_name")
-        .eq("email", User?.email);
-      if (data) {
-        setOrgname(data[0].org_name);
+        .from("user_org_roles")
+        .select("org_uuid, orgs (name)")
+        .eq("user_uuid", User?.id);
+      const orgname = data as unknown as
+        | {
+            org_uuid: string;
+            orgs: {
+              name: string;
+            };
+          }[]
+        | null;
+      if (orgname) {
+        setOrgname(orgname[0].orgs.name);
       }
       if (error) {
         console.log(error.message);
       }
     };
     fetchOrgname();
-  }, [User?.email]);
+  }, [User?.id]);
 
   useEffect(() => {
+    if (!User) return;
     const fetchpfp = async () => {
       console.log("------FETCHING PROFILE PICTURE-------");
       console.log("getting profile picture path from Users");
-      const { data: pfp_name } = await supabase
-        .from("Users")
-        .select("pfp_str")
-        .eq("email", User?.email);
+      const { data } = await supabase
+        .from("user_org_roles")
+        .select("orgs (name, pfp_str)")
+        .eq("user_uuid", User.id);
+      const pfp_name = data as unknown as
+        | {
+            orgs: {
+              name: string;
+              pfp_str: string;
+            };
+          }[]
+        | null;
       if (pfp_name) {
         console.log("pulling profile picture link from storage");
+        console.log(pfp_name);
         const { data: URL } = supabase.storage
           .from("profile.images")
-          .getPublicUrl(`${orgname}/${pfp_name[0].pfp_str}`);
+          .getPublicUrl(`${orgname}/${pfp_name[0].orgs.pfp_str}`);
+        console.log(URL);
         if (URL) setImageUrl(URL.publicUrl);
       }
     };
     fetchpfp();
-  }, [User?.email, orgname, editModal]);
+  }, [User?.id, orgname, editModal]);
 
   const controlEditModal = () => {
     setEditModal(!editModal);

@@ -4,15 +4,27 @@ export const signIn = async (email: string, password: string) => {
   console.log("-----Sign in User-----");
   const { data, error } = await supabase.auth.signInWithPassword({
     email: email,
-    password: password
+    password: password,
   });
   if (error) return { user: null, error };
   console.log("Fetch user role");
-  const { data: role } = await supabase.from("Users").select("role").eq("email", data.user.email);
+  const { data: data_1 } = await supabase
+    .from("user_org_roles")
+    .select("user_uuid, roles(name)")
+    .eq("user_uuid", data.user.id);
+  const role = data_1 as unknown as
+    | {
+        user_uuid: string;
+        roles: {
+          name: string;
+        };
+      }[]
+    | null;
+  console.log(role);
   const user = {
     id: data.user.id,
     email: data.user.email,
-    role: role ? role[0].role : "unknown"
+    role: role && role[0] ? role[0].roles.name : "member",
   };
   return { user, error };
 };
@@ -20,11 +32,21 @@ export const signIn = async (email: string, password: string) => {
 export const fetchUser = async () => {
   console.log("------FETCH USER---------");
   const {
-    data: { user }
+    data: { user },
   } = await supabase.auth.getUser();
   console.log("Fetch user role");
-  const { data: role } = await supabase.from("Users").select("role").eq("email", user?.email);
-  if (user && role) return { id: user.id, email: user.email, role: role[0].role };
+  const { data } = await supabase
+    .from("user_org_roles")
+    .select("roles (name)")
+    .eq("user_uuid", user?.id);
+  const role = data as unknown as
+    | {
+        roles: {
+          name: string;
+        };
+      }[]
+    | null;
+  if (user && role) return { id: user.id, email: user.email, role: role[0].roles.name };
 };
 
 export const signOut = async () => {
@@ -37,7 +59,7 @@ export const signUp = async (email: string, password: string) => {
   // add user to auth table
   const { data, error } = await supabase.auth.signUp({
     email: email,
-    password: password
+    password: password,
   });
   if (error) return { user: null, error };
 
@@ -70,17 +92,12 @@ export const verifyOTP = async (email: string, token: string, type: "email" | "r
     if (type === "email") {
       console.log("insert new user into database");
       const { error } = await supabase
-        .from("Users")
+        .from("users")
         .insert({ uuid: data.user?.id, email: data.user?.email });
-      console.log("fetch new user role");
-      const { data: role } = await supabase
-        .from("Users")
-        .select("role")
-        .eq("email", data.user.email);
       const user = {
         id: data.user.id,
         email: data.user.email,
-        role: role ? role[0].role : "unknown"
+        role: "member",
       };
       return { user, error };
     }
@@ -88,7 +105,7 @@ export const verifyOTP = async (email: string, token: string, type: "email" | "r
     const user = {
       id: data.user.id,
       email: data.user.email,
-      role: "unknown"
+      role: "unknown",
     };
     return { user, error: null };
   }
@@ -108,42 +125,57 @@ export const updatePassword = async (password: string) => {
   const { error } = await supabase.auth.updateUser({ password });
   return error;
 };
+
 export const fetchRSVPAndAttended = async (email: string) => {
   console.log("---fetch RSVP and Attended events---");
-  const { data, error } = await supabase.from("Users").select("rsvp,attended").eq("email", email);
+  const { data, error } = await supabase
+    .from("events_log")
+    .select("event_id, attended, users!inner(email)")
+    .eq("users.email", email);
   if (data) {
+    console.log(data);
     return {
-      rsvp: data[0].rsvp ? data[0].rsvp : [],
-      attended: data[0].attended ? data[0].attended : [],
-      error: null
+      rsvp: data.filter((daton) => daton.attended == false).map((daton) => String(daton.event_id)),
+      attended: data
+        .filter((daton) => daton.attended == true)
+        .map((daton) => String(daton.event_id)),
+      error: null,
     };
   } else return { rsvp: null, attended: null, error };
 };
 
-export const editRSVP = async (id: string, email: string, remove: boolean, currRSVP: string[]) => {
+export const editRSVP = async (id: string, uid: string, remove: boolean) => {
   console.log("---update RSVP info----");
   console.log("update rsvp array in user table---");
   // update rsvp array in user table
-  const { error } = await supabase.from("Users").update({ rsvp: currRSVP }).eq("email", email);
-
-  if (error) {
-    return error;
+  if (remove) {
+    const { error } = await supabase
+      .from("events_log")
+      .delete()
+      .eq("event_id", Number(id))
+      .eq("user_id", uid);
+    if (error) return error;
   } else {
-    // update rsvp count in event table
-    console.log("get rsvp count in events table");
-    const { data, error } = await supabase.from("Events").select("rsvp").eq("id", id);
-
-    if (data) {
-      console.log("update rsvp count in events table");
-      const { error } = await supabase
-        .from("Events")
-        .update({ rsvp: remove ? data[0].rsvp - 1 : data[0].rsvp + 1 })
-        .eq("id", id);
-      if (error) {
-        return error;
-      }
-    } else return error;
+    const { error } = await supabase
+      .from("events_log")
+      .insert({ user_id: uid, event_id: id, points: 1, attended: false });
+    if (error) console.log(error);
+    if (error) return error;
   }
+  // update rsvp count in event table
+  console.log("get rsvp count in events table");
+  const { data, error } = await supabase.from("events").select("rsvp").eq("id", id);
+
+  if (data) {
+    console.log("update rsvp count in events table");
+    const { error } = await supabase
+      .from("events")
+      .update({ rsvp: remove ? data[0].rsvp - 1 : data[0].rsvp + 1 })
+      .eq("id", id);
+    if (error) {
+      return error;
+    }
+  } else return error;
 
   // return no errors
   return null;
@@ -152,17 +184,17 @@ export const editRSVP = async (id: string, email: string, remove: boolean, currR
 export const logAttendance = async (selection: string, id: string, userInput: string | null) => {
   console.log("---Validate attendance---");
   const { error } = await supabase.rpc("validate_attendance", {
-    event_id: selection,
-    input: userInput,
-    user_id: id
+    p_event_id: selection,
+    p_password: userInput,
+    p_user_id: id,
   });
   if (!error) {
     console.log("Get User attendance from Users");
-    const { data, error } = await supabase.from("Users").select("attended").eq("uuid", id);
+    const { data, error } = await supabase.from("users").select("attended").eq("uuid", id);
     if (!error) {
       const currAttended = data[0].attended;
       const { error } = await supabase
-        .from("Users")
+        .from("users")
         .update({ attended: [...currAttended, selection] })
         .eq("uuid", id);
       if (error) return error;

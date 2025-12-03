@@ -16,11 +16,14 @@ export type Event = {
   end_date: string;
   attendance: number;
   rsvp: number;
-  Users?: { uuid: string; email: string; pfp_str: string };
-  org_emails?: { email: string; org_name: string };
+  orgs: {
+    name: string;
+    pfp_str: string;
+  };
   poster: string;
   attendance_cap?: number;
 };
+
 export type Member = {
   uuid: string;
   email: string;
@@ -55,7 +58,7 @@ export const eventFormDataDefault: formdata = {
   location_str: "",
   content: "",
   tags: [""],
-  poster: ""
+  poster: "",
 };
 
 export const locations: string[] = [
@@ -155,7 +158,7 @@ export const locations: string[] = [
   "Epstein Family Amphitheater",
   "The Loft",
   "Old Student Center Stages",
-  "Visual Arts Presentation Lab (VAF 201)"
+  "Visual Arts Presentation Lab (VAF 201)",
 ];
 export const majors: string[] = [
   "Anthropology",
@@ -276,7 +279,7 @@ export const majors: string[] = [
   "Sociology—Culture and Communication",
   "Sociology—Social Inequity",
   "Sociology—Law and Society",
-  "Structural Engineering"
+  "Structural Engineering",
 ];
 
 export const container = {
@@ -284,18 +287,18 @@ export const container = {
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.2
-    }
-  }
+      staggerChildren: 0.2,
+    },
+  },
 };
 export const container_login = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.02
-    }
-  }
+      staggerChildren: 0.02,
+    },
+  },
 };
 
 export const item = {
@@ -304,7 +307,7 @@ export const item = {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.35
-    }
-  }
+      duration: 0.35,
+    },
+  },
 };

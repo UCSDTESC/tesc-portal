@@ -35,15 +35,19 @@ export default function NewProfile({ controlModal }: Props) {
       if (!file || !User?.email) return;
 
       console.log("fetching org name from org_emails");
-      const { data: org, error: orgError } = await supabase
-        .from("org_emails")
-        .select("org_name")
-        .eq("email", User.email)
+      const { data, error: orgError } = await supabase
+        .from("user_org_roles")
+        .select("orgs (uuid, name)")
+        .eq("user_uuid", User.id)
         .single();
-
+      const org = data as {
+        orgs: {
+          uuid: string;
+          name: string;
+        };
+      } | null;
       if (orgError || !org) throw orgError;
-
-      const orgName = org.org_name;
+      const orgName = org.orgs.name;
       const filePath = `${orgName}/${file.name}`;
 
       console.log("uploading profile picture to storage");
@@ -51,16 +55,16 @@ export default function NewProfile({ controlModal }: Props) {
         .from("profile.images")
         .upload(filePath, file, {
           cacheControl: "3600",
-          upsert: true
+          upsert: true,
         });
 
       if (uploadError) throw uploadError;
 
       console.log("update profile picture path on Users");
       const { error: updateError } = await supabase
-        .from("Users")
+        .from("orgs")
         .update({ pfp_str: file.name })
-        .eq("email", User.email);
+        .eq("uuid", org.orgs.uuid);
 
       if (updateError) throw updateError;
 

@@ -18,7 +18,7 @@ export default function Form({
   formdata,
   id,
   editEvent = false,
-  onSuccess
+  onSuccess,
 }: {
   formdata?: formdata;
   id: string;
@@ -57,6 +57,7 @@ export default function Form({
     } else if (User?.id) {
       const error = await createEvent(User, formData);
       if (error) {
+        console.log(error);
         setError(error.message);
         DisplayToast("Unable to create event", "error");
       } else {
@@ -113,11 +114,11 @@ export default function Form({
                   {
                     name: "offset",
                     options: {
-                      offset: [0, -14]
-                    }
-                  }
-                ]
-              }
+                      offset: [0, -14],
+                    },
+                  },
+                ],
+              },
             }}
           >
             <IoInformationCircleOutline className="text-sm" />
@@ -153,11 +154,11 @@ export default function Form({
                   {
                     name: "offset",
                     options: {
-                      offset: [0, -14]
-                    }
-                  }
-                ]
-              }
+                      offset: [0, -14],
+                    },
+                  },
+                ],
+              },
             }}
           >
             <IoInformationCircleOutline className="text-sm" />

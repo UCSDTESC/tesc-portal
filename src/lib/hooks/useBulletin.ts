@@ -84,6 +84,7 @@ export function useBulletin(User: User | null) {
       if (User?.id) {
         const { rsvp, attended, error } = await fetchRSVPAndAttended(User.email);
         if (rsvp && attended) {
+
           setRSVP(rsvp);
           setAttendance(attended);
         } else if (error) {
@@ -108,7 +109,7 @@ export function useBulletin(User: User | null) {
         currRSVP = [...currRSVP, id];
       }
       // edit database rsvp array and count
-      const error = await editRSVP(id, User.email, remove, currRSVP);
+      const error = await editRSVP(id, User.id, remove);
       if (error) {
         console.error(error.message);
         DisplayToast(remove === true ? "Unable to remove RSVP" : "Unable to RSVP", "error");
@@ -159,7 +160,7 @@ export function useBulletin(User: User | null) {
     setOrgFilters,
     orgs,
     sortMethod,
-    setSortMethod
+    setSortMethod,
   };
 }
 
@@ -196,5 +197,5 @@ export const BulletinContext = createContext<BulletinContextProps>({
   setOrgFilters: () => {},
   orgs: [],
   sortMethod: "",
-  setSortMethod: () => {}
+  setSortMethod: () => {},
 } as BulletinContextProps);

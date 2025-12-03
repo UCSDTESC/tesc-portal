@@ -21,7 +21,7 @@ export default function CheckBoxes() {
       if (!User) return;
       if (User.role === "company" || User.role === "") return;
       console.log("------PULLING USER POINTS---------------");
-      const { data, error } = await supabase.from("Users").select("points").eq("email", User.email);
+      const { data, error } = await supabase.from("users").select("points").eq("email", User.email);
       if (data) {
         setUserPoints(data[0].points);
       }

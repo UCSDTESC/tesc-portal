@@ -99,7 +99,7 @@ export default function EditProfileForm({
     e.preventDefault();
     if (Object.keys(errors).length === 0) {
       const { error } = await supabase
-        .from("Users")
+        .from("users")
         .update({
           first_name: firstName.trim(),
           last_name: lastName.trim(),
