@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@components/components/ui/card";
 import { Label } from "@components/components/ui/label";
@@ -38,17 +38,41 @@ export default function EditProfileForm({
   initialResumeUrl = "",
   onCancel
 }: EditProfileFormProps) {
+  const { User } = useContext(UserContext);
   const [firstName, setFirstName] = useState(initialFirstName);
   const [lastName, setLastName] = useState(initialLastName);
   const [major, setMajor] = useState(initialMajor);
   const [gradYear, setGradYear] = useState<string>(initialGradYear ? String(initialGradYear) : "");
   const [resumeUrl, setResumeUrl] = useState(initialResumeUrl);
   const [touched, setTouched] = useState<{ [k: string]: boolean }>({});
-  const { User } = useContext(UserContext);
   const yearMin = currentYear() - 1;
   const yearMax = currentYear() + 15;
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (!User) return;
+    const fetchMemberData = async () => {
+      console.log(User.email);
+      const { data, error } = await supabase
+        .from("users")
+        .select("first_name, last_name, major, expected_grad, resume_link")
+        .eq("email", User.email)
+        .limit(1)
+        .single();
+      if (data) {
+        setFirstName(data.first_name ? data.first_name : "");
+        setLastName(data.last_name ? data.last_name : "");
+        setMajor(data.major ? data.major : "");
+        setGradYear(data.expected_grad ? data.expected_grad : "");
+        setResumeUrl(data.resume_link ? data.resume_link : "");
+      }
+      if (error) {
+        DisplayToast("Error grabbing profile information", "error");
+      }
+    };
+    fetchMemberData();
+  }, [User]);
+  console.log("rerender");
   const errors = useMemo(() => {
     const e: {
       firstName?: string;
@@ -121,7 +145,7 @@ export default function EditProfileForm({
         DisplayToast("Successfully updated profile info", "success");
         navigate("/");
       }
-    } else {                                                                                                                                                                              
+    } else {
       setTouched({
         firstName: true,
         lastName: true,
