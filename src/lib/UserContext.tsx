@@ -53,6 +53,7 @@ const UserContext = createContext<UserContext>({
   },
   handleUpdatePassword: (password: string, OnSuccess: () => void) => {
     OnSuccess?.();
+    console.log(password);
   }
 });
 export default UserContext;
