@@ -202,3 +202,66 @@ export const logAttendance = async (selection: string, id: string, userInput: st
   }
   return error;
 };
+
+// for attended events list
+export const fetchAttendedEvents = async (userId: string) => {
+  console.log("---Fetch User Attended Events---");
+  // base cases
+  const { data: logData, error: logError } = await supabase
+    .from("events_log")
+    .select("event_id, points")
+    .eq("user_id", userId)
+    .eq("attended", true);
+  
+  if (logError) {
+    console.error("Error fetching event log:", logError);
+    return { events: null, error: logError };
+  }
+  if (!logData || logData.length == 0) {
+    return { events: [], error: null };
+  }
+
+  console.log("Fetching attended event details");
+  // extract IDs
+  const attendedEventsIds = logData.map((log) => log.event_id);
+  const { data: eventDetails, error: detailsError } = await supabase
+    .from("events")
+    .select(
+      `
+      id, 
+      title, 
+      start_date, 
+      end_date, 
+      location, 
+      location_str, 
+      content, 
+      tags, 
+      poster,
+      org_id, 
+      orgs!inner(name, pfp_str) 
+      `
+    )
+    .in("id", attendedEventsIds)
+    .eq("deleted", false);
+
+  if (detailsError) {
+    console.error("Error fetching event details:", detailsError);
+    return { events: null, error: detailsError };
+  }
+  
+  const attendedEventsWithPoints = eventDetails.map(event => {
+    const logEntry = logData.find(log => log.event_id === event.id);
+    return {
+      id: event.id,
+      title: event.title,
+      date: `${event.start_date} - ${event.end_date}`,
+      location: event.location_str,
+      points: logEntry ? logEntry.points : 0,
+      category: event.tags[0] || 'General',
+      description: event.content,
+      coverImage: event.poster,
+    };
+  });
+
+  return { events: attendedEventsWithPoints, error: null };
+};

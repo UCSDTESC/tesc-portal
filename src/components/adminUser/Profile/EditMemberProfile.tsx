@@ -21,7 +21,9 @@ import supabase from "@server/supabase";
 import DisplayToast from "@lib/hooks/useToast";
 import { useNavigate } from "react-router";
 
-export type EditProfileFormProps = {
+import ListAttendedEvents from "@components/ui/ListAttendedEvents";
+
+export type EditMemberProfileProps = {
   initialFirstName?: string;
   initialLastName?: string;
   initialMajor?: string;
@@ -30,14 +32,14 @@ export type EditProfileFormProps = {
   onCancel?: () => void;
 };
 
-export default function EditProfileForm({
+export default function EditMemberProfile({
   initialFirstName = "",
   initialLastName = "",
   initialMajor = "",
   initialGradYear,
   initialResumeUrl = "",
   onCancel
-}: EditProfileFormProps) {
+}: EditMemberProfileProps) {
   const [firstName, setFirstName] = useState(initialFirstName);
   const [lastName, setLastName] = useState(initialLastName);
   const [major, setMajor] = useState(initialMajor);
@@ -272,6 +274,14 @@ export default function EditProfileForm({
           </Card>
         )}
       </div>
+
+      {/* recently attended events list */}
+      {User && User.id && (
+        <div className="max-w-6xl mx-auto pt-12">
+            <ListAttendedEvents userId={User.id} />
+        </div>
+      )}
+
     </motion.div>
   );
 }
