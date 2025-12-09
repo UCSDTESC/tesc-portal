@@ -18,7 +18,7 @@ export default function Form({
   formdata,
   id,
   editEvent = false,
-  onSuccess,
+  onSuccess
 }: {
   formdata?: formdata;
   id: string;
@@ -46,7 +46,7 @@ export default function Form({
   // update event or create new event
   const handleSubmit = async () => {
     if (formdata && User?.id) {
-      const error = await updateEvent(id, User.id, formData);
+      const error = await updateEvent(id, formData);
       if (error) {
         setError(error.message);
         DisplayToast("Unable to update event", "error");
@@ -114,11 +114,11 @@ export default function Form({
                   {
                     name: "offset",
                     options: {
-                      offset: [0, -14],
-                    },
-                  },
-                ],
-              },
+                      offset: [0, -14]
+                    }
+                  }
+                ]
+              }
             }}
           >
             <IoInformationCircleOutline className="text-sm" />
@@ -154,11 +154,11 @@ export default function Form({
                   {
                     name: "offset",
                     options: {
-                      offset: [0, -14],
-                    },
-                  },
-                ],
-              },
+                      offset: [0, -14]
+                    }
+                  }
+                ]
+              }
             }}
           >
             <IoInformationCircleOutline className="text-sm" />
