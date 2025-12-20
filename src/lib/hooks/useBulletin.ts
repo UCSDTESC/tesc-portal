@@ -159,7 +159,7 @@ export function useBulletin(User: User | null) {
     setOrgFilters,
     orgs,
     sortMethod,
-    setSortMethod
+    setSortMethod,
   };
 }
 
@@ -168,8 +168,8 @@ export interface BulletinContextProps {
   People: Member[] | undefined;
   tagFilters: string[];
   gradYears: string[];
-  RSVP: string[];
-  attendance: string[];
+  RSVP: string[] | null;
+  attendance: string[] | null;
   handleAttendance: (selection: string) => void;
   handleRSVP: (selection: string, remove: boolean) => void;
   setTagFilters: (tags: string[]) => void;
@@ -196,5 +196,5 @@ export const BulletinContext = createContext<BulletinContextProps>({
   setOrgFilters: () => {},
   orgs: [],
   sortMethod: "",
-  setSortMethod: () => {}
+  setSortMethod: () => {},
 } as BulletinContextProps);
