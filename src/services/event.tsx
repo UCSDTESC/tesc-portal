@@ -1,6 +1,7 @@
 import supabase from "@server/supabase";
 import { formdata } from "@lib/constants";
 import { User } from "@lib/UserContext";
+import { logAttendance } from './user';
 
 export const fetchEventByOrg = async (uid: string) => {
   console.log("FETCH USER ORGS");
@@ -123,4 +124,24 @@ export const queryPeopleBySearchAndFilters = async (
 
   const { data, error } = await query;
   return { People: data, error };
+};
+
+// for attended events list
+export const verifyEventAttendance = async (
+  eventId: string,
+  userId: string,
+  password: string
+) => {
+
+  console.log("----------VERIFYING EVENT ATTENDANCE-----------");
+  const error = await logAttendance(eventId, userId, password);
+  // check password, update events_log, update user points/attended list
+  
+  if (error) {
+    console.log("Attendance verification failed:", error);
+  } else {
+    console.log("Attendance successfully logged");
+  }
+
+  return { error };
 };
