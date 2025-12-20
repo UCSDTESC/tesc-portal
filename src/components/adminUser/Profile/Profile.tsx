@@ -19,6 +19,8 @@ export default function Profile() {
   }, []);
 
   useEffect(() => {
+    if (!User) return;
+    if (User.role === "member") return;
     const fetchOrgname = async () => {
       const { data, error } = await supabase
         .from("user_org_roles")
@@ -40,10 +42,11 @@ export default function Profile() {
       }
     };
     fetchOrgname();
-  }, [User?.id]);
+  }, [User, User?.id]);
 
   useEffect(() => {
     if (!User) return;
+    if (User.role === "member") return;
     const fetchpfp = async () => {
       console.log("------FETCHING PROFILE PICTURE-------");
       console.log("getting profile picture path from Users");
@@ -70,7 +73,7 @@ export default function Profile() {
       }
     };
     fetchpfp();
-  }, [User?.id, orgname, editModal]);
+  }, [User?.id, orgname, editModal, User]);
 
   const controlEditModal = () => {
     setEditModal(!editModal);

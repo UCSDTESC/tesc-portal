@@ -12,8 +12,8 @@ export function useBulletin(User: User | null) {
   const { setShowLoginModal } = useContext(UserContext);
   const [data, setData] = useState<Event[]>();
   const [People, setPeople] = useState<Member[]>();
-  const [RSVP, setRSVP] = useState<string[]>([]);
-  const [attendance, setAttendance] = useState<string[]>([]);
+  const [RSVP, setRSVP] = useState<string[] | null>(null);
+  const [attendance, setAttendance] = useState<string[] | null>(null);
   const [search, setSearch] = useState("");
   const [orgs, setOrgs] = useState<string[]>([]);
   const [tagFilters, setTagFilters] = useState<string[]>([]);
@@ -81,10 +81,9 @@ export function useBulletin(User: User | null) {
   // fetch RSVP and attended events
   useEffect(() => {
     const fetchRSVPAndAttendedEvents = async () => {
-      if (User?.id) {
+      if (User?.id && !(RSVP && attendance)) {
         const { rsvp, attended, error } = await fetchRSVPAndAttended(User.email);
         if (rsvp && attended) {
-
           setRSVP(rsvp);
           setAttendance(attended);
         } else if (error) {
@@ -94,7 +93,7 @@ export function useBulletin(User: User | null) {
       }
     };
     fetchRSVPAndAttendedEvents();
-  }, [User]);
+  }, [User, RSVP, attendance]);
 
   const handleRSVP = async (id: string, remove: boolean) => {
     // if user is not logged in, show login modal
@@ -102,7 +101,7 @@ export function useBulletin(User: User | null) {
       setShowLoginModal(true);
     } else {
       // update rsvp array
-      let currRSVP = RSVP;
+      let currRSVP = RSVP ? RSVP : [];
       if (remove) {
         currRSVP = currRSVP.filter((item) => item !== id);
       } else {
@@ -138,7 +137,7 @@ export function useBulletin(User: User | null) {
           console.error(error.message);
           DisplayToast("Error logging attendance", "error");
         } else {
-          setAttendance([...attendance, selection]);
+          setAttendance(attendance ? [...attendance, selection] : [selection]);
           DisplayToast("Succesfully logged attendance", "success");
         }
       }
@@ -169,8 +168,8 @@ export interface BulletinContextProps {
   People: Member[] | undefined;
   tagFilters: string[];
   gradYears: string[];
-  RSVP: string[];
-  attendance: string[];
+  RSVP: string[] | null;
+  attendance: string[] | null;
   handleAttendance: (selection: string) => void;
   handleRSVP: (selection: string, remove: boolean) => void;
   setTagFilters: (tags: string[]) => void;

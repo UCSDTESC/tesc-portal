@@ -10,7 +10,7 @@ import {
   signUp,
   verifyOTP,
   sendPasswordRecovery,
-  updatePassword,
+  updatePassword
 } from "@services/user";
 
 import Navbar from "./Navbar";
@@ -18,7 +18,7 @@ import DisplayToast from "@lib/hooks/useToast";
 import Footer from "./Footer";
 
 export default function Page() {
-  const [User, setUser] = useState<User>({ id: "", email: "", role: "" });
+  const [User, setUser] = useState<User | null>(null);
   const [Error, setError] = useState("");
   const [showLoginModal, setShowLoginModal] = useState(false);
   const navigate = useNavigate();
@@ -67,7 +67,7 @@ export default function Page() {
       setUser({
         id: user?.id ? user?.id : "",
         email: user?.email ? user?.email : "",
-        role: user?.role ? user.role : "unknown",
+        role: user?.role ? user.role : "unknown"
       });
       onSuccess();
       DisplayToast("Succesfully logged in", "success");
@@ -114,6 +114,7 @@ export default function Page() {
   // get current user
   useEffect(() => {
     // if (location.pathname.includes("bulletin")) return;
+    if (User) return;
     const getUser = async () => {
       try {
         const user = await fetchUser();
@@ -145,7 +146,7 @@ export default function Page() {
           handleSignUp,
           handleVerifyOTP,
           handleSendRecovery,
-          handleUpdatePassword,
+          handleUpdatePassword
         }}
       >
         <Navbar />

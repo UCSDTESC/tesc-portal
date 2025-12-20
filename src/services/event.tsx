@@ -40,7 +40,7 @@ export const createEvent = async (User: User, formData: formdata) => {
       content: formData.content,
       tags: formData.tags,
       org_id: org_name[0].org_uuid,
-      poster: formData.poster,
+      poster: formData.poster
     });
     return error;
   }
@@ -52,7 +52,7 @@ export const deleteEvent = async (id: string) => {
   return error;
 };
 
-export const updateEvent = async (eventId: string, uid: string, formData: formdata) => {
+export const updateEvent = async (eventId: string, formData: formdata) => {
   const { error } = await supabase
     .from("events")
     .update({
@@ -65,7 +65,7 @@ export const updateEvent = async (eventId: string, uid: string, formData: formda
       content: formData.content,
       tags: formData.tags,
       poster: formData.poster,
-      attendance_cap: formData.attendance_cap ? Number(formData.attendance_cap) : null,
+      attendance_cap: formData.attendance_cap ? Number(formData.attendance_cap) : null
     })
     .eq("id", eventId);
   return error;
