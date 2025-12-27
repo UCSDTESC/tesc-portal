@@ -1,7 +1,7 @@
 import supabase from "@server/supabase";
-import { formdata } from "@lib/constants";
+import { DateGroup, formdata } from "@lib/constants";
 import { User } from "@lib/UserContext";
-import { logAttendance } from './user';
+import { logAttendance } from "./user";
 
 export const fetchEventByOrg = async (uid: string) => {
   console.log("FETCH USER ORGS");
@@ -23,25 +23,40 @@ export const fetchEventByOrg = async (uid: string) => {
   }
 };
 
-export const createEvent = async (User: User, formData: formdata) => {
+export const createEvent = async (User: User, formData: formdata, Timeslots: DateGroup[]) => {
+  console.log(Timeslots);
   const { data: org_name } = await supabase
     .from("user_org_roles")
     .select("org_uuid")
     .eq("user_uuid", User.id);
   if (org_name) {
     console.log("----------INSERT NEW EVENT-----------");
-    const { error } = await supabase.from("events").insert({
-      title: formData.title,
-      password: formData.password,
-      start_date: formData.start_date,
-      end_date: formData.end_date,
-      location: formData.location,
-      location_str: formData.location_str,
-      content: formData.content,
-      tags: formData.tags,
-      org_id: org_name[0].org_uuid,
-      poster: formData.poster
-    });
+    const { data, error } = await supabase
+      .from("events")
+      .insert({
+        title: formData.title,
+        password: formData.password,
+        start_date: formData.start_date,
+        end_date: formData.end_date,
+        location: formData.location,
+        location_str: formData.location_str,
+        content: formData.content,
+        tags: formData.tags,
+        org_id: org_name[0].org_uuid,
+        poster: formData.poster,
+      })
+      .select();
+    if (data) {
+      for (const Timeslot of Timeslots) {
+        const { error } = await supabase.from("event_slots").insert({
+          event_id: data[0].id,
+          starts_at: Timeslot.startDate,
+          ends_at: Timeslot.endDate,
+          capacity: formData.attendance_cap ? formData.attendance_cap : null,
+        });
+        if (error) return error;
+      }
+    }
     return error;
   }
 };
@@ -52,7 +67,7 @@ export const deleteEvent = async (id: string) => {
   return error;
 };
 
-export const updateEvent = async (eventId: string, formData: formdata) => {
+export const updateEvent = async (eventId: string, formData: formdata, Timeslots: DateGroup[]) => {
   const { error } = await supabase
     .from("events")
     .update({
@@ -65,9 +80,19 @@ export const updateEvent = async (eventId: string, formData: formdata) => {
       content: formData.content,
       tags: formData.tags,
       poster: formData.poster,
-      attendance_cap: formData.attendance_cap ? Number(formData.attendance_cap) : null
+      attendance_cap: formData.attendance_cap ? Number(formData.attendance_cap) : null,
     })
     .eq("id", eventId);
+  for (const Timeslot of Timeslots) {
+    const { error } = await supabase.from("event_slots").update({
+      starts_at: Timeslot.startDate,
+      ends_at: Timeslot.endDate,
+      capacity: formData.attendance_cap ? Number(formData.attendance_cap) : null,
+    });
+    if (error) {
+      return error;
+    }
+  }
   return error;
 };
 
@@ -127,16 +152,11 @@ export const queryPeopleBySearchAndFilters = async (
 };
 
 // for attended events list
-export const verifyEventAttendance = async (
-  eventId: string,
-  userId: string,
-  password: string
-) => {
-
+export const verifyEventAttendance = async (eventId: string, userId: string, password: string) => {
   console.log("----------VERIFYING EVENT ATTENDANCE-----------");
   const error = await logAttendance(eventId, userId, password);
   // check password, update events_log, update user points/attended list
-  
+
   if (error) {
     console.log("Attendance verification failed:", error);
   } else {

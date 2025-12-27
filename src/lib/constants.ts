@@ -48,7 +48,11 @@ export type formdata = {
   poster: string;
   attendance_cap?: number;
 };
-
+export type DateGroup = {
+  id: number;
+  startDate: string;
+  endDate: string;
+};
 export const eventFormDataDefault: formdata = {
   title: "",
   password: "",

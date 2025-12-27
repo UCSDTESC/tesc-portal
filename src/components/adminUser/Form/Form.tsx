@@ -3,7 +3,7 @@ import { useContext } from "react";
 import { useNavigate } from "react-router";
 
 import UserContext from "@lib/UserContext";
-import { formdata, profile_picture_src } from "@lib/constants";
+import { DateGroup, formdata, profile_picture_src } from "@lib/constants";
 import { getFormDataDefault } from "@lib/utils";
 import { createEvent, updateEvent } from "@services/event";
 
@@ -12,13 +12,14 @@ import { MultipleSelectChip, Dropdown } from "./Dropdowns";
 import DisplayToast from "@lib/hooks/useToast";
 import { Tooltip } from "@mui/material";
 import { IoInformationCircleOutline } from "react-icons/io5";
+import DoubleSelectGroup from "./DoubleSelectGroup";
 
 // TODO: refactor label and input components into an individual component
 export default function Form({
   formdata,
   id,
   editEvent = false,
-  onSuccess
+  onSuccess,
 }: {
   formdata?: formdata;
   id: string;
@@ -30,6 +31,9 @@ export default function Form({
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [formData, setFormData] = useState<formdata>(formdata ? formdata : getFormDataDefault());
+  const [Timeslots, setTimeSlots] = useState<DateGroup[]>([
+    { id: Date.now(), startDate: "", endDate: "" },
+  ]);
 
   useEffect(() => {
     document.title = "New Event | TESC Portal";
@@ -46,7 +50,7 @@ export default function Form({
   // update event or create new event
   const handleSubmit = async () => {
     if (formdata && User?.id) {
-      const error = await updateEvent(id, formData);
+      const error = await updateEvent(id, formData, Timeslots);
       if (error) {
         setError(error.message);
         DisplayToast("Unable to update event", "error");
@@ -55,14 +59,14 @@ export default function Form({
         DisplayToast("Succesfully updated event", "success");
       }
     } else if (User?.id) {
-      const error = await createEvent(User, formData);
+      const error = await createEvent(User, formData, Timeslots);
       if (error) {
         console.log(error);
         setError(error.message);
         DisplayToast("Unable to create event", "error");
       } else {
         form.current?.reset();
-        setFormData(getFormDataDefault());
+ 
         navigate("/");
         DisplayToast("Succesfully created event", "success");
       }
@@ -114,11 +118,11 @@ export default function Form({
                   {
                     name: "offset",
                     options: {
-                      offset: [0, -14]
-                    }
-                  }
-                ]
-              }
+                      offset: [0, -14],
+                    },
+                  },
+                ],
+              },
             }}
           >
             <IoInformationCircleOutline className="text-sm" />
@@ -133,56 +137,7 @@ export default function Form({
           autoFocus
           required
         />
-        <label htmlFor="StartTime">Start Time (date and time)</label>
-        <div className="border-black border rounded-lg px-3 h-12 flex items-center">
-          <input
-            type="datetime-local"
-            name="StartTime"
-            value={formData.start_date}
-            required
-            onChange={(e) => handleChange(e.target.value, ["start_date", "end_date"])}
-          ></input>
-        </div>
-        <div className="flex items-center gap-1">
-          <label htmlFor="EndTime">End Time (date and time)</label>
-          <Tooltip
-            title={"Event end must be in the future and also after event start"}
-            placement="bottom"
-            slotProps={{
-              popper: {
-                modifiers: [
-                  {
-                    name: "offset",
-                    options: {
-                      offset: [0, -14]
-                    }
-                  }
-                ]
-              }
-            }}
-          >
-            <IoInformationCircleOutline className="text-sm" />
-          </Tooltip>
-        </div>
-        <div className="border-black border rounded-lg px-3 h-12 flex items-center scroll-smooth">
-          <input
-            type="datetime-local"
-            name="EndTime"
-            required
-            min={Math.max(new Date(formData.start_date).getTime(), Date.now())}
-            value={formData.end_date}
-            onChange={(e) => {
-              if (
-                new Date(e.target.value).getTime() <
-                Math.max(new Date(formData.start_date).getTime(), Date.now())
-              ) {
-                return;
-              } else {
-                handleChange(e.target.value, ["end_date"]);
-              }
-            }}
-          ></input>
-        </div>
+        <DoubleSelectGroup {...{ Timeslots, setTimeSlots }} />
 
         <label>Event Location</label>
         <Dropdown formData={formData} handleChange={handleChange} />
