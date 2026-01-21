@@ -163,6 +163,7 @@ export const locations: string[] = [
 export const majors: string[] = [
   "Anthropology",
   "Archaeology",
+  "Artificial Intelligence",
   "Biological Anthropology",
   "Climate Change and Human Solutions",
   "Sociocultural Anthropology",
