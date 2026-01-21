@@ -27,8 +27,9 @@ createRoot(document.getElementById("root")!).render(
             <Route path="" element={<Profile />} />
             <Route path="all-attended-events" element={<PageAllAttendEvents />} />
           </Route>
+          <Route path="my-events" element={<PageAllAttendEvents />}></Route>
         </Route>
       </Routes>
     </BrowserRouter>
-  </StrictMode>
+  </StrictMode>,
 );

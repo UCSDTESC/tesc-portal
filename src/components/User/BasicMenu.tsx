@@ -73,7 +73,7 @@ export default function BasicMenu() {
             <Grow
               {...TransitionProps}
               style={{
-                transformOrigin: placement === "bottom-end" ? "left top" : "left bottom"
+                transformOrigin: placement === "bottom-end" ? "left top" : "left bottom",
               }}
             >
               <Paper>
@@ -85,9 +85,14 @@ export default function BasicMenu() {
                     onKeyDown={handleListKeyDown}
                   >
                     {User?.role !== "company" && (
-                      <NavLink to="/profile">
-                        <MenuItem onClick={handleClose}>Profile</MenuItem>
-                      </NavLink>
+                      <>
+                        <NavLink to="/profile">
+                          <MenuItem onClick={handleClose}>Profile</MenuItem>
+                        </NavLink>
+                        <NavLink to="/my-events">
+                          <MenuItem onClick={handleClose}>Event History</MenuItem>
+                        </NavLink>
+                      </>
                     )}
                     {User?.role === "internal" && (
                       <>
