@@ -5,20 +5,20 @@
 
 import React, { useState, useEffect, useContext } from "react";
 import EventCard from '@components/ui/EventCard'; 
-import EventDetails from '@components/ui/EventDetails';
 import { AttendedEvent } from '../lib/interfaces/AttendedEvent';
 import { fetchAttendedEvents } from '../../services/user';
-import UserContext from "@lib/UserContext"; 
+import UserContext from "@lib/UserContext";
+import { useNavigate } from "react-router"; 
 
 const PageAllAttendEvents: React.FC = () => {
     console.log("PageAllAttendEvents Component Loaded.");
     const { User } = useContext(UserContext); 
     console.log("User Context Retrieved:", User);
+    const navigate = useNavigate();
 
     const [allEvents, setAllEvents] = useState<AttendedEvent[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [selectedEvent, setSelectedEvent] = useState<AttendedEvent | null>(null);
 
     useEffect(() => {
         const loadEvents = async () => {
@@ -32,7 +32,14 @@ const PageAllAttendEvents: React.FC = () => {
                 
                 if (fetchError) throw new Error("Failed to fetch events.");
                 
-                const sortedEvents = (events || []).sort((a, b) => 
+                // Filter to only past events and sort by date (newest first)
+                const now = new Date();
+                const pastEvents = (events || []).filter(event => {
+                    const eventEndDate = new Date(event.date.split(' - ')[1] || event.date.split(' - ')[0]);
+                    return eventEndDate < now;
+                });
+                
+                const sortedEvents = pastEvents.sort((a, b) => 
                     new Date(b.date.split(' - ')[0]).getTime() - new Date(a.date.split(' - ')[0]).getTime()
                 );
                 
@@ -47,13 +54,9 @@ const PageAllAttendEvents: React.FC = () => {
         loadEvents();
     }, [User]);
     
-    // handlers
-    const handleViewDetails = (event: AttendedEvent) => setSelectedEvent(event);
-    const handleCloseModal = () => setSelectedEvent(null);
-    
-    const handleAddFeedback = (_eventId: string) => { 
-        console.log(`User initiated feedback submission for Event ID: ${_eventId}`);
-        handleCloseModal(); 
+    // handler - navigate to bulletin page
+    const handleViewDetails = (event: AttendedEvent) => {
+        navigate(`/bulletin/${event.id}`);
     };
 
     // loading + error states
@@ -63,17 +66,18 @@ const PageAllAttendEvents: React.FC = () => {
     if (!User || !User.id) return <h1>Please log in to view history.</h1>;
 
     return (
-        <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ padding: '40px', maxWidth: '1400px', margin: '0 auto' }}>
             <h1 style={{ fontSize: '28px', marginBottom: '30px' }}>Full Attended Event History</h1>
             
             {allEvents.length === 0 ? (
-                <p>No event history found.</p>
+                <p>No past event history found.</p>
             ) : (
                 <div 
                     style={{ 
                         display: 'grid', 
                         gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
-                        gap: '20px', 
+                        gap: '24px',
+                        width: '100%',
                     }}
                 >
                     {allEvents.map((event) => (
@@ -84,14 +88,6 @@ const PageAllAttendEvents: React.FC = () => {
                         />
                     ))}
                 </div>
-            )}
-
-            {selectedEvent && (
-                <EventDetails
-                    event={selectedEvent} 
-                    onClose={handleCloseModal} 
-                    onAddFeedback={handleAddFeedback}
-                />
             )}
         </div>
     );
