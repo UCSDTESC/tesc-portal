@@ -1,8 +1,3 @@
-// TODO: FIX
-// this is for the all-attended-events page when yo uwant to look at every event
-// you attended -- through the recently attended events bar
-// but it doesn't work right now sorry
-
 import React, { useState, useEffect, useContext } from "react";
 import EventCard from '@components/ui/EventCard'; 
 import { AttendedEvent } from '../lib/interfaces/AttendedEvent';
@@ -32,7 +27,8 @@ const PageAllAttendEvents: React.FC = () => {
                 
                 if (fetchError) throw new Error("Failed to fetch events.");
                 
-                // Filter to only past events and sort by date (newest first)
+                // only filter for past events
+                // sort by date -- newest first
                 const now = new Date();
                 const pastEvents = (events || []).filter(event => {
                     const eventEndDate = new Date(event.date.split(' - ')[1] || event.date.split(' - ')[0]);
@@ -61,25 +57,18 @@ const PageAllAttendEvents: React.FC = () => {
 
     // loading + error states
     if (loading) return <p>Loading event history...</p>;
-    if (error) return <p style={{ color: 'red' }}>Error: {error}</p>;
+    if (error) return <p className="text-red-500">Error: {error}</p>;
     if (!User && loading) return <p>Checking user session...</p>;
     if (!User || !User.id) return <h1>Please log in to view history.</h1>;
 
     return (
-        <div style={{ padding: '40px', maxWidth: '1400px', margin: '0 auto' }}>
-            <h1 style={{ fontSize: '28px', marginBottom: '30px' }}>Full Attended Event History</h1>
+        <div className="p-10 max-w-[1400px] mx-auto">
+            <h1 className="text-[28px] mb-8">Full Attended Event History</h1>
             
             {allEvents.length === 0 ? (
                 <p>No past event history found.</p>
             ) : (
-                <div 
-                    style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
-                        gap: '24px',
-                        width: '100%',
-                    }}
-                >
+                <div className="grid grid-flow-col auto-cols-auto gap-6 w-full overflow-x-auto">
                     {allEvents.map((event) => (
                         <EventCard 
                             key={event.id} 
