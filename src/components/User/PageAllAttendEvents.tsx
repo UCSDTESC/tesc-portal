@@ -1,24 +1,20 @@
-// TODO: FIX
-// this is for the all-attended-events page when yo uwant to look at every event
-// you attended -- through the recently attended events bar
-// but it doesn't work right now sorry
-
 import React, { useState, useEffect, useContext } from "react";
 import EventCard from '@components/ui/EventCard'; 
-import EventDetails from '@components/ui/EventDetails';
 import { AttendedEvent } from '../lib/interfaces/AttendedEvent';
 import { fetchAttendedEvents } from '../../services/user';
-import UserContext from "@lib/UserContext"; 
+import UserContext from "@lib/UserContext";
+import { useNavigate } from "react-router"; 
 
 const PageAllAttendEvents: React.FC = () => {
     console.log("PageAllAttendEvents Component Loaded.");
     const { User } = useContext(UserContext); 
     console.log("User Context Retrieved:", User);
+    const navigate = useNavigate();
 
     const [allEvents, setAllEvents] = useState<AttendedEvent[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [selectedEvent, setSelectedEvent] = useState<AttendedEvent | null>(null);
+    const [searchQuery, setSearchQuery] = useState<string>('');
 
     useEffect(() => {
         const loadEvents = async () => {
@@ -32,7 +28,15 @@ const PageAllAttendEvents: React.FC = () => {
                 
                 if (fetchError) throw new Error("Failed to fetch events.");
                 
-                const sortedEvents = (events || []).sort((a, b) => 
+                // only filter for past events
+                // sort by date -- newest first
+                const now = new Date();
+                const pastEvents = (events || []).filter(event => {
+                    const eventEndDate = new Date(event.date.split(' - ')[1] || event.date.split(' - ')[0]);
+                    return eventEndDate < now;
+                });
+                
+                const sortedEvents = pastEvents.sort((a, b) => 
                     new Date(b.date.split(' - ')[0]).getTime() - new Date(a.date.split(' - ')[0]).getTime()
                 );
                 
@@ -47,36 +51,61 @@ const PageAllAttendEvents: React.FC = () => {
         loadEvents();
     }, [User]);
     
-    // handlers
-    const handleViewDetails = (event: AttendedEvent) => setSelectedEvent(event);
-    const handleCloseModal = () => setSelectedEvent(null);
-    
-    const handleAddFeedback = (_eventId: string) => { 
-        console.log(`User initiated feedback submission for Event ID: ${_eventId}`);
-        handleCloseModal(); 
+    // handler - navigate to bulletin page
+    const handleViewDetails = (event: AttendedEvent) => {
+        navigate(`/bulletin/${event.id}`);
     };
+
+    // Filter events based on search query
+    const filteredEvents = allEvents.filter(event => {
+        if (!searchQuery.trim()) return true;
+        
+        const query = searchQuery.toLowerCase();
+        const searchableText = [
+            event.title,
+            event.location,
+            event.category,
+            event.description || ''
+        ].join(' ').toLowerCase();
+        
+        return searchableText.includes(query);
+    });
 
     // loading + error states
     if (loading) return <p>Loading event history...</p>;
-    if (error) return <p style={{ color: 'red' }}>Error: {error}</p>;
+    if (error) return <p className="text-red-500">Error: {error}</p>;
     if (!User && loading) return <p>Checking user session...</p>;
     if (!User || !User.id) return <h1>Please log in to view history.</h1>;
 
     return (
-        <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto' }}>
-            <h1 style={{ fontSize: '28px', marginBottom: '30px' }}>Full Attended Event History</h1>
+        <div className="p-10 max-w-[1400px] mx-auto">
+            <h1 className="text-[28px] mb-8">Full Attended Event History</h1>
+            
+            {/* Search Bar */}
+            {allEvents.length > 0 && (
+                <div className="mb-6">
+                    <input
+                        type="text"
+                        placeholder="Search events by title, location, category..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    {searchQuery && (
+                        <p className="mt-2 text-sm text-gray-600">
+                            Showing {filteredEvents.length} of {allEvents.length} events
+                        </p>
+                    )}
+                </div>
+            )}
             
             {allEvents.length === 0 ? (
-                <p>No event history found.</p>
+                <p>No past event history found.</p>
+            ) : filteredEvents.length === 0 ? (
+                <p className="text-gray-500">No events match your search "{searchQuery}"</p>
             ) : (
-                <div 
-                    style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
-                        gap: '20px', 
-                    }}
-                >
-                    {allEvents.map((event) => (
+                <div className="grid grid-flow-col auto-cols-auto gap-6 w-full overflow-x-auto">
+                    {filteredEvents.map((event) => (
                         <EventCard 
                             key={event.id} 
                             event={event} 
@@ -84,14 +113,6 @@ const PageAllAttendEvents: React.FC = () => {
                         />
                     ))}
                 </div>
-            )}
-
-            {selectedEvent && (
-                <EventDetails
-                    event={selectedEvent} 
-                    onClose={handleCloseModal} 
-                    onAddFeedback={handleAddFeedback}
-                />
             )}
         </div>
     );

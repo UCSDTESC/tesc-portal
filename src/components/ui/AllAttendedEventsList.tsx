@@ -1,8 +1,3 @@
-// TODO: FIX
-// this is for the all-attended-events page when yo uwant to look at every event
-// you attended -- through the recently attended events bar
-// but it doesn't work right now sorry
-
 import React, { useState, useEffect, useContext } from "react";
 import EventCard from './EventCard'; 
 import EventDetails from './EventDetails';
