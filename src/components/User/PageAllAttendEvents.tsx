@@ -14,6 +14,7 @@ const PageAllAttendEvents: React.FC = () => {
     const [allEvents, setAllEvents] = useState<AttendedEvent[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState<string>('');
 
     useEffect(() => {
         const loadEvents = async () => {
@@ -55,6 +56,21 @@ const PageAllAttendEvents: React.FC = () => {
         navigate(`/bulletin/${event.id}`);
     };
 
+    // Filter events based on search query
+    const filteredEvents = allEvents.filter(event => {
+        if (!searchQuery.trim()) return true;
+        
+        const query = searchQuery.toLowerCase();
+        const searchableText = [
+            event.title,
+            event.location,
+            event.category,
+            event.description || ''
+        ].join(' ').toLowerCase();
+        
+        return searchableText.includes(query);
+    });
+
     // loading + error states
     if (loading) return <p>Loading event history...</p>;
     if (error) return <p className="text-red-500">Error: {error}</p>;
@@ -65,11 +81,31 @@ const PageAllAttendEvents: React.FC = () => {
         <div className="p-10 max-w-[1400px] mx-auto">
             <h1 className="text-[28px] mb-8">Full Attended Event History</h1>
             
+            {/* Search Bar */}
+            {allEvents.length > 0 && (
+                <div className="mb-6">
+                    <input
+                        type="text"
+                        placeholder="Search events by title, location, category..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    {searchQuery && (
+                        <p className="mt-2 text-sm text-gray-600">
+                            Showing {filteredEvents.length} of {allEvents.length} events
+                        </p>
+                    )}
+                </div>
+            )}
+            
             {allEvents.length === 0 ? (
                 <p>No past event history found.</p>
+            ) : filteredEvents.length === 0 ? (
+                <p className="text-gray-500">No events match your search "{searchQuery}"</p>
             ) : (
                 <div className="grid grid-flow-col auto-cols-auto gap-6 w-full overflow-x-auto">
-                    {allEvents.map((event) => (
+                    {filteredEvents.map((event) => (
                         <EventCard 
                             key={event.id} 
                             event={event} 
