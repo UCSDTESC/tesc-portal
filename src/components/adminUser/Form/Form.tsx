@@ -10,7 +10,7 @@ import { createEvent, updateEvent } from "@services/event";
 import Editor from "./Editor";
 import { MultipleSelectChip, Dropdown } from "./Dropdowns";
 import DisplayToast from "@lib/hooks/useToast";
-import { Tooltip } from "@mui/material";
+import { Tooltip, Switch, FormControlLabel } from "@mui/material";
 import { IoInformationCircleOutline } from "react-icons/io5";
 
 // TODO: refactor label and input components into an individual component
@@ -18,7 +18,7 @@ export default function Form({
   formdata,
   id,
   editEvent = false,
-  onSuccess
+  onSuccess,
 }: {
   formdata?: formdata;
   id: string;
@@ -114,11 +114,11 @@ export default function Form({
                   {
                     name: "offset",
                     options: {
-                      offset: [0, -14]
-                    }
-                  }
-                ]
-              }
+                      offset: [0, -14],
+                    },
+                  },
+                ],
+              },
             }}
           >
             <IoInformationCircleOutline className="text-sm" />
@@ -146,7 +146,7 @@ export default function Form({
         <div className="flex items-center gap-1">
           <label htmlFor="EndTime">End Time (date and time)</label>
           <Tooltip
-            title={"Event end must be in the future and also after event start"}
+            title={"Event end must be after event start"}
             placement="bottom"
             slotProps={{
               popper: {
@@ -154,11 +154,11 @@ export default function Form({
                   {
                     name: "offset",
                     options: {
-                      offset: [0, -14]
-                    }
-                  }
-                ]
-              }
+                      offset: [0, -14],
+                    },
+                  },
+                ],
+              },
             }}
           >
             <IoInformationCircleOutline className="text-sm" />
@@ -169,20 +169,43 @@ export default function Form({
             type="datetime-local"
             name="EndTime"
             required
-            min={Math.max(new Date(formData.start_date).getTime(), Date.now())}
+            min={formData.start_date}
             value={formData.end_date}
             onChange={(e) => {
-              if (
-                new Date(e.target.value).getTime() <
-                Math.max(new Date(formData.start_date).getTime(), Date.now())
-              ) {
+              if (new Date(e.target.value).getTime() <= new Date(formData.start_date).getTime()) {
                 return;
-              } else {
-                handleChange(e.target.value, ["end_date"]);
               }
+              handleChange(e.target.value, ["end_date"]);
             }}
           ></input>
         </div>
+
+        <FormControlLabel
+          control={
+            <Switch
+              checked={formData.track_attendance ?? false}
+              onChange={(_, checked) => handleChange(checked, ["track_attendance"])}
+              color="primary"
+            />
+          }
+          label="Track attendance on the portal"
+        />
+
+        {!(formData.track_attendance ?? false) && (
+          <>
+            <label htmlFor="manual_attendance">Manual attendance</label>
+            <input
+              id="manual_attendance"
+              name="manual_attendance"
+              type="number"
+              min={0}
+              placeholder="Enter attendance count"
+              className="border-black border rounded-lg px-3 h-12"
+              value={formData.manual_attendance ?? ""}
+              onChange={(e) => handleChange(e.target.value, ["manual_attendance"])}
+            />
+          </>
+        )}
 
         <label>Event Location</label>
         <Dropdown formData={formData} handleChange={handleChange} />

@@ -28,7 +28,7 @@ export default function EventInfo({ selection }: { selection: string }) {
       return;
     }
     setImageUrl(
-      `https://mxbwjmjpevvyejnugisy.supabase.co/storage/v1/object/public/profile.images/${filtered[0].orgs?.name}/${filtered[0].orgs?.pfp_str}`
+      `https://mxbwjmjpevvyejnugisy.supabase.co/storage/v1/object/public/profile.images/${filtered[0].orgs?.name}/${filtered[0].orgs?.pfp_str}`,
     );
   }, [data, selection, User?.role]);
 
@@ -67,8 +67,24 @@ export default function EventInfo({ selection }: { selection: string }) {
                   <motion.h1 variants={item} className="font-bold text-4xl">
                     {daton.title}
                   </motion.h1>
-                  {daton.attendance_cap != null ? (
-                    daton.attendance < daton.attendance_cap && daton.rsvp < daton.attendance_cap ? (
+                  {daton.track_attendance &&
+                    (daton.attendance_cap != null ? (
+                      daton.attendance < daton.attendance_cap &&
+                      daton.rsvp < daton.attendance_cap ? (
+                        <RsvpOrAttendanceButton
+                          {...{
+                            start_date: daton.start_date,
+                            end_date: daton.end_date,
+                            selection,
+                          }}
+                          className="absolute bottom-0 right-[5%] bg-lightBlue hover:opacity-80"
+                        />
+                      ) : (
+                        <div className="text-red-600 underline bold px-4 py-2 rounded-lg cursor-pointer w-fit h-fit absolute bottom-0 right-0 ">
+                          Event attendance cap reached
+                        </div>
+                      )
+                    ) : (
                       <RsvpOrAttendanceButton
                         {...{
                           start_date: daton.start_date,
@@ -77,21 +93,7 @@ export default function EventInfo({ selection }: { selection: string }) {
                         }}
                         className="absolute bottom-0 right-[5%] bg-lightBlue hover:opacity-80"
                       />
-                    ) : (
-                      <div className="text-red-600 underline bold px-4 py-2 rounded-lg cursor-pointer w-fit h-fit absolute bottom-0 right-0 ">
-                        Event attendance cap reached
-                      </div>
-                    )
-                  ) : (
-                    <RsvpOrAttendanceButton
-                      {...{
-                        start_date: daton.start_date,
-                        end_date: daton.end_date,
-                        selection,
-                      }}
-                      className="absolute bottom-0 right-[5%] bg-lightBlue hover:opacity-80"
-                    />
-                  )}
+                    ))}
                   <motion.p className="text-lg text-[#898989]" variants={item}>
                     {daton.orgs?.name ? daton.orgs.name : "Unknown"}
                   </motion.p>
@@ -116,7 +118,7 @@ export default function EventInfo({ selection }: { selection: string }) {
                           daton.title,
                           daton.location_str,
                           daton.start_date,
-                          daton.end_date
+                          daton.end_date,
                         )}
                         className="flex items-center gap-2 bg-blue/20 justify-center px-2 rounded-2xl text-gray-700 hover:bg-blue/40"
                       >
