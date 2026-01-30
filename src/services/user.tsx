@@ -4,7 +4,7 @@ export const signIn = async (email: string, password: string) => {
   console.log("-----Sign in User-----");
   const { data, error } = await supabase.auth.signInWithPassword({
     email: email,
-    password: password
+    password: password,
   });
   if (error) return { user: null, error };
   console.log("Fetch user role");
@@ -24,7 +24,7 @@ export const signIn = async (email: string, password: string) => {
   const user = {
     id: data.user.id,
     email: data.user.email,
-    role: role && role[0] ? role[0].roles.name : "member"
+    role: role && role[0] ? role[0].roles.name : "member",
   };
   return { user, error };
 };
@@ -32,7 +32,7 @@ export const signIn = async (email: string, password: string) => {
 export const fetchUser = async () => {
   console.log("------FETCH USER---------");
   const {
-    data: { user }
+    data: { user },
   } = await supabase.auth.getUser();
   console.log("Fetch user role");
   const { data } = await supabase
@@ -50,7 +50,7 @@ export const fetchUser = async () => {
     return {
       id: user.id,
       email: user.email,
-      role: role && role[0] ? role[0].roles.name : "member"
+      role: role && role[0] ? role[0].roles.name : "member",
     };
 };
 
@@ -60,11 +60,22 @@ export const signOut = async () => {
   return error;
 };
 
+export const signInWithGoogle = async () => {
+  console.log("-----Sign in with Google-----");
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${window.location.origin}/bulletin/-1`,
+    },
+  });
+  return { data, error };
+};
+
 export const signUp = async (email: string, password: string) => {
   // add user to auth table
   const { data, error } = await supabase.auth.signUp({
     email: email,
-    password: password
+    password: password,
   });
   if (error) return { user: null, error };
 
@@ -102,7 +113,7 @@ export const verifyOTP = async (email: string, token: string, type: "email" | "r
       const user = {
         id: data.user.id,
         email: data.user.email,
-        role: "member"
+        role: "member",
       };
       return { user, error };
     }
@@ -110,7 +121,7 @@ export const verifyOTP = async (email: string, token: string, type: "email" | "r
     const user = {
       id: data.user.id,
       email: data.user.email,
-      role: "unknown"
+      role: "unknown",
     };
     return { user, error: null };
   }
@@ -144,7 +155,7 @@ export const fetchRSVPAndAttended = async (email: string) => {
       attended: data
         .filter((daton) => daton.attended == true)
         .map((daton) => String(daton.event_id)),
-      error: null
+      error: null,
     };
   } else return { rsvp: null, attended: null, error };
 };
@@ -191,7 +202,7 @@ export const logAttendance = async (selection: string, id: string, userInput: st
   const { error } = await supabase.rpc("validate_attendance", {
     p_event_id: selection,
     p_password: userInput,
-    p_user_id: id
+    p_user_id: id,
   });
   if (!error) {
     console.log("Get User attendance from Users");
@@ -217,7 +228,7 @@ export const fetchAttendedEvents = async (userId: string) => {
     .select("event_id, points")
     .eq("user_id", userId)
     .eq("attended", true);
-  
+
   if (logError) {
     console.error("Error fetching event log:", logError);
     return { events: null, error: logError };
@@ -244,7 +255,7 @@ export const fetchAttendedEvents = async (userId: string) => {
       poster,
       org_id, 
       orgs!inner(name, pfp_str) 
-      `
+      `,
     )
     .in("id", attendedEventsIds)
     .eq("deleted", false);
@@ -253,16 +264,16 @@ export const fetchAttendedEvents = async (userId: string) => {
     console.error("Error fetching event details:", detailsError);
     return { events: null, error: detailsError };
   }
-  
-  const attendedEventsWithPoints = eventDetails.map(event => {
-    const logEntry = logData.find(log => log.event_id === event.id);
+
+  const attendedEventsWithPoints = eventDetails.map((event) => {
+    const logEntry = logData.find((log) => log.event_id === event.id);
     return {
       id: event.id,
       title: event.title,
       date: `${event.start_date} - ${event.end_date}`,
       location: event.location_str,
       points: logEntry ? logEntry.points : 0,
-      category: event.tags[0] || 'General',
+      category: event.tags[0] || "General",
       description: event.content,
       coverImage: event.poster,
     };

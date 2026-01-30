@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigate } from "react-router";
 
 import UserContext from "@lib/UserContext";
 import type { User, UserCredentials } from "@lib/UserContext";
+import supabase from "@server/supabase";
 import {
   signIn,
   fetchUser,
@@ -10,7 +11,8 @@ import {
   signUp,
   verifyOTP,
   sendPasswordRecovery,
-  updatePassword
+  updatePassword,
+  signInWithGoogle,
 } from "@services/user";
 
 import Navbar from "./Navbar";
@@ -57,7 +59,7 @@ export default function Page() {
 
   const handleVerifyOTP = async (
     { email, password: Token, type }: UserCredentials & { type: "email" | "recovery" },
-    onSuccess: () => void
+    onSuccess: () => void,
   ) => {
     const { user, error } = await verifyOTP(email, Token, type);
     if (error) {
@@ -67,7 +69,7 @@ export default function Page() {
       setUser({
         id: user?.id ? user?.id : "",
         email: user?.email ? user?.email : "",
-        role: user?.role ? user.role : "unknown"
+        role: user?.role ? user.role : "unknown",
       });
       onSuccess();
       DisplayToast("Succesfully logged in", "success");
@@ -111,6 +113,63 @@ export default function Page() {
     }
   };
 
+  // sign in with Google
+  const handleSignInWithGoogle = async () => {
+    const { error } = await signInWithGoogle();
+    if (error) {
+      console.error(error.message);
+      DisplayToast("Error signing in with Google", "error");
+    }
+    // Note: User will be set via auth state change listener when OAuth completes
+  };
+
+  // listen for auth state changes (handles OAuth callbacks)
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event);
+      if (event === "SIGNED_IN" && session?.user) {
+        // User signed in (including OAuth)
+        try {
+          // Check if user exists in users table (for OAuth users who sign in for first time)
+          if (session.user.email) {
+            const { data: existingUser } = await supabase
+              .from("users")
+              .select("uuid")
+              .eq("uuid", session.user.id)
+              .single();
+
+            // If user doesn't exist in users table, insert them (for Google OAuth first-time sign-in)
+            if (!existingUser) {
+              console.log("Inserting new OAuth user into database");
+              await supabase.from("users").insert({
+                uuid: session.user.id,
+                email: session.user.email,
+              });
+            }
+          }
+
+          const user = await fetchUser();
+          if (user && user.email) {
+            setUser({ id: user.id, email: user.email, role: user.role });
+            DisplayToast("Successfully logged in", "success");
+            // Close login modal if open
+            setShowLoginModal(false);
+          }
+        } catch (err) {
+          console.error("Error fetching user after auth:", err);
+        }
+      } else if (event === "SIGNED_OUT") {
+        setUser(null);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
   // get current user
   useEffect(() => {
     // if (location.pathname.includes("bulletin")) return;
@@ -144,9 +203,10 @@ export default function Page() {
           handleSignIn,
           handleSignOut,
           handleSignUp,
+          handleSignInWithGoogle,
           handleVerifyOTP,
           handleSendRecovery,
-          handleUpdatePassword
+          handleUpdatePassword,
         }}
       >
         <Navbar />
