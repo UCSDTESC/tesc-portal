@@ -23,7 +23,9 @@ export const getFormDataDefault = (): formdata => {
     location_str: "",
     content: "",
     tags: [],
-    poster: "https://placehold.co/600x400"
+    poster: "https://placehold.co/600x400",
+    track_attendance: false,
+    manual_attendance: "",
   };
 };
 
@@ -35,8 +37,8 @@ export const DateParser = (date: string) => {
       parseInt(parsedDate[1]) - 1,
       parseInt(parsedDate[2]),
       parseInt(parsedDate[3]),
-      parseInt(parsedDate[4])
-    )
+      parseInt(parsedDate[4]),
+    ),
   );
   return correctDate.toUTCString();
 };
@@ -54,13 +56,13 @@ export const formatGoogleCalendarEvent = (
   title: string,
   location: string,
   start_date: string,
-  end_date: string
+  end_date: string,
 ) => {
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title.replace(
     " ",
-    "+"
+    "+",
   )}&details=More+details+see:+${window.location.href}&location=${location}&dates=${formatDate(
-    start_date
+    start_date,
   )}/${formatDate(end_date)}&ctz=America/Los_Angeles`;
 };
 
@@ -82,8 +84,8 @@ export function getPdfPreviewUrl(url: string): { previewUrl: string | null; note
       }
       return {
         previewUrl: `https://drive.google.com/viewerng/viewer?embedded=true&url=${encodeURIComponent(
-          href
-        )}`
+          href,
+        )}`,
       };
     }
 
