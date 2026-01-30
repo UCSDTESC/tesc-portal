@@ -4,12 +4,12 @@ import { SidebarClub, SidebarCompany } from "./SidebarItem";
 import UserContext from "@lib/UserContext";
 export const EventsList = memo(function ({
   setSelection,
-  selection
+  selection,
 }: {
   setSelection: (selection: string) => void;
   selection: string;
 }) {
-  const { data, People } = useContext(BulletinContext);
+  const { data, People, eventTimeFilter } = useContext(BulletinContext);
   const { User } = useContext(UserContext);
   if (User?.role === "company") {
     return (
@@ -18,6 +18,13 @@ export const EventsList = memo(function ({
           return <SidebarCompany {...{ daton, setSelection, selection }} />;
         })}
       </>
+    );
+  }
+  if (eventTimeFilter === "current" && (!data || data.length === 0)) {
+    return (
+      <p className="px-4 py-6 text-center text-sm text-slate-600">
+        There are no upcoming events right now. Please check back later!
+      </p>
     );
   }
   return (

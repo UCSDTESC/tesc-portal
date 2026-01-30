@@ -55,7 +55,7 @@ export function SidebarClub({
         </div>
         <span className="w-full flex flex-col items-start">
           <p className="text-[12px] line-clamp-1 text-muted-foreground">
-            {new Date(daton.created_at).toUTCString().slice(0, 16)} <br />
+            {new Date(daton.start_date).toUTCString().slice(0, 16)} <br />
           </p>
           <p className="w-full text-left text-[12px] line-clamp-1 font-bold text-muted-foreground">
             {daton.location_str ? daton.location_str : "N/A"}

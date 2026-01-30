@@ -53,7 +53,7 @@ export function useBulletin(User: User | null) {
           search,
           tagFilters,
           orgFilters,
-          sortMethod
+          sortMethod,
         );
         if (People) {
           setPeople(People as unknown as Member[]);
@@ -65,7 +65,7 @@ export function useBulletin(User: User | null) {
           search,
           tagFilters,
           orgFilters,
-          sortMethod
+          sortMethod,
         );
         if (events) {
           setData(events as unknown as Event[]);
@@ -116,7 +116,7 @@ export function useBulletin(User: User | null) {
         setRSVP(currRSVP);
         DisplayToast(
           remove === true ? "Succesfully removed RSVP" : "Succesfully RSVP'd",
-          "success"
+          "success",
         );
       }
     }
@@ -179,6 +179,7 @@ export interface BulletinContextProps {
   orgs: string[];
   sortMethod: string;
   setSortMethod: (sortMethod: string) => void;
+  eventTimeFilter?: "current" | "past";
 }
 
 export const BulletinContext = createContext<BulletinContextProps>({
@@ -197,4 +198,5 @@ export const BulletinContext = createContext<BulletinContextProps>({
   orgs: [],
   sortMethod: "",
   setSortMethod: () => {},
+  eventTimeFilter: "current",
 } as BulletinContextProps);
