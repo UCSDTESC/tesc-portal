@@ -12,8 +12,7 @@ import Form from "../Form/Form";
 import TableRow from "./TableRow";
 
 const COLUMNS = [
-  { key: "title", label: "Title", width: "10%" },
-  { key: "password", label: "Code", width: "4%" },
+  { key: "title", label: "Title", width: "14%" },
   { key: "created_at", label: "Created", width: "7%" },
   { key: "start_date", label: "Start", width: "7%" },
   { key: "end_date", label: "End", width: "7%" },
