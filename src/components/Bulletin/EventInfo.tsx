@@ -120,9 +120,14 @@ export default function EventInfo({ selection }: { selection: string }) {
                     ))}
                   <div className="flex w-full flex-row mt-10 justify-between flex-wrap-reverse gap-8">
                     <span className="w-fit">
-                      <h1 className=" font-semibold ">
-                        {DateParser(daton.start_date)} <br />
-                        {daton.location_str}
+                      <h1 className="font-semibold">
+                        <span className="block">
+                          Start: {DateParser(daton.start_date)}
+                        </span>
+                        <span className="block">
+                          End: {DateParser(daton.end_date)}
+                        </span>
+                        <span className="block mt-1">{daton.location_str}</span>
                       </h1>
                       <Editor content={daton.content} />
                     </span>
