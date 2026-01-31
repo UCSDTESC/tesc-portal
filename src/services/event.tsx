@@ -1,12 +1,12 @@
 import supabase from "@server/supabase";
 import { formdata } from "@lib/constants";
 import { User } from "@lib/UserContext";
-import { logAttendance } from './user';
+import { logAttendance } from "./user";
 
 function generateRecurringDates(
   startDateStr: string,
   recurrenceEndStr: string,
-  rate: "daily" | "weekly" | "biweekly" | "monthly",
+  rate: "daily" | "weekly" | "biweekly" | "monthly"
 ): string[] {
   const dates: string[] = [];
   const start = new Date(startDateStr);
@@ -56,7 +56,7 @@ export const fetchEventByOrg = async (uid: string) => {
       .select()
       .in(
         "org_id",
-        orgs.map((org) => org.org_uuid),
+        orgs.map((org) => org.org_uuid)
       )
       .eq("deleted", false);
     return { data, error };
@@ -85,7 +85,11 @@ export const createEvent = async (User: User, formData: formdata) => {
     tags: isInternal ? [] : formData.tags,
     org_id: org_name[0].org_uuid,
     poster: isInternal ? "" : formData.poster,
-    attendance_cap: isInternal ? null : (formData.attendance_cap ? Number(formData.attendance_cap) : null),
+    attendance_cap: isInternal
+      ? null
+      : formData.attendance_cap
+      ? Number(formData.attendance_cap)
+      : null,
     track_attendance: formData.track_attendance ?? false,
     internal: formData.internal ?? false,
     manual_attendance:
@@ -96,21 +100,17 @@ export const createEvent = async (User: User, formData: formdata) => {
         : null,
   });
 
-  if (
-    recurringRate !== "none" &&
-    recurrenceEnd &&
-    recurrenceEnd.trim() !== ""
-  ) {
+  if (recurringRate !== "none" && recurrenceEnd && recurrenceEnd.trim() !== "") {
     const startDates = generateRecurringDates(
       formData.start_date,
       recurrenceEnd,
-      recurringRate as "daily" | "weekly" | "biweekly" | "monthly",
+      recurringRate as "daily" | "weekly" | "biweekly" | "monthly"
     );
     const durationMs =
       new Date(formData.end_date).getTime() - new Date(formData.start_date).getTime();
 
     const eventsToInsert = startDates.map((startDate) =>
-      buildEventPayload(startDate, addDurationToDate(startDate, durationMs)),
+      buildEventPayload(startDate, addDurationToDate(startDate, durationMs))
     );
 
     if (eventsToInsert.length === 0) return { message: "No occurrences in date range" };
@@ -124,9 +124,9 @@ export const createEvent = async (User: User, formData: formdata) => {
   }
 
   console.log("----------INSERT NEW EVENT-----------");
-  const { error } = await supabase.from("events").insert([
-    buildEventPayload(formData.start_date, formData.end_date),
-  ]);
+  const { error } = await supabase
+    .from("events")
+    .insert([buildEventPayload(formData.start_date, formData.end_date)]);
   return error;
 };
 
@@ -150,7 +150,11 @@ export const updateEvent = async (eventId: string, formData: formdata) => {
       content: formData.content,
       tags: isInternal ? [] : formData.tags,
       poster: isInternal ? "" : formData.poster,
-      attendance_cap: isInternal ? null : (formData.attendance_cap ? Number(formData.attendance_cap) : null),
+      attendance_cap: isInternal
+        ? null
+        : formData.attendance_cap
+        ? Number(formData.attendance_cap)
+        : null,
       track_attendance: formData.track_attendance ?? false,
       internal: formData.internal ?? false,
       manual_attendance:
@@ -170,12 +174,12 @@ export const queryEventsBySearchAndFilters = async (
   orgFilters: string[],
   sortMethod: string,
   userId: string | undefined,
-  internalFilter?: boolean,
+  internalFilter?: boolean
 ) => {
   let query = supabase
     .from("events")
     .select(
-      "id,content,created_at,end_date,id,location_str,start_date,tags,title,attendance,poster,rsvp,org_id, orgs!inner(name, pfp_str), attendance_cap, track_attendance, internal, password, manual_attendance",
+      "id,content,created_at,end_date,id,location_str,start_date,tags,title,attendance,poster,rsvp,org_id, orgs!inner(name, pfp_str), attendance_cap, track_attendance, internal, password, manual_attendance"
     )
     .ilike("title", `%${keyword}%`)
     .eq("deleted", false);
@@ -190,14 +194,16 @@ export const queryEventsBySearchAndFilters = async (
 
   if (sortMethod === "Event Name (A-Z)") query = query.order("title", { ascending: true });
   else if (sortMethod == "Most Recent") query = query.order("start_date", { ascending: false });
-  else query = query.order("created_at", { ascending: false });
+  else query = query.order("start_date", { ascending: false });
 
   const { data, error } = await query;
 
   // Filter internal events: only show to users with org membership matching event's org_id
   let filteredEvents = data ?? [];
   if (filteredEvents.length > 0) {
-    const internalEvents = filteredEvents.filter((e: { internal?: boolean }) => e.internal === true);
+    const internalEvents = filteredEvents.filter(
+      (e: { internal?: boolean }) => e.internal === true
+    );
     if (internalEvents.length > 0 && userId) {
       const { data: userOrgs } = await supabase
         .from("user_org_roles")
@@ -206,7 +212,7 @@ export const queryEventsBySearchAndFilters = async (
       const userOrgIds = new Set((userOrgs ?? []).map((r: { org_uuid: string }) => r.org_uuid));
       filteredEvents = filteredEvents.filter(
         (e: { internal?: boolean; org_id?: string }) =>
-          !e.internal || (e.internal && e.org_id && userOrgIds.has(e.org_id)),
+          !e.internal || (e.internal && e.org_id && userOrgIds.has(e.org_id))
       );
     } else if (internalEvents.length > 0 && !userId) {
       filteredEvents = filteredEvents.filter((e: { internal?: boolean }) => !e.internal);
@@ -220,7 +226,7 @@ export const queryPeopleBySearchAndFilters = async (
   keyword: string,
   tagFilters: string[],
   orgFilters: string[],
-  sortMethod: string,
+  sortMethod: string
 ) => {
   let query = supabase
     .from("users")
@@ -244,16 +250,11 @@ export const queryPeopleBySearchAndFilters = async (
 };
 
 // for attended events list
-export const verifyEventAttendance = async (
-  eventId: string,
-  userId: string,
-  password: string
-) => {
-
+export const verifyEventAttendance = async (eventId: string, userId: string, password: string) => {
   console.log("----------VERIFYING EVENT ATTENDANCE-----------");
   const error = await logAttendance(eventId, userId, password);
   // check password, update events_log, update user points/attended list
-  
+
   if (error) {
     console.log("Attendance verification failed:", error);
   } else {
