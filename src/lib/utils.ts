@@ -26,6 +26,7 @@ export const getFormDataDefault = (): formdata => {
     poster: "https://placehold.co/600x400",
     track_attendance: false,
     manual_attendance: "",
+    internal: false,
   };
 };
 

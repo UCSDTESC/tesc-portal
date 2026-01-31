@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 import { fetchGradYears, fetchOrgs } from "@services/organization";
 import { editRSVP, fetchRSVPAndAttended, logAttendance } from "@services/user";
@@ -19,6 +19,7 @@ export function useBulletin(User: User | null) {
   const [orgs, setOrgs] = useState<string[]>([]);
   const [tagFilters, setTagFilters] = useState<string[]>([]);
   const [orgFilters, setOrgFilters] = useState<string[]>([]);
+  const [internalFilter, setInternalFilter] = useState<boolean>(false);
   const [sortMethod, setSortMethod] = useState<string>("");
   const [gradYears, setGradYears] = useState<string[]>([]);
   // fetch list of organizations
@@ -45,46 +46,48 @@ export function useBulletin(User: User | null) {
     getGradYears();
   }, []);
 
-  // fetch events (with any searches and filters)
-  useEffect(() => {
+  const fetchData = useCallback(async () => {
     if (!User) {
       setIsLoading(false);
       return;
     }
-    const fetchEvents = async () => {
-      setIsLoading(true);
-      console.log("----FETCH EVENTS---");
-      if (User?.role === "company") {
-        const { People, error } = await queryPeopleBySearchAndFilters(
-          search,
-          tagFilters,
-          orgFilters,
-          sortMethod,
-        );
-        if (People) {
-          setPeople(People as unknown as Member[]);
-        } else {
-          console.error(error?.message);
-        }
-        setIsLoading(false);
+    setIsLoading(true);
+    console.log("----FETCH EVENTS---");
+    if (User?.role === "company") {
+      const { People, error } = await queryPeopleBySearchAndFilters(
+        search,
+        tagFilters,
+        orgFilters,
+        sortMethod,
+      );
+      if (People) {
+        setPeople(People as unknown as Member[]);
       } else {
-        const { events, error } = await queryEventsBySearchAndFilters(
-          search,
-          tagFilters,
-          orgFilters,
-          sortMethod,
-        );
-        if (events) {
-          setData(events as unknown as Event[]);
-        } else {
-          console.error(error?.message);
-          DisplayToast("Error fetching events", "error");
-        }
-        setIsLoading(false);
+        console.error(error?.message);
       }
-    };
-    fetchEvents();
-  }, [search, tagFilters, orgFilters, sortMethod, User]);
+      setIsLoading(false);
+    } else {
+      const { events, error } = await queryEventsBySearchAndFilters(
+        search,
+        tagFilters,
+        orgFilters,
+        sortMethod,
+        User?.id,
+        internalFilter,
+      );
+      if (events) {
+        setData(events as unknown as Event[]);
+      } else {
+        console.error(error?.message);
+        DisplayToast("Error fetching events", "error");
+      }
+      setIsLoading(false);
+    }
+  }, [search, tagFilters, orgFilters, sortMethod, User, internalFilter]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // fetch RSVP and attended events
   useEffect(() => {
@@ -167,8 +170,11 @@ export function useBulletin(User: User | null) {
     orgFilters,
     setOrgFilters,
     orgs,
+    internalFilter,
+    setInternalFilter,
     sortMethod,
     setSortMethod,
+    fetchData,
   };
 }
 
@@ -187,9 +193,14 @@ export interface BulletinContextProps {
   orgFilters: string[];
   setOrgFilters: (orgs: string[]) => void;
   orgs: string[];
+  internalFilter: boolean;
+  setInternalFilter: (value: boolean) => void;
   sortMethod: string;
   setSortMethod: (sortMethod: string) => void;
   eventTimeFilter?: "current" | "past";
+  openEditModal?: (event: Event) => void;
+  showEditModal?: boolean;
+  setShowEditModal?: (show: boolean) => void;
 }
 
 export const BulletinContext = createContext<BulletinContextProps>({
@@ -207,7 +218,12 @@ export const BulletinContext = createContext<BulletinContextProps>({
   orgFilters: [],
   setOrgFilters: () => {},
   orgs: [],
+  internalFilter: false,
+  setInternalFilter: () => {},
   sortMethod: "",
   setSortMethod: () => {},
   eventTimeFilter: "current",
+  openEditModal: () => {},
+  showEditModal: false,
+  setShowEditModal: () => {},
 } as BulletinContextProps);

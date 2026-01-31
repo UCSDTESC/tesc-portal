@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { SidebarClub, SidebarCompany } from "./SidebarItem";
 import UserContext from "@lib/UserContext";
 
-const MIN_SKELETON_DURATION_MS = 500;
+const MIN_SKELETON_DURATION_MS = 100;
 const FADE_OUT_DURATION_MS = 300;
 
 function EventListSkeleton() {

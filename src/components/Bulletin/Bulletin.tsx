@@ -1,14 +1,18 @@
 import { useContext, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate, useParams } from "react-router";
 
 import UserContext from "@lib/UserContext";
 
 import { BulletinContext, useBulletin } from "@lib/hooks/useBulletin";
+import { useEditModal } from "@lib/hooks/useEditModal";
+import { formdata } from "@lib/constants";
 import { FaArrowRightToBracket } from "react-icons/fa6";
 import { FaArrowRightFromBracket } from "react-icons/fa6";
 import CheckBoxes from "./CheckBoxes";
 import { EventsList } from "./EventsList";
 import BulletinDisplay from "./BulletinDisplay";
+import Form from "../adminUser/Form/Form";
 
 type EventTimeFilter = "current" | "past";
 
@@ -34,9 +38,13 @@ export default function Bulletin() {
     orgFilters,
     setOrgFilters,
     orgs,
+    internalFilter,
+    setInternalFilter,
     sortMethod,
     setSortMethod,
+    fetchData,
   } = useBulletin(User);
+  const { showEditModal, setShowEditModal, curID, currEdit, openEditModal } = useEditModal();
 
   // Sync selection with URL when navigating (e.g. direct link, browser back/forward)
   useEffect(() => {
@@ -83,9 +91,14 @@ export default function Bulletin() {
         orgFilters,
         setOrgFilters,
         orgs,
+        internalFilter,
+        setInternalFilter,
         sortMethod,
         setSortMethod,
         eventTimeFilter,
+        openEditModal,
+        showEditModal,
+        setShowEditModal,
       }}
     >
       <div className="grid w-full  h-[calc(100vh-3.5rem)] grid-rows-[3.5rem_1fr] font-DM">
@@ -164,6 +177,46 @@ export default function Bulletin() {
           </div>
         </div>
       </div>
+      {showEditModal &&
+        createPortal(
+          <BulletinEditModal
+            setShowEditModal={setShowEditModal}
+            fetchData={fetchData}
+            currEdit={currEdit}
+            curID={curID}
+          />,
+          document.body,
+        )}
     </BulletinContext.Provider>
+  );
+}
+
+function BulletinEditModal({
+  setShowEditModal,
+  fetchData,
+  currEdit,
+  curID,
+}: {
+  setShowEditModal: (show: boolean) => void;
+  fetchData: () => void;
+  currEdit: formdata;
+  curID: string;
+}) {
+  return (
+    <div className="w-screen h-screen fixed top-0 flex justify-center items-center z-100 overflow-scroll">
+      <div
+        className="fixed top-0 w-full h-full bg-black opacity-35 cursor-pointer"
+        onClick={() => setShowEditModal(false)}
+      />
+      <Form
+        formdata={currEdit}
+        id={curID}
+        onSuccess={() => {
+          setShowEditModal(false);
+          fetchData();
+        }}
+        editEvent={true}
+      />
+    </div>
   );
 }

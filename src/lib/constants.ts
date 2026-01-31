@@ -24,6 +24,7 @@ export type Event = {
   attendance_cap?: number;
   track_attendance?: boolean;
   manual_attendance?: number | null;
+  internal?: boolean;
 };
 
 export type Member = {
@@ -51,6 +52,7 @@ export type formdata = {
   attendance_cap?: number;
   track_attendance?: boolean;
   manual_attendance?: string | number;
+  internal?: boolean;
 };
 
 export const eventFormDataDefault: formdata = {
@@ -65,6 +67,7 @@ export const eventFormDataDefault: formdata = {
   poster: "",
   track_attendance: false,
   manual_attendance: "",
+  internal: false,
 };
 
 export const locations: string[] = [

@@ -70,7 +70,7 @@ export default function Form({
   };
 
   return (
-    <div className="w-1/2 mt-20 flex flex-col m-auto bg-white z-101">
+    <div className={`w-1/2 flex flex-col m-auto bg-white z-101 ${editEvent ? "mt-5" : "mt-20"}`}>
       {!editEvent && (
         <>
           <h1 className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A]">
@@ -91,7 +91,7 @@ export default function Form({
       >
         <p className="text-red-500">{error}</p>
 
-        <label htmlFor="title">Event Title </label>
+        <label htmlFor="title">Event Title <span className="text-red-500">*</span></label>
         <input
           name="title"
           placeholder="Title"
@@ -101,39 +101,43 @@ export default function Form({
           autoFocus
           required
         />
-        <div className="flex items-center gap-1">
-          <label htmlFor="Password">Event Code </label>
-          <Tooltip
-            title={
-              "This code is used for Event attendance validation for participants, show this code at your event to track attendance"
-            }
-            placement="bottom"
-            slotProps={{
-              popper: {
-                modifiers: [
-                  {
-                    name: "offset",
-                    options: {
-                      offset: [0, -14],
-                    },
+        {(formData.track_attendance ?? false) && (
+          <>
+            <div className="flex items-center gap-1">
+              <label htmlFor="Password">Event Code </label>
+              <Tooltip
+                title={
+                  "This code is used for Event attendance validation for participants, show this code at your event to track attendance"
+                }
+                placement="bottom"
+                slotProps={{
+                  popper: {
+                    modifiers: [
+                      {
+                        name: "offset",
+                        options: {
+                          offset: [0, -14],
+                        },
+                      },
+                    ],
                   },
-                ],
-              },
-            }}
-          >
-            <IoInformationCircleOutline className="text-sm" />
-          </Tooltip>
-        </div>
-        <input
-          name="Password"
-          placeholder="Code"
-          className="border-black border rounded-lg px-3 h-12"
-          value={formData.password}
-          onChange={(e) => handleChange(e.target.value, ["password"])}
-          autoFocus
-          required
-        />
-        <label htmlFor="StartTime">Start Time (date and time)</label>
+                }}
+              >
+                <IoInformationCircleOutline className="text-sm" />
+              </Tooltip>
+            </div>
+            <input
+              name="Password"
+              placeholder="Code"
+              className="border-black border rounded-lg px-3 h-12"
+              value={formData.password}
+              onChange={(e) => handleChange(e.target.value, ["password"])}
+              autoFocus
+              required
+            />
+          </>
+        )}
+        <label htmlFor="StartTime">Start Time (date and time) <span className="text-red-500">*</span></label>
         <div className="border-black border rounded-lg px-3 h-12 flex items-center">
           <input
             type="datetime-local"
@@ -144,7 +148,7 @@ export default function Form({
           ></input>
         </div>
         <div className="flex items-center gap-1">
-          <label htmlFor="EndTime">End Time (date and time)</label>
+          <label htmlFor="EndTime">End Time (date and time) <span className="text-red-500">*</span></label>
           <Tooltip
             title={"Event end must be after event start"}
             placement="bottom"
@@ -180,16 +184,28 @@ export default function Form({
           ></input>
         </div>
 
-        <FormControlLabel
-          control={
-            <Switch
-              checked={formData.track_attendance ?? false}
-              onChange={(_, checked) => handleChange(checked, ["track_attendance"])}
-              color="primary"
-            />
-          }
-          label="Track attendance on the portal"
-        />
+        <div className="flex flex-wrap items-center gap-6">
+          <FormControlLabel
+            control={
+              <Switch
+                checked={formData.track_attendance ?? false}
+                onChange={(_, checked) => handleChange(checked, ["track_attendance"])}
+                color="primary"
+              />
+            }
+            label="Track attendance on the portal"
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={formData.internal ?? false}
+                onChange={(_, checked) => handleChange(checked, ["internal"])}
+                color="primary"
+              />
+            }
+            label="Internal event"
+          />
+        </div>
 
         {!(formData.track_attendance ?? false) && (
           <>
@@ -209,24 +225,28 @@ export default function Form({
 
         <label>Event Location</label>
         <Dropdown formData={formData} handleChange={handleChange} />
-        <label htmlFor="StartTime">Attendance cap</label>
-        <input
-          value={formData.attendance_cap}
-          className="border-black border rounded-lg px-3 h-12 flex items-center"
-          onChange={(e) => handleChange(e.target.value, ["attendance_cap"])}
-        />
-        <label>Tags</label>
-        <MultipleSelectChip formData={formData} handleChange={handleChange} />
-        <label>Event Poster</label>
-        <input
-          name="poster"
-          placeholder={profile_picture_src}
-          className="border-black border rounded-lg px-3 h-12"
-          value={formData.poster}
-          onChange={(e) => setFormData({ ...formData, ["poster"]: e.target.value })}
-          autoFocus
-        />
-        {formData.poster && <img src={formData.poster} alt="" className="rounded-2xl" />}
+        {!(formData.internal ?? false) && (
+          <>
+            <label htmlFor="StartTime">Attendance cap</label>
+            <input
+              value={formData.attendance_cap}
+              className="border-black border rounded-lg px-3 h-12 flex items-center"
+              onChange={(e) => handleChange(e.target.value, ["attendance_cap"])}
+            />
+            <label>Tags</label>
+            <MultipleSelectChip formData={formData} handleChange={handleChange} />
+            <label>Event Poster</label>
+            <input
+              name="poster"
+              placeholder={profile_picture_src}
+              className="border-black border rounded-lg px-3 h-12"
+              value={formData.poster}
+              onChange={(e) => setFormData({ ...formData, ["poster"]: e.target.value })}
+              autoFocus
+            />
+            {formData.poster && <img src={formData.poster} alt="" className="rounded-2xl" />}
+          </>
+        )}
         <Editor content={formData.content} setEditorContent={(e) => handleChange(e, ["content"])} />
         <button
           type="submit"
