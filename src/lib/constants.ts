@@ -53,7 +53,11 @@ export type formdata = {
   track_attendance?: boolean;
   manual_attendance?: string | number;
   internal?: boolean;
+  recurring_rate?: "none" | "daily" | "weekly" | "biweekly" | "monthly";
+  recurrence_end_date?: string;
 };
+
+export const RECURRING_RATES = ["none", "daily", "weekly", "biweekly", "monthly"] as const;
 
 export const eventFormDataDefault: formdata = {
   title: "",
@@ -68,6 +72,8 @@ export const eventFormDataDefault: formdata = {
   track_attendance: false,
   manual_attendance: "",
   internal: false,
+  recurring_rate: "none",
+  recurrence_end_date: "",
 };
 
 export const locations: string[] = [

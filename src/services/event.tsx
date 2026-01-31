@@ -3,6 +3,46 @@ import { formdata } from "@lib/constants";
 import { User } from "@lib/UserContext";
 import { logAttendance } from './user';
 
+function generateRecurringDates(
+  startDateStr: string,
+  recurrenceEndStr: string,
+  rate: "daily" | "weekly" | "biweekly" | "monthly",
+): string[] {
+  const dates: string[] = [];
+  const start = new Date(startDateStr);
+  // recurrence_end_date is YYYY-MM-DD; include occurrences that start on or before this date
+  const endDate = new Date(recurrenceEndStr + "T23:59:59");
+  if (endDate < start) return [startDateStr];
+
+  const current = new Date(start);
+
+  while (current <= endDate) {
+    dates.push(current.toISOString().slice(0, 16));
+    switch (rate) {
+      case "daily":
+        current.setDate(current.getDate() + 1);
+        break;
+      case "weekly":
+        current.setDate(current.getDate() + 7);
+        break;
+      case "biweekly":
+        current.setDate(current.getDate() + 14);
+        break;
+      case "monthly":
+        current.setMonth(current.getMonth() + 1);
+        break;
+    }
+  }
+
+  return dates;
+}
+
+function addDurationToDate(dateStr: string, durationMs: number): string {
+  const d = new Date(dateStr);
+  d.setTime(d.getTime() + durationMs);
+  return d.toISOString().slice(0, 16);
+}
+
 export const fetchEventByOrg = async (uid: string) => {
   console.log("FETCH USER ORGS");
   const { data: orgs, error } = await supabase
@@ -28,32 +68,66 @@ export const createEvent = async (User: User, formData: formdata) => {
     .from("user_org_roles")
     .select("org_uuid")
     .eq("user_uuid", User.id);
-  if (org_name) {
-    console.log("----------INSERT NEW EVENT-----------");
-    const isInternal = formData.internal ?? false;
-    const { error } = await supabase.from("events").insert({
-      title: formData.title,
-      password: formData.password,
-      start_date: formData.start_date,
-      end_date: formData.end_date,
-      location: formData.location,
-      location_str: formData.location_str,
-      content: formData.content,
-      tags: isInternal ? [] : formData.tags,
-      org_id: org_name[0].org_uuid,
-      poster: isInternal ? "" : formData.poster,
-      attendance_cap: isInternal ? null : (formData.attendance_cap ? Number(formData.attendance_cap) : null),
-      track_attendance: formData.track_attendance ?? false,
-      internal: formData.internal ?? false,
-      manual_attendance:
-        !(formData.track_attendance ?? false) &&
-        formData.manual_attendance !== undefined &&
-        formData.manual_attendance !== ""
-          ? Number(formData.manual_attendance)
-          : null,
-    });
+  if (!org_name) return { message: "No org found" };
+
+  const isInternal = formData.internal ?? false;
+  const recurringRate = formData.recurring_rate ?? "none";
+  const recurrenceEnd = formData.recurrence_end_date ?? "";
+
+  const buildEventPayload = (startDate: string, endDate: string) => ({
+    title: formData.title,
+    password: formData.password,
+    start_date: startDate,
+    end_date: endDate,
+    location: formData.location,
+    location_str: formData.location_str,
+    content: formData.content,
+    tags: isInternal ? [] : formData.tags,
+    org_id: org_name[0].org_uuid,
+    poster: isInternal ? "" : formData.poster,
+    attendance_cap: isInternal ? null : (formData.attendance_cap ? Number(formData.attendance_cap) : null),
+    track_attendance: formData.track_attendance ?? false,
+    internal: formData.internal ?? false,
+    manual_attendance:
+      !(formData.track_attendance ?? false) &&
+      formData.manual_attendance !== undefined &&
+      formData.manual_attendance !== ""
+        ? Number(formData.manual_attendance)
+        : null,
+  });
+
+  if (
+    recurringRate !== "none" &&
+    recurrenceEnd &&
+    recurrenceEnd.trim() !== ""
+  ) {
+    const startDates = generateRecurringDates(
+      formData.start_date,
+      recurrenceEnd,
+      recurringRate as "daily" | "weekly" | "biweekly" | "monthly",
+    );
+    const durationMs =
+      new Date(formData.end_date).getTime() - new Date(formData.start_date).getTime();
+
+    const eventsToInsert = startDates.map((startDate) =>
+      buildEventPayload(startDate, addDurationToDate(startDate, durationMs)),
+    );
+
+    if (eventsToInsert.length === 0) return { message: "No occurrences in date range" };
+    if (eventsToInsert.length > 100) {
+      return { message: "Too many occurrences (max 100). Please shorten the date range." };
+    }
+
+    console.log("----------INSERT RECURRING EVENTS-----------", eventsToInsert.length);
+    const { error } = await supabase.from("events").insert(eventsToInsert);
     return error;
   }
+
+  console.log("----------INSERT NEW EVENT-----------");
+  const { error } = await supabase.from("events").insert([
+    buildEventPayload(formData.start_date, formData.end_date),
+  ]);
+  return error;
 };
 
 export const deleteEvent = async (id: string) => {

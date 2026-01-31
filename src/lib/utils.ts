@@ -27,6 +27,8 @@ export const getFormDataDefault = (): formdata => {
     track_attendance: false,
     manual_attendance: "",
     internal: false,
+    recurring_rate: "none",
+    recurrence_end_date: "",
   };
 };
 

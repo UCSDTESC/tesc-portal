@@ -3,7 +3,7 @@ import { useContext } from "react";
 import { useNavigate } from "react-router";
 
 import UserContext from "@lib/UserContext";
-import { formdata, profile_picture_src } from "@lib/constants";
+import { formdata, profile_picture_src, RECURRING_RATES } from "@lib/constants";
 import { getFormDataDefault } from "@lib/utils";
 import { createEvent, updateEvent } from "@services/event";
 
@@ -45,6 +45,23 @@ export default function Form({
 
   // update event or create new event
   const handleSubmit = async () => {
+    const recurringRate = formData.recurring_rate ?? "none";
+    if (!editEvent && recurringRate !== "none") {
+      const recurrenceEnd = formData.recurrence_end_date ?? "";
+      if (!recurrenceEnd.trim()) {
+        setError("Please select a recurrence end date for recurring events.");
+        DisplayToast("Recurrence end date is required", "error");
+        return;
+      }
+      const startDate = new Date(formData.start_date);
+      const endDate = new Date(recurrenceEnd);
+      if (endDate < startDate) {
+        setError("Recurrence end date must be on or after the event start date.");
+        DisplayToast("Invalid recurrence end date", "error");
+        return;
+      }
+    }
+
     if (formdata && User?.id) {
       const error = await updateEvent(id, formData);
       if (error) {
@@ -91,7 +108,9 @@ export default function Form({
       >
         <p className="text-red-500">{error}</p>
 
-        <label htmlFor="title">Event Title <span className="text-red-500">*</span></label>
+        <label htmlFor="title">
+          Event Title <span className="text-red-500">*</span>
+        </label>
         <input
           name="title"
           placeholder="Title"
@@ -137,7 +156,9 @@ export default function Form({
             />
           </>
         )}
-        <label htmlFor="StartTime">Start Time (date and time) <span className="text-red-500">*</span></label>
+        <label htmlFor="StartTime">
+          Start Time (date and time) <span className="text-red-500">*</span>
+        </label>
         <div className="border-black border rounded-lg px-3 h-12 flex items-center">
           <input
             type="datetime-local"
@@ -148,7 +169,9 @@ export default function Form({
           ></input>
         </div>
         <div className="flex items-center gap-1">
-          <label htmlFor="EndTime">End Time (date and time) <span className="text-red-500">*</span></label>
+          <label htmlFor="EndTime">
+            End Time (date and time) <span className="text-red-500">*</span>
+          </label>
           <Tooltip
             title={"Event end must be after event start"}
             placement="bottom"
@@ -183,6 +206,42 @@ export default function Form({
             }}
           ></input>
         </div>
+
+        {!editEvent && (
+          <>
+            <label htmlFor="recurring">Recurring</label>
+            <select
+              id="recurring"
+              className="border-black border rounded-lg px-3 h-12"
+              value={formData.recurring_rate ?? "none"}
+              onChange={(e) =>
+                handleChange(
+                  e.target.value as "none" | "daily" | "weekly" | "biweekly" | "monthly",
+                  ["recurring_rate"],
+                )
+              }
+            >
+              {RECURRING_RATES.map((rate) => (
+                <option key={rate} value={rate}>
+                  {rate === "none" ? "None" : rate.charAt(0).toUpperCase() + rate.slice(1)}
+                </option>
+              ))}
+            </select>
+            {(formData.recurring_rate ?? "none") !== "none" && (
+              <>
+                <label htmlFor="recurrence_end">Recurrence end date</label>
+                <input
+                  id="recurrence_end"
+                  type="date"
+                  className="border-black border rounded-lg px-3 h-12"
+                  value={formData.recurrence_end_date ?? ""}
+                  min={formData.start_date?.slice(0, 10)}
+                  onChange={(e) => handleChange(e.target.value, ["recurrence_end_date"])}
+                />
+              </>
+            )}
+          </>
+        )}
 
         <div className="flex flex-wrap items-center gap-6">
           <FormControlLabel
