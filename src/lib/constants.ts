@@ -22,6 +22,8 @@ export type Event = {
   };
   poster: string;
   attendance_cap?: number;
+  track_attendance?: boolean;
+  manual_attendance?: number | null;
 };
 
 export type Member = {
@@ -47,6 +49,8 @@ export type formdata = {
   tags: string[];
   poster: string;
   attendance_cap?: number;
+  track_attendance?: boolean;
+  manual_attendance?: string | number;
 };
 
 export const eventFormDataDefault: formdata = {
@@ -59,6 +63,8 @@ export const eventFormDataDefault: formdata = {
   content: "",
   tags: [""],
   poster: "",
+  track_attendance: false,
+  manual_attendance: "",
 };
 
 export const locations: string[] = [

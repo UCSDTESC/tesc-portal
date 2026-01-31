@@ -12,6 +12,7 @@ export function useBulletin(User: User | null) {
   const { setShowLoginModal } = useContext(UserContext);
   const [data, setData] = useState<Event[]>();
   const [People, setPeople] = useState<Member[]>();
+  const [isLoading, setIsLoading] = useState(true);
   const [RSVP, setRSVP] = useState<string[] | null>(null);
   const [attendance, setAttendance] = useState<string[] | null>(null);
   const [search, setSearch] = useState("");
@@ -46,26 +47,32 @@ export function useBulletin(User: User | null) {
 
   // fetch events (with any searches and filters)
   useEffect(() => {
+    if (!User) {
+      setIsLoading(false);
+      return;
+    }
     const fetchEvents = async () => {
+      setIsLoading(true);
       console.log("----FETCH EVENTS---");
       if (User?.role === "company") {
         const { People, error } = await queryPeopleBySearchAndFilters(
           search,
           tagFilters,
           orgFilters,
-          sortMethod
+          sortMethod,
         );
         if (People) {
           setPeople(People as unknown as Member[]);
         } else {
           console.error(error?.message);
         }
+        setIsLoading(false);
       } else {
         const { events, error } = await queryEventsBySearchAndFilters(
           search,
           tagFilters,
           orgFilters,
-          sortMethod
+          sortMethod,
         );
         if (events) {
           setData(events as unknown as Event[]);
@@ -73,6 +80,7 @@ export function useBulletin(User: User | null) {
           console.error(error?.message);
           DisplayToast("Error fetching events", "error");
         }
+        setIsLoading(false);
       }
     };
     fetchEvents();
@@ -116,7 +124,7 @@ export function useBulletin(User: User | null) {
         setRSVP(currRSVP);
         DisplayToast(
           remove === true ? "Succesfully removed RSVP" : "Succesfully RSVP'd",
-          "success"
+          "success",
         );
       }
     }
@@ -147,6 +155,7 @@ export function useBulletin(User: User | null) {
   return {
     data,
     People,
+    isLoading,
     tagFilters,
     gradYears,
     RSVP,
@@ -166,6 +175,7 @@ export function useBulletin(User: User | null) {
 export interface BulletinContextProps {
   data: Event[] | undefined;
   People: Member[] | undefined;
+  isLoading?: boolean;
   tagFilters: string[];
   gradYears: string[];
   RSVP: string[] | null;
@@ -179,11 +189,13 @@ export interface BulletinContextProps {
   orgs: string[];
   sortMethod: string;
   setSortMethod: (sortMethod: string) => void;
+  eventTimeFilter?: "current" | "past";
 }
 
 export const BulletinContext = createContext<BulletinContextProps>({
   data: [],
   People: [],
+  isLoading: false,
   tagFilters: [],
   gradYears: [],
   RSVP: [],
@@ -197,4 +209,5 @@ export const BulletinContext = createContext<BulletinContextProps>({
   orgs: [],
   sortMethod: "",
   setSortMethod: () => {},
+  eventTimeFilter: "current",
 } as BulletinContextProps);

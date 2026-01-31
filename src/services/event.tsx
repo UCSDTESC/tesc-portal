@@ -16,7 +16,7 @@ export const fetchEventByOrg = async (uid: string) => {
       .select()
       .in(
         "org_id",
-        orgs.map((org) => org.org_uuid)
+        orgs.map((org) => org.org_uuid),
       )
       .eq("deleted", false);
     return { data, error };
@@ -40,7 +40,14 @@ export const createEvent = async (User: User, formData: formdata) => {
       content: formData.content,
       tags: formData.tags,
       org_id: org_name[0].org_uuid,
-      poster: formData.poster
+      poster: formData.poster,
+      track_attendance: formData.track_attendance ?? false,
+      manual_attendance:
+        !(formData.track_attendance ?? false) &&
+        formData.manual_attendance !== undefined &&
+        formData.manual_attendance !== ""
+          ? Number(formData.manual_attendance)
+          : null,
     });
     return error;
   }
@@ -65,7 +72,14 @@ export const updateEvent = async (eventId: string, formData: formdata) => {
       content: formData.content,
       tags: formData.tags,
       poster: formData.poster,
-      attendance_cap: formData.attendance_cap ? Number(formData.attendance_cap) : null
+      attendance_cap: formData.attendance_cap ? Number(formData.attendance_cap) : null,
+      track_attendance: formData.track_attendance ?? false,
+      manual_attendance:
+        !(formData.track_attendance ?? false) &&
+        formData.manual_attendance !== undefined &&
+        formData.manual_attendance !== ""
+          ? Number(formData.manual_attendance)
+          : null,
     })
     .eq("id", eventId);
   return error;
@@ -75,12 +89,12 @@ export const queryEventsBySearchAndFilters = async (
   keyword: string,
   tagFilters: string[],
   orgFilters: string[],
-  sortMethod: string
+  sortMethod: string,
 ) => {
   let query = supabase
     .from("events")
     .select(
-      "id,content,created_at,end_date,id,location_str,start_date,tags,title,attendance,poster,rsvp,org_id, orgs!inner(name, pfp_str), attendance_cap"
+      "id,content,created_at,end_date,id,location_str,start_date,tags,title,attendance,poster,rsvp,org_id, orgs!inner(name, pfp_str), attendance_cap, track_attendance",
     )
     .ilike("title", `%${keyword}%`)
     .eq("deleted", false);
@@ -103,7 +117,7 @@ export const queryPeopleBySearchAndFilters = async (
   keyword: string,
   tagFilters: string[],
   orgFilters: string[],
-  sortMethod: string
+  sortMethod: string,
 ) => {
   let query = supabase
     .from("users")
