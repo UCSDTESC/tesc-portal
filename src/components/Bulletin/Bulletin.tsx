@@ -21,6 +21,7 @@ export default function Bulletin() {
   const {
     data,
     People,
+    isLoading,
     gradYears,
     tagFilters,
     RSVP,
@@ -49,6 +50,7 @@ export default function Bulletin() {
     <BulletinContext.Provider
       value={{
         data: filteredData,
+        isLoading,
         gradYears,
         People,
         tagFilters,

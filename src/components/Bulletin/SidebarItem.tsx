@@ -21,7 +21,7 @@ export function SidebarClub({
   return (
     <button
       key={daton.id}
-      className={` cursor-pointer flex flex-col p-1 h-[100px] font-DM ${
+      className={`w-full cursor-pointer flex flex-col p-1 h-[100px] font-DM ${
         selection !== String(daton.id) ? "opacity-80" : ""
       }`}
       onClick={() => {
@@ -79,7 +79,7 @@ export function SidebarCompany({
   return (
     <button
       key={daton.email}
-      className={` cursor-pointer flex flex-col p-1 h-[100px] font-DM ${
+      className={`w-full cursor-pointer flex flex-col p-1 h-[100px] font-DM ${
         selection !== daton.email ? "opacity-80" : ""
       }`}
       onClick={() => {
