@@ -25,8 +25,15 @@ export function SidebarClub({
         selection !== String(daton.id) ? "opacity-80" : ""
       }`}
       onClick={() => {
-        navigate(selection != "-1" ? "/bulletin/-1" : `/bulletin/${daton.id}`);
-        setSelection(selection != "-1" && selection == String(daton.id) ? "-1" : String(daton.id));
+        const id = String(daton.id);
+        const isCurrentlySelected = selection === id;
+        if (isCurrentlySelected) {
+          navigate("/bulletin/-1");
+          setSelection("-1");
+        } else {
+          navigate(`/bulletin/${daton.id}`);
+          setSelection(id);
+        }
       }}
     >
       <div className="flex flex-col justify-between rounded-lg bg-white h-full w-full p-1">
@@ -83,8 +90,14 @@ export function SidebarCompany({
         selection !== daton.email ? "opacity-80" : ""
       }`}
       onClick={() => {
-        navigate(selection != "-1" ? "/bulletin/-1" : `/bulletin/${daton.email}`);
-        setSelection(selection != "-1" && selection == daton.email ? "-1" : daton.email);
+        const isCurrentlySelected = selection === daton.email;
+        if (isCurrentlySelected) {
+          navigate("/bulletin/-1");
+          setSelection("-1");
+        } else {
+          navigate(`/bulletin/${daton.email}`);
+          setSelection(daton.email);
+        }
       }}
     >
       <div className="flex flex-col rounded-lg bg-white h-full w-full px-4">

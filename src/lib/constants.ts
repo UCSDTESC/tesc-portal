@@ -24,6 +24,7 @@ export type Event = {
   attendance_cap?: number;
   track_attendance?: boolean;
   manual_attendance?: number | null;
+  internal?: boolean;
 };
 
 export type Member = {
@@ -51,7 +52,12 @@ export type formdata = {
   attendance_cap?: number;
   track_attendance?: boolean;
   manual_attendance?: string | number;
+  internal?: boolean;
+  recurring_rate?: "none" | "daily" | "weekly" | "biweekly" | "monthly";
+  recurrence_end_date?: string;
 };
+
+export const RECURRING_RATES = ["none", "daily", "weekly", "biweekly", "monthly"] as const;
 
 export const eventFormDataDefault: formdata = {
   title: "",
@@ -65,6 +71,9 @@ export const eventFormDataDefault: formdata = {
   poster: "",
   track_attendance: false,
   manual_attendance: "",
+  internal: false,
+  recurring_rate: "none",
+  recurrence_end_date: "",
 };
 
 export const locations: string[] = [
@@ -169,6 +178,7 @@ export const locations: string[] = [
 export const majors: string[] = [
   "Anthropology",
   "Archaeology",
+  "Artificial Intelligence",
   "Biological Anthropology",
   "Climate Change and Human Solutions",
   "Sociocultural Anthropology",

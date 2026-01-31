@@ -8,9 +8,10 @@ import UserContext from "@lib/UserContext";
 import { WelcomePage } from "./WelcomePage";
 import { motion } from "motion/react";
 import { container, item } from "@lib/constants";
+import { EditOutlined } from "@ant-design/icons";
 
 export default function EventInfo({ selection }: { selection: string }) {
-  const { data } = useContext(BulletinContext);
+  const { data, openEditModal } = useContext(BulletinContext);
   const { User } = useContext(UserContext);
   const [imageUrl, setImageUrl] = useState("");
   useEffect(() => {
@@ -64,9 +65,21 @@ export default function EventInfo({ selection }: { selection: string }) {
                   className="flex flex-col h-full justify-center relative"
                   variants={container}
                 >
-                  <motion.h1 variants={item} className="font-bold text-4xl">
-                    {daton.title}
-                  </motion.h1>
+                  <div className="flex items-center gap-3">
+                    <motion.h1 variants={item} className="font-bold text-4xl">
+                      {daton.title}
+                    </motion.h1>
+                    {daton.internal && openEditModal && (
+                      <button
+                        type="button"
+                        onClick={() => openEditModal(daton)}
+                        className="p-2 rounded-lg bg-blue/20 hover:bg-blue/40 text-navy transition-colors"
+                        title="Edit event"
+                      >
+                        <EditOutlined />
+                      </button>
+                    )}
+                  </div>
                   {daton.track_attendance &&
                     (daton.attendance_cap != null ? (
                       daton.attendance < daton.attendance_cap &&
@@ -99,11 +112,12 @@ export default function EventInfo({ selection }: { selection: string }) {
                   </motion.p>
                 </motion.div>
                 <motion.div className="col-start-2 w-[95%] max-w-[800px] mx-auto" variants={item}>
-                  {daton.poster ? (
-                    <img src={daton.poster} alt="" className="w-full rounded-lg object-cover" />
-                  ) : (
-                    <div className="w-full bg-blue/15 animate-pulse aspect-video rounded-lg"></div>
-                  )}
+                  {!daton.internal &&
+                    (daton.poster ? (
+                      <img src={daton.poster} alt="" className="w-full rounded-lg object-cover" />
+                    ) : (
+                      <div className="w-full bg-blue/15 animate-pulse aspect-video rounded-lg"></div>
+                    ))}
                   <div className="flex w-full flex-row mt-10 justify-between flex-wrap-reverse gap-8">
                     <span className="w-fit">
                       <h1 className=" font-semibold ">

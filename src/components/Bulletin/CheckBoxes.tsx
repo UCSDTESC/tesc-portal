@@ -8,13 +8,15 @@ import { FaDiamond } from "react-icons/fa6";
 import supabase from "@server/supabase";
 import { majors } from "@lib/constants";
 import { CSVLink } from "react-csv";
+import { FormControlLabel, Switch } from "@mui/material";
 export default function CheckBoxes() {
-  const { setSearch, People } = useContext(BulletinContext);
+  const { setSearch, People, internalFilter, setInternalFilter } = useContext(BulletinContext);
   const { User } = useContext(UserContext);
   const filterRef = useRef(null);
   const sortRef = useRef(null);
   const [filterMenu, setFilterMenu] = useState("");
   const [userPoints, setUserPoints] = useState(0);
+  const [hasOrgRole, setHasOrgRole] = useState(false);
   useOutsideClicks([filterRef, sortRef], () => setFilterMenu(""));
   useEffect(() => {
     const getUserPoints = async () => {
@@ -22,8 +24,8 @@ export default function CheckBoxes() {
       if (User.role === "company" || User.role === "") return;
       console.log("------PULLING USER POINTS---------------");
       const { data, error } = await supabase.from("users").select("points").eq("email", User.email);
-      if (data) {
-        setUserPoints(data[0].points);
+      if (data && data[0]) {
+        setUserPoints(data[0].points ?? 0);
       }
       if (error) {
         console.error(error);
@@ -31,20 +33,32 @@ export default function CheckBoxes() {
     };
     getUserPoints();
   }, [User]);
+  useEffect(() => {
+    const checkOrgRole = async () => {
+      if (!User?.id || User.role === "company") return;
+      const { data } = await supabase
+        .from("user_org_roles")
+        .select("org_uuid")
+        .eq("user_uuid", User.id)
+        .limit(1);
+      setHasOrgRole((data?.length ?? 0) > 0);
+    };
+    checkOrgRole();
+  }, [User?.id, User?.role]);
 
   return (
-    <form className="p-3 w-full flex gap-2">
+    <form className="p-3 w-full flex gap-2 min-h-[2.25rem]">
       <input
         type="Search"
         placeholder="Search..."
         onChange={(e) => {
           setSearch(e.target.value);
         }}
-        className="rounded-lg h-fit p-1 min-w-0 w-20 md:w-fit  focus:outline-none bg-white"
+        className="rounded-lg min-h-[2.25rem] p-1 min-w-0 w-20 md:w-fit focus:outline-none bg-white"
       />
-      <div className="flex flex-row gap-3">
+      <div className="flex flex-row gap-3 shrink-0">
         <div
-          className="bg-white w-fit flex items-center gap-1 h-full px-2 rounded-2xl relative cursor-pointer indent-[-9999px] md:indent-0"
+          className="bg-white w-fit shrink-0 flex items-center gap-1 min-h-[2.25rem] px-2 rounded-2xl relative cursor-pointer indent-[-9999px] md:indent-0"
           ref={filterRef}
           onClick={() => {
             setFilterMenu(filterMenu == "Tags" ? "" : "Tags");
@@ -69,7 +83,7 @@ export default function CheckBoxes() {
           </div>
         </div>
         <div
-          className="bg-white w-fit flex items-center gap-1 h-full px-2 rounded-2xl relative cursor-pointer indent-[-9999px] md:indent-0"
+          className="bg-white w-fit shrink-0 flex items-center gap-1 min-h-[2.25rem] px-2 rounded-2xl relative cursor-pointer indent-[-9999px] md:indent-0"
           ref={sortRef}
           onClick={() => {
             setFilterMenu(filterMenu == "Sort" ? "" : "Sort");
@@ -93,16 +107,32 @@ export default function CheckBoxes() {
           </div>
         </div>
       </div>
-      {User && User.role !== "company" && (
-        <div className="bg-white  w-fit flex items-center ml-auto h-full p-1 rounded-2xl relative font-bold gap-1 px-4 text-navy text-xl">
+      {User?.role !== "company" && hasOrgRole && (
+        <div className="bg-white w-fit shrink-0 min-h-[2.25rem] px-2 rounded-2xl flex items-center">
+          <FormControlLabel
+            control={
+              <Switch
+                checked={internalFilter}
+                onChange={(_, checked) => setInternalFilter(checked)}
+                color="primary"
+                size="small"
+              />
+            }
+            label="Internal only"
+            className="!m-0"
+          />
+        </div>
+      )}
+      {User?.role !== "company" && (
+        <div className="bg-white w-fit flex items-center ml-auto min-h-[2.25rem] p-1 rounded-2xl relative font-bold gap-1 px-4 text-navy text-xl">
           <FaDiamond className="text-lightBlue" />
-          {userPoints}
+          {userPoints ?? 0}
         </div>
       )}
       {User && User.role === "company" && (
         <CSVLink
           data={People ? People : []}
-          className="bg-white w-fit flex items-center ml-auto h-full p-1 rounded-2xl relative gap-1 px-4 text-navy text-md"
+          className="bg-white w-fit flex items-center ml-auto min-h-[2.25rem] p-1 rounded-2xl relative gap-1 px-4 text-navy text-md"
         >
           Export csv
         </CSVLink>

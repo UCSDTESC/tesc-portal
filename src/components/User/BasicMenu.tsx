@@ -11,10 +11,12 @@ import { useContext } from "react";
 import UserContext from "@lib/UserContext";
 import { NavLink } from "react-router";
 import { CgProfile } from "react-icons/cg";
+
 export default function BasicMenu() {
   const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef<HTMLButtonElement>(null);
-  const { User, handleSignOut } = useContext(UserContext);
+  const { User, handleSignOut, setShowLoginModal } = useContext(UserContext);
+  const isLoggedIn = User && User.id;
   const handleToggle = () => {
     setOpen((prevOpen) => !prevOpen);
   };
@@ -40,11 +42,16 @@ export default function BasicMenu() {
   const prevOpen = React.useRef(open);
   React.useEffect(() => {
     if (prevOpen.current === true && open === false) {
-      anchorRef.current!.focus();
+      anchorRef.current?.focus();
     }
 
     prevOpen.current = open;
   }, [open]);
+
+  const handleLoginClick = () => {
+    setOpen(false);
+    setShowLoginModal(true);
+  };
 
   return (
     <Stack direction="row" spacing={2}>
@@ -56,7 +63,7 @@ export default function BasicMenu() {
           aria-expanded={open ? "true" : undefined}
           aria-haspopup="true"
           onClick={handleToggle}
-          className="!text-white !text-[3vh] !cursor-pointer  !hover:opacity-80 !w-fit !h-fit"
+          className="!text-white !text-[3vh] !cursor-pointer !hover:opacity-80 !w-fit !h-fit"
         >
           <CgProfile />
         </Button>
@@ -73,7 +80,7 @@ export default function BasicMenu() {
             <Grow
               {...TransitionProps}
               style={{
-                transformOrigin: placement === "bottom-end" ? "left top" : "left bottom"
+                transformOrigin: placement === "bottom-end" ? "left top" : "left bottom",
               }}
             >
               <Paper>
@@ -84,19 +91,28 @@ export default function BasicMenu() {
                     aria-labelledby="composition-button"
                     onKeyDown={handleListKeyDown}
                   >
-                    {User?.role !== "company" && (
-                      <NavLink to="/profile">
-                        <MenuItem onClick={handleClose}>Profile</MenuItem>
-                      </NavLink>
-                    )}
-                    {User?.role === "internal" && (
+                    {isLoggedIn ? (
                       <>
-                        <NavLink to="/form">
-                          <MenuItem onClick={handleClose}>New Event</MenuItem>
-                        </NavLink>
+                        {User?.role !== "company" && (
+                          <>
+                            <NavLink to="/profile">
+                              <MenuItem onClick={handleClose}>Profile</MenuItem>
+                            </NavLink>
+                            <NavLink to="/my-events">
+                              <MenuItem onClick={handleClose}>Event History</MenuItem>
+                            </NavLink>
+                          </>
+                        )}
+                        {User?.role === "internal" && (
+                          <NavLink to="/form">
+                            <MenuItem onClick={handleClose}>New Event</MenuItem>
+                          </NavLink>
+                        )}
+                        <MenuItem onClick={handleSignOut}>Logout</MenuItem>
                       </>
+                    ) : (
+                      <MenuItem onClick={handleLoginClick}>Log in</MenuItem>
                     )}
-                    <MenuItem onClick={handleSignOut}>Logout</MenuItem>
                   </MenuList>
                 </ClickAwayListener>
               </Paper>

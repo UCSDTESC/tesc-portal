@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import Form from "@components/adminUser/Form/Form.tsx";
 import Bulletin from "@components/Bulletin/Bulletin.tsx";
 import Profile from "@components/adminUser/Profile/Profile.tsx";
+import PageAllAttendEvents from "@components/User/PageAllAttendEvents.tsx";
 import { Toaster } from "react-hot-toast";
 
 import Page from "./pageRoot/Page.tsx";
@@ -24,9 +25,11 @@ createRoot(document.getElementById("root")!).render(
           </Route>
           <Route path="profile">
             <Route path="" element={<Profile />} />
+            <Route path="all-attended-events" element={<PageAllAttendEvents />} />
           </Route>
+          <Route path="my-events" element={<PageAllAttendEvents />}></Route>
         </Route>
       </Routes>
     </BrowserRouter>
-  </StrictMode>
+  </StrictMode>,
 );

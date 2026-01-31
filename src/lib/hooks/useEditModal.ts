@@ -25,6 +25,7 @@ export function useEditModal() {
       poster: daton.poster,
       attendance_cap: daton.attendance_cap,
       track_attendance: daton.track_attendance ?? false,
+      internal: daton.internal ?? false,
       manual_attendance: daton.manual_attendance != null ? String(daton.manual_attendance) : "",
     });
   };

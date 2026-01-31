@@ -6,6 +6,8 @@ import Modal from "@mui/material/Modal";
 import NewProfile from "./NewProfile";
 import EditProfileForm from "./EditMemberProfile";
 
+import PageAllAttendEvents from "@components/User/PageAllAttendEvents"; 
+
 // TODO: code clean-up
 export default function Profile() {
   const { User } = useContext(UserContext);
@@ -77,7 +79,7 @@ export default function Profile() {
     setEditModal(!editModal);
   };
 
-  if (User?.role === "internal")
+  if (User?.role === "internal") {
     return (
       <div className="flex flex-nowrap items-start w-screen min-h-screen mt-8 px-15 gap-6">
         <div className="flex flex-[0_0_10%] w-full flex-col items-center justify-center gap-2 min-w-0 px-1">
@@ -109,10 +111,21 @@ export default function Profile() {
         </Modal>
       </div>
     );
-  else
-    return (
-      <div className="flex flex-wrap justify-center w-screen min-h-screen mt-8 px-15 gap-8">
-        <EditProfileForm />
-      </div>
-    );
+  } else {
+    const currentPath = window.location.pathname;
+
+    if (currentPath === "/all-attended-events") {
+      return <PageAllAttendEvents />;
+      // TODO: FIX
+      // this is for the all-attended-events page when yo uwant to look at every event
+      // you attended -- through the recently attended events bar
+      // but it doesn't work right now sorry
+    } else {
+      return (
+        <div className="flex flex-wrap justify-center w-screen min-h-screen mt-8 px-15 gap-8">
+          <EditProfileForm />
+        </div>
+      );
+    }
+  }
 }

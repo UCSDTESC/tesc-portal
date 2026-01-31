@@ -1,4 +1,4 @@
-import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { DeleteOutlined } from "@ant-design/icons";
 import { Event } from "@lib/constants";
 import { useState } from "react";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa6";
@@ -60,23 +60,19 @@ export default function TableRow({ daton, columns, getCellValue, onDelete, onEdi
   const truncate = (s: string, max = 40) => (s.length <= max ? s : s.slice(0, max) + "…");
 
   return (
-    <tr className="border-b border-slate-200 hover:bg-slate-50/80 transition-colors">
+    <tr
+      className="border-b border-slate-200 hover:bg-slate-50/80 transition-colors cursor-pointer"
+      onClick={() => onEdit(daton)}
+    >
       {columns.map((col) => {
         if (col.key === "actions") {
           return (
             <td
               key={col.key}
               className="px-3 py-2 border-r border-slate-200 last:border-r-0 whitespace-nowrap"
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  className="p-1.5 rounded text-slate-600 hover:bg-slate-200 hover:text-slate-900 cursor-pointer"
-                  onClick={() => onEdit(daton)}
-                  title="Edit"
-                >
-                  <EditOutlined />
-                </button>
                 <DeleteConfirmationModal
                   itemName={daton.title}
                   isDeleting={isDeleting}
@@ -150,10 +146,10 @@ export default function TableRow({ daton, columns, getCellValue, onDelete, onEdi
         return (
           <td
             key={col.key}
-            className="px-3 py-2 border-r border-slate-200 last:border-r-0 text-slate-700 max-w-[200px]"
+            className="px-3 py-2 border-r border-slate-200 last:border-r-0 text-slate-700 overflow-hidden text-ellipsis min-w-0"
             title={raw !== display ? raw : undefined}
           >
-            {display || "—"}
+            <span className="block truncate">{display || "—"}</span>
           </td>
         );
       })}
