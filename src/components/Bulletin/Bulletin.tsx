@@ -89,7 +89,7 @@ export default function Bulletin() {
       }}
     >
       <div className="grid w-full  h-[calc(100vh-3.5rem)] grid-rows-[3.5rem_1fr] font-DM">
-        <div className="bg-linear-to-r from-0% from-blue via-70% via-[#3B7DB6] to-blue flex items-center gap-3">
+        <div className="bg-linear-to-r from-0% from-blue via-70% via-[#3B7DB6] to-blue flex min-h-[2.25rem] items-center gap-3 [&>*]:min-h-[2.25rem]">
           <CheckBoxes />
         </div>
         <div className="flex w-full h-full flex-row relative">

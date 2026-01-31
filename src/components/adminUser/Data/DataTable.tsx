@@ -12,18 +12,18 @@ import Form from "../Form/Form";
 import TableRow from "./TableRow";
 
 const COLUMNS = [
-  { key: "title", label: "Title" },
-  { key: "password", label: "Code" },
-  { key: "created_at", label: "Created" },
-  { key: "start_date", label: "Start" },
-  { key: "end_date", label: "End" },
-  { key: "location_str", label: "Location" },
-  { key: "rsvp", label: "RSVP" },
-  { key: "attendance_cap", label: "Max RSVP" },
-  { key: "attendance", label: "Attendance" },
-  { key: "track_attendance", label: "Track attendance?" },
-  { key: "tags", label: "Tags" },
-  { key: "actions", label: "Actions" },
+  { key: "title", label: "Title", width: "10%" },
+  { key: "password", label: "Code", width: "4%" },
+  { key: "created_at", label: "Created", width: "7%" },
+  { key: "start_date", label: "Start", width: "7%" },
+  { key: "end_date", label: "End", width: "7%" },
+  { key: "location_str", label: "Location", width: "16%" },
+  { key: "rsvp", label: "RSVP", width: "7%" },
+  { key: "attendance_cap", label: "Max RSVP", width: "8%" },
+  { key: "attendance", label: "Attendance", width: "9%" },
+  { key: "track_attendance", label: "Track attendance?", width: "11%" },
+  { key: "tags", label: "Tags", width: "9%" },
+  { key: "actions", label: "Actions", width: "5%" },
 ] as const;
 
 function getCellValue(daton: Event, key: string): string {
@@ -123,7 +123,12 @@ export default function DataTable() {
       {/* Database-style table */}
       <div className="border border-slate-300 rounded-lg overflow-hidden bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-sm">
+          <table className="w-full table-fixed border-collapse text-sm">
+            <colgroup>
+              {COLUMNS.map((col) => (
+                <col key={col.key} style={{ width: col.width }} />
+              ))}
+            </colgroup>
             <thead>
               <tr className="bg-[#114675] border-b border-[#114675]/80">
                 {COLUMNS.map((col) => (

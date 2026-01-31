@@ -5,9 +5,7 @@ import UserContext from "@lib/UserContext";
 import LoginModal from "./LoginModal";
 import TESC from "/TESC.png";
 import BasicMenu from "@components/User/BasicMenu";
-import { Button } from "@components/components/ui/button";
 export default function Navbar() {
-  const { User } = useContext(UserContext);
   const { showLoginModal, setShowLoginModal } = useContext(UserContext);
 
   return (
@@ -15,27 +13,9 @@ export default function Navbar() {
       <NavLink to="/">
         <img src={TESC} alt="" className="h-[40px]" />
       </NavLink>
-      {User && User.id && (
-        <>
-          <div className="flex gap-4">
-            <BasicMenu />
-          </div>
-        </>
-      )}
-      {!User ||
-        (!User.id && (
-          <>
-            <Button
-              // className="rounded-full h-8 px-4 text-sm"
-              className="font-DM text-lg font-semibold  px-5 cursor-pointer h-[40px] right-10 bg-navy rounded-full"
-              onClick={() => {
-                setShowLoginModal(true);
-              }}
-            >
-              Log in
-            </Button>
-          </>
-        ))}
+      <div className="flex gap-4">
+        <BasicMenu />
+      </div>
       {showLoginModal &&
         createPortal(
           <LoginModal

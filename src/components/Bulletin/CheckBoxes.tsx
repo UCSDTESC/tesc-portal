@@ -22,8 +22,8 @@ export default function CheckBoxes() {
       if (User.role === "company" || User.role === "") return;
       console.log("------PULLING USER POINTS---------------");
       const { data, error } = await supabase.from("users").select("points").eq("email", User.email);
-      if (data) {
-        setUserPoints(data[0].points);
+      if (data && data[0]) {
+        setUserPoints(data[0].points ?? 0);
       }
       if (error) {
         console.error(error);
@@ -33,18 +33,18 @@ export default function CheckBoxes() {
   }, [User]);
 
   return (
-    <form className="p-3 w-full flex gap-2">
+    <form className="p-3 w-full flex gap-2 min-h-[2.25rem]">
       <input
         type="Search"
         placeholder="Search..."
         onChange={(e) => {
           setSearch(e.target.value);
         }}
-        className="rounded-lg h-fit p-1 min-w-0 w-20 md:w-fit  focus:outline-none bg-white"
+        className="rounded-lg min-h-[2.25rem] p-1 min-w-0 w-20 md:w-fit focus:outline-none bg-white"
       />
-      <div className="flex flex-row gap-3">
+      <div className="flex flex-row gap-3 shrink-0">
         <div
-          className="bg-white w-fit flex items-center gap-1 h-full px-2 rounded-2xl relative cursor-pointer indent-[-9999px] md:indent-0"
+          className="bg-white w-fit shrink-0 flex items-center gap-1 min-h-[2.25rem] px-2 rounded-2xl relative cursor-pointer indent-[-9999px] md:indent-0"
           ref={filterRef}
           onClick={() => {
             setFilterMenu(filterMenu == "Tags" ? "" : "Tags");
@@ -69,7 +69,7 @@ export default function CheckBoxes() {
           </div>
         </div>
         <div
-          className="bg-white w-fit flex items-center gap-1 h-full px-2 rounded-2xl relative cursor-pointer indent-[-9999px] md:indent-0"
+          className="bg-white w-fit shrink-0 flex items-center gap-1 min-h-[2.25rem] px-2 rounded-2xl relative cursor-pointer indent-[-9999px] md:indent-0"
           ref={sortRef}
           onClick={() => {
             setFilterMenu(filterMenu == "Sort" ? "" : "Sort");
@@ -93,16 +93,16 @@ export default function CheckBoxes() {
           </div>
         </div>
       </div>
-      {User && User.role !== "company" && (
-        <div className="bg-white  w-fit flex items-center ml-auto h-full p-1 rounded-2xl relative font-bold gap-1 px-4 text-navy text-xl">
+      {User?.role !== "company" && (
+        <div className="bg-white w-fit flex items-center ml-auto min-h-[2.25rem] p-1 rounded-2xl relative font-bold gap-1 px-4 text-navy text-xl">
           <FaDiamond className="text-lightBlue" />
-          {userPoints}
+          {userPoints ?? 0}
         </div>
       )}
       {User && User.role === "company" && (
         <CSVLink
           data={People ? People : []}
-          className="bg-white w-fit flex items-center ml-auto h-full p-1 rounded-2xl relative gap-1 px-4 text-navy text-md"
+          className="bg-white w-fit flex items-center ml-auto min-h-[2.25rem] p-1 rounded-2xl relative gap-1 px-4 text-navy text-md"
         >
           Export csv
         </CSVLink>
