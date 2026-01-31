@@ -1,5 +1,5 @@
-import { useContext, useMemo, useState } from "react";
-import { useParams } from "react-router";
+import { useContext, useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router";
 
 import UserContext from "@lib/UserContext";
 
@@ -15,6 +15,7 @@ type EventTimeFilter = "current" | "past";
 export default function Bulletin() {
   const { User } = useContext(UserContext);
   const postId = useParams();
+  const navigate = useNavigate();
   const [selection, setSelection] = useState<string>(String(postId.postId));
   const [displaysideBar, setDisplaySideBar] = useState(true);
   const [eventTimeFilter, setEventTimeFilter] = useState<EventTimeFilter>("current");
@@ -36,6 +37,25 @@ export default function Bulletin() {
     sortMethod,
     setSortMethod,
   } = useBulletin(User);
+
+  // Sync selection with URL when navigating (e.g. direct link, browser back/forward)
+  useEffect(() => {
+    const id = String(postId.postId ?? "-1");
+    setSelection(id);
+  }, [postId.postId]);
+
+  // Auto-select Current/Past tab when loading an event from URL so it displays correctly
+  useEffect(() => {
+    if (User?.role === "company" || !data) return;
+    const eventId = postId.postId;
+    if (!eventId || eventId === "-1") return;
+    const event = data.find((e) => String(e.id) === String(eventId));
+    if (event) {
+      const endTime = new Date(event.end_date).getTime();
+      const isCurrent = endTime >= Date.now();
+      setEventTimeFilter(isCurrent ? "current" : "past");
+    }
+  }, [data, postId.postId, User?.role]);
 
   const filteredData = useMemo(() => {
     if (!data || User?.role === "company") return data;
@@ -96,17 +116,29 @@ export default function Bulletin() {
                   />
                   <button
                     type="button"
-                    onClick={() => setEventTimeFilter("current")}
+                    onClick={() => {
+                      if (eventTimeFilter !== "current") {
+                        setEventTimeFilter("current");
+                        setSelection("-1");
+                        navigate("/bulletin/-1");
+                      }
+                    }}
                     className="relative z-10 flex flex-1 items-center justify-center rounded-full py-1.5 text-sm font-medium transition-colors duration-200 text-slate-600 hover:text-slate-900"
                     style={{
                       color: eventTimeFilter === "current" ? "white" : undefined,
                     }}
                   >
-                    Current
+                    Upcoming
                   </button>
                   <button
                     type="button"
-                    onClick={() => setEventTimeFilter("past")}
+                    onClick={() => {
+                      if (eventTimeFilter !== "past") {
+                        setEventTimeFilter("past");
+                        setSelection("-1");
+                        navigate("/bulletin/-1");
+                      }
+                    }}
                     className="relative z-10 flex flex-1 items-center justify-center rounded-full py-1.5 text-sm font-medium transition-colors duration-200 text-slate-600 hover:text-slate-900"
                     style={{
                       color: eventTimeFilter === "past" ? "white" : undefined,
