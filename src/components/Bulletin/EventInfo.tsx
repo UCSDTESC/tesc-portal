@@ -2,15 +2,16 @@ import { useContext, useEffect, useState } from "react";
 import { BulletinContext } from "@lib/hooks/useBulletin";
 import { RsvpOrAttendanceButton } from "./RsvpOrAttendanceButton";
 import Editor from "./Editor";
-import { DateParser, formatGoogleCalendarEvent, formatGoogleMapsLocation } from "@lib/utils";
+import { DateParser, formatGoogleCalendarEvent, formatGoogleMapsLocation, toISO } from "@lib/utils";
 import googleCalendar from "/Google_Calendar_icon_(2020).svg";
 import UserContext from "@lib/UserContext";
 import { WelcomePage } from "./WelcomePage";
 import { motion } from "motion/react";
 import { container, item } from "@lib/constants";
+import { EditOutlined } from "@ant-design/icons";
 
 export default function EventInfo({ selection }: { selection: string }) {
-  const { data } = useContext(BulletinContext);
+  const { data, openEditModal } = useContext(BulletinContext);
   const { User } = useContext(UserContext);
   const [imageUrl, setImageUrl] = useState("");
   useEffect(() => {
@@ -28,7 +29,7 @@ export default function EventInfo({ selection }: { selection: string }) {
       return;
     }
     setImageUrl(
-      `https://mxbwjmjpevvyejnugisy.supabase.co/storage/v1/object/public/profile.images/${filtered[0].orgs?.name}/${filtered[0].orgs?.pfp_str}`
+      `https://mxbwjmjpevvyejnugisy.supabase.co/storage/v1/object/public/profile.images/${filtered[0].orgs?.name}/${filtered[0].orgs?.pfp_str}`,
     );
   }, [data, selection, User?.role]);
 
@@ -64,11 +65,39 @@ export default function EventInfo({ selection }: { selection: string }) {
                   className="flex flex-col h-full justify-center relative"
                   variants={container}
                 >
-                  <motion.h1 variants={item} className="font-bold text-4xl">
-                    {daton.title}
-                  </motion.h1>
-                  {daton.attendance_cap != null ? (
-                    daton.attendance < daton.attendance_cap && daton.rsvp < daton.attendance_cap ? (
+                  <div className="flex items-center gap-3">
+                    <motion.h1 variants={item} className="font-bold text-4xl">
+                      {daton.title}
+                    </motion.h1>
+                    {daton.internal && openEditModal && (
+                      <button
+                        type="button"
+                        onClick={() => openEditModal(daton)}
+                        className="p-2 rounded-lg bg-blue/20 hover:bg-blue/40 text-navy transition-colors"
+                        title="Edit event"
+                      >
+                        <EditOutlined />
+                      </button>
+                    )}
+                  </div>
+                  {daton.track_attendance &&
+                    (daton.attendance_cap != null ? (
+                      daton.attendance < daton.attendance_cap &&
+                      daton.rsvp < daton.attendance_cap ? (
+                        <RsvpOrAttendanceButton
+                          {...{
+                            start_date: daton.start_date,
+                            end_date: daton.end_date,
+                            selection,
+                          }}
+                          className="absolute bottom-0 right-[5%] bg-lightBlue hover:opacity-80"
+                        />
+                      ) : (
+                        <div className="text-red-600 underline bold px-4 py-2 rounded-lg cursor-pointer w-fit h-fit absolute bottom-0 right-0 ">
+                          Event attendance cap reached
+                        </div>
+                      )
+                    ) : (
                       <RsvpOrAttendanceButton
                         {...{
                           start_date: daton.start_date,
@@ -77,52 +106,90 @@ export default function EventInfo({ selection }: { selection: string }) {
                         }}
                         className="absolute bottom-0 right-[5%] bg-lightBlue hover:opacity-80"
                       />
-                    ) : (
-                      <div className="text-red-600 underline bold px-4 py-2 rounded-lg cursor-pointer w-fit h-fit absolute bottom-0 right-0 ">
-                        Event attendance cap reached
-                      </div>
-                    )
-                  ) : (
-                    <RsvpOrAttendanceButton
-                      {...{
-                        start_date: daton.start_date,
-                        end_date: daton.end_date,
-                        selection,
-                      }}
-                      className="absolute bottom-0 right-[5%] bg-lightBlue hover:opacity-80"
-                    />
-                  )}
+                    ))}
                   <motion.p className="text-lg text-[#898989]" variants={item}>
                     {daton.orgs?.name ? daton.orgs.name : "Unknown"}
                   </motion.p>
                 </motion.div>
                 <motion.div className="col-start-2 w-[95%] max-w-[800px] mx-auto" variants={item}>
-                  {daton.poster ? (
-                    <img src={daton.poster} alt="" className="w-full rounded-lg object-cover" />
-                  ) : (
-                    <div className="w-full bg-blue/15 animate-pulse aspect-video rounded-lg"></div>
-                  )}
+                  {!daton.internal &&
+                    (daton.poster ? (
+                      <img src={daton.poster} alt="" className="w-full rounded-lg object-cover" />
+                    ) : (
+                      <div className="w-full bg-blue/15 animate-pulse aspect-video rounded-lg"></div>
+                    ))}
                   <div className="flex w-full flex-row mt-10 justify-between flex-wrap-reverse gap-8">
                     <span className="w-fit">
-                      <h1 className=" font-semibold ">
-                        {DateParser(daton.start_date)} <br />
-                        {daton.location_str}
+                      <h1 className="font-semibold">
+                        {(daton.event_slots?.length ?? 0) > 0 ? (
+                          <span className="block space-y-1">
+                            <span className="block font-medium text-navy">Time slots</span>
+                            {(daton.event_slots ?? [])
+                              .sort(
+                                (a, b) =>
+                                  new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()
+                              )
+                              .map((slot, i) => (
+                                <span key={slot.id} className="block">
+                                  {i + 1}. {DateParser(toISO(slot.starts_at))} –{" "}
+                                  {DateParser(toISO(slot.ends_at))}
+                                </span>
+                              ))}
+                          </span>
+                        ) : (
+                          <>
+                            <span className="block">
+                              Start: {DateParser(daton.start_date)}
+                            </span>
+                            <span className="block">
+                              End: {DateParser(daton.end_date)}
+                            </span>
+                          </>
+                        )}
+                        <span className="block mt-2">{daton.location_str}</span>
                       </h1>
                       <Editor content={daton.content} />
                     </span>
                     <div className="w-max flex flex-col gap-2 ">
-                      <a
-                        href={formatGoogleCalendarEvent(
-                          daton.title,
-                          daton.location_str,
-                          daton.start_date,
-                          daton.end_date
-                        )}
-                        className="flex items-center gap-2 bg-blue/20 justify-center px-2 rounded-2xl text-gray-700 hover:bg-blue/40"
-                      >
-                        <img src={googleCalendar} alt="" className="h-[15px]" />
-                        Add to Google Calendar
-                      </a>
+                      {(daton.event_slots?.length ?? 0) > 0
+                        ? (daton.event_slots ?? [])
+                            .sort(
+                              (a, b) =>
+                                new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()
+                            )
+                            .map((slot, i) => (
+                              <a
+                                key={slot.id}
+                                href={formatGoogleCalendarEvent(
+                                  (daton.event_slots?.length ?? 0) > 1
+                                    ? `${daton.title} (Session ${i + 1})`
+                                    : daton.title,
+                                  daton.location_str,
+                                  toISO(slot.starts_at),
+                                  toISO(slot.ends_at),
+                                )}
+                                className="flex items-center gap-2 bg-blue/20 justify-center px-2 rounded-2xl text-gray-700 hover:bg-blue/40"
+                              >
+                                <img src={googleCalendar} alt="" className="h-[15px]" />
+                                {(daton.event_slots?.length ?? 0) > 1
+                                  ? `Add session ${i + 1} to Google Calendar`
+                                  : "Add to Google Calendar"}
+                              </a>
+                            ))
+                        : (
+                            <a
+                              href={formatGoogleCalendarEvent(
+                                daton.title,
+                                daton.location_str,
+                                daton.start_date,
+                                daton.end_date,
+                              )}
+                              className="flex items-center gap-2 bg-blue/20 justify-center px-2 rounded-2xl text-gray-700 hover:bg-blue/40"
+                            >
+                              <img src={googleCalendar} alt="" className="h-[15px]" />
+                              Add to Google Calendar
+                            </a>
+                          )}
                       <a
                         href={formatGoogleMapsLocation(daton.location_str)}
                         className="flex items-center gap-2 bg-blue/20 justify-center px-2 rounded-2xl text-gray-700 hover:bg-blue/40"

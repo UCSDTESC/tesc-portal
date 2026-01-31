@@ -23,22 +23,34 @@ export const getFormDataDefault = (): formdata => {
     location_str: "",
     content: "",
     tags: [],
-    poster: "https://placehold.co/600x400"
+    poster: "https://placehold.co/600x400",
+    track_attendance: false,
+    manual_attendance: "",
+    internal: false,
+    recurring_rate: "none",
+    recurrence_end_date: "",
   };
 };
 
+const MONTH_NAMES = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+/** Parses and displays date/time as stored (no timezone conversion). Expects YYYY-MM-DDTHH:mm or similar. */
 export const DateParser = (date: string) => {
-  const parsedDate = date.split(/-|T|:/);
-  const correctDate = new Date(
-    Date.UTC(
-      parseInt(parsedDate[0]),
-      parseInt(parsedDate[1]) - 1,
-      parseInt(parsedDate[2]),
-      parseInt(parsedDate[3]),
-      parseInt(parsedDate[4])
-    )
-  );
-  return correctDate.toUTCString();
+  if (!date || date === "N/A") return date;
+  const match = date.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/);
+  if (!match) return date;
+  const [, year, month, day, hour, min, sec] = match;
+  const monthNum = parseInt(month, 10) - 1;
+  const hourNum = parseInt(hour, 10);
+  const ampm = hourNum >= 12 ? "PM" : "AM";
+  const hour12 = hourNum % 12 || 12;
+  const timeStr = sec
+    ? `${hour12}:${min}:${sec} ${ampm}`
+    : `${hour12}:${min} ${ampm}`;
+  return `${MONTH_NAMES[monthNum]} ${parseInt(day, 10)}, ${year}, ${timeStr}`;
 };
 
 export const toISO = (date: string) => {
@@ -54,13 +66,13 @@ export const formatGoogleCalendarEvent = (
   title: string,
   location: string,
   start_date: string,
-  end_date: string
+  end_date: string,
 ) => {
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title.replace(
     " ",
-    "+"
+    "+",
   )}&details=More+details+see:+${window.location.href}&location=${location}&dates=${formatDate(
-    start_date
+    start_date,
   )}/${formatDate(end_date)}&ctz=America/Los_Angeles`;
 };
 
@@ -82,8 +94,8 @@ export function getPdfPreviewUrl(url: string): { previewUrl: string | null; note
       }
       return {
         previewUrl: `https://drive.google.com/viewerng/viewer?embedded=true&url=${encodeURIComponent(
-          href
-        )}`
+          href,
+        )}`,
       };
     }
 

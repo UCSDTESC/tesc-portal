@@ -22,7 +22,11 @@ export type Event = {
   };
   poster: string;
   attendance_cap?: number;
-};
+  track_attendance?: boolean;
+  manual_attendance?: number | null;
+  internal?: boolean;
+  event_slots?: { id: number; starts_at: string; ends_at: string }[];
+}
 
 export type Member = {
   uuid: string;
@@ -47,12 +51,21 @@ export type formdata = {
   tags: string[];
   poster: string;
   attendance_cap?: number;
+  track_attendance?: boolean;
+  manual_attendance?: string | number;
+  internal?: boolean;
+  recurring_rate?: "none" | "daily" | "weekly" | "biweekly" | "monthly";
+  recurrence_end_date?: string;
 };
+
 export type DateGroup = {
   id: number;
   startDate: string;
   endDate: string;
 };
+
+export const RECURRING_RATES = ["none", "daily", "weekly", "biweekly", "monthly"] as const;
+
 export const eventFormDataDefault: formdata = {
   title: "",
   password: "",
@@ -63,6 +76,11 @@ export const eventFormDataDefault: formdata = {
   content: "",
   tags: [""],
   poster: "",
+  track_attendance: false,
+  manual_attendance: "",
+  internal: false,
+  recurring_rate: "none",
+  recurrence_end_date: "",
 };
 
 export const locations: string[] = [
@@ -167,6 +185,7 @@ export const locations: string[] = [
 export const majors: string[] = [
   "Anthropology",
   "Archaeology",
+  "Artificial Intelligence",
   "Biological Anthropology",
   "Climate Change and Human Solutions",
   "Sociocultural Anthropology",

@@ -3,14 +3,19 @@ import { useContext } from "react";
 import { useNavigate } from "react-router";
 
 import UserContext from "@lib/UserContext";
-import { DateGroup, formdata, profile_picture_src } from "@lib/constants";
+import {
+  DateGroup,
+  formdata,
+  profile_picture_src,
+  RECURRING_RATES,
+} from "@lib/constants";
 import { getFormDataDefault } from "@lib/utils";
-import { createEvent, updateEvent } from "@services/event";
+import { createEvent, updateEvent, fetchEventSlots } from "@services/event";
 
 import Editor from "./Editor";
 import { MultipleSelectChip, Dropdown } from "./Dropdowns";
 import DisplayToast from "@lib/hooks/useToast";
-import { Tooltip } from "@mui/material";
+import { Tooltip, Switch, FormControlLabel } from "@mui/material";
 import { IoInformationCircleOutline } from "react-icons/io5";
 import DoubleSelectGroup from "./DoubleSelectGroup";
 
@@ -38,6 +43,18 @@ export default function Form({
   useEffect(() => {
     document.title = "New Event | TESC Portal";
   }, []);
+
+  useEffect(() => {
+    if (editEvent && id) {
+      fetchEventSlots(id).then((slots) => {
+        if (slots.length > 0) {
+          setTimeSlots(slots);
+        } else {
+          setTimeSlots([{ id: Date.now(), startDate: "", endDate: "" }]);
+        }
+      });
+    }
+  }, [editEvent, id]);
   // handle change to form
   const handleChange = <T,>(value: T, cols: string[]): void => {
     let currform = formData;
@@ -49,6 +66,23 @@ export default function Form({
 
   // update event or create new event
   const handleSubmit = async () => {
+    const recurringRate = formData.recurring_rate ?? "none";
+    if (!editEvent && recurringRate !== "none") {
+      const recurrenceEnd = formData.recurrence_end_date ?? "";
+      if (!recurrenceEnd.trim()) {
+        setError("Please select a recurrence end date for recurring events.");
+        DisplayToast("Recurrence end date is required", "error");
+        return;
+      }
+      const startDate = new Date(formData.start_date);
+      const endDate = new Date(recurrenceEnd);
+      if (endDate < startDate) {
+        setError("Recurrence end date must be on or after the event start date.");
+        DisplayToast("Invalid recurrence end date", "error");
+        return;
+      }
+    }
+
     if (formdata && User?.id) {
       const error = await updateEvent(id, formData, Timeslots);
       if (error) {
@@ -74,7 +108,7 @@ export default function Form({
   };
 
   return (
-    <div className="w-1/2 mt-20 flex flex-col m-auto bg-white z-101">
+    <div className={`w-1/2 flex flex-col m-auto bg-white z-101 ${editEvent ? "mt-5" : "mt-20"}`}>
       {!editEvent && (
         <>
           <h1 className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A]">
@@ -95,7 +129,9 @@ export default function Form({
       >
         <p className="text-red-500">{error}</p>
 
-        <label htmlFor="title">Event Title </label>
+        <label htmlFor="title">
+          Event Title <span className="text-red-500">*</span>
+        </label>
         <input
           name="title"
           placeholder="Title"
@@ -105,60 +141,196 @@ export default function Form({
           autoFocus
           required
         />
-        <div className="flex items-center gap-1">
-          <label htmlFor="Password">Event Code </label>
-          <Tooltip
-            title={
-              "This code is used for Event attendance validation for participants, show this code at your event to track attendance"
-            }
-            placement="bottom"
-            slotProps={{
-              popper: {
-                modifiers: [
-                  {
-                    name: "offset",
-                    options: {
-                      offset: [0, -14],
-                    },
+        {(formData.track_attendance ?? false) && (
+          <>
+            <div className="flex items-center gap-1">
+              <label htmlFor="Password">Event Code </label>
+              <Tooltip
+                title={
+                  "This code is used for Event attendance validation for participants, show this code at your event to track attendance"
+                }
+                placement="bottom"
+                slotProps={{
+                  popper: {
+                    modifiers: [
+                      {
+                        name: "offset",
+                        options: {
+                          offset: [0, -14],
+                        },
+                      },
+                    ],
                   },
-                ],
-              },
-            }}
-          >
-            <IoInformationCircleOutline className="text-sm" />
-          </Tooltip>
+                }}
+              >
+                <IoInformationCircleOutline className="text-sm" />
+              </Tooltip>
+            </div>
+            <input
+              name="Password"
+              placeholder="Code"
+              className="border-black border rounded-lg px-3 h-12"
+              value={formData.password}
+              onChange={(e) => handleChange(e.target.value, ["password"])}
+              required
+            />
+          </>
+        )}
+        {!editEvent && (
+          <>
+            <label htmlFor="recurring">Recurring</label>
+            <select
+              id="recurring"
+              className="border-black border rounded-lg px-3 h-12"
+              value={formData.recurring_rate ?? "none"}
+              onChange={(e) =>
+                handleChange(
+                  e.target.value as "none" | "daily" | "weekly" | "biweekly" | "monthly",
+                  ["recurring_rate"],
+                )
+              }
+            >
+              {RECURRING_RATES.map((rate) => (
+                <option key={rate} value={rate}>
+                  {rate === "none" ? "None" : rate.charAt(0).toUpperCase() + rate.slice(1)}
+                </option>
+              ))}
+            </select>
+            {(formData.recurring_rate ?? "none") !== "none" && (
+              <>
+                <label htmlFor="recurrence_end">Recurrence end date</label>
+                <input
+                  id="recurrence_end"
+                  type="date"
+                  className="border-black border rounded-lg px-3 h-12"
+                  value={formData.recurrence_end_date ?? ""}
+                  min={formData.start_date?.slice(0, 10)}
+                  onChange={(e) => handleChange(e.target.value, ["recurrence_end_date"])}
+                />
+              </>
+            )}
+          </>
+        )}
+        {(formData.recurring_rate ?? "none") !== "none" ? (
+          <>
+            <label htmlFor="StartTime">
+              Start Time (date and time) <span className="text-red-500">*</span>
+            </label>
+            <div className="border-black border rounded-lg px-3 h-12 flex items-center">
+              <input
+                type="datetime-local"
+                name="StartTime"
+                value={formData.start_date}
+                required
+                onChange={(e) => handleChange(e.target.value, ["start_date", "end_date"])}
+              />
+            </div>
+            <div className="flex items-center gap-1">
+              <label htmlFor="EndTime">
+                End Time (date and time) <span className="text-red-500">*</span>
+              </label>
+              <Tooltip
+                title="Event end must be after event start"
+                placement="bottom"
+                slotProps={{
+                  popper: {
+                    modifiers: [
+                      {
+                        name: "offset",
+                        options: {
+                          offset: [0, -14],
+                        },
+                      },
+                    ],
+                  },
+                }}
+              >
+                <IoInformationCircleOutline className="text-sm" />
+              </Tooltip>
+            </div>
+            <div className="border-black border rounded-lg px-3 h-12 flex items-center scroll-smooth">
+              <input
+                type="datetime-local"
+                name="EndTime"
+                required
+                min={formData.start_date}
+                value={formData.end_date}
+                onChange={(e) => {
+                  if (new Date(e.target.value).getTime() <= new Date(formData.start_date).getTime()) {
+                    return;
+                  }
+                  handleChange(e.target.value, ["end_date"]);
+                }}
+              />
+            </div>
+          </>
+        ) : (
+          <DoubleSelectGroup {...{ Timeslots, setTimeSlots }} />
+        )}
+
+        <div className="flex flex-wrap items-center gap-6">
+          <FormControlLabel
+            control={
+              <Switch
+                checked={formData.track_attendance ?? false}
+                onChange={(_, checked) => handleChange(checked, ["track_attendance"])}
+                color="primary"
+              />
+            }
+            label="Track attendance on the portal"
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={formData.internal ?? false}
+                onChange={(_, checked) => handleChange(checked, ["internal"])}
+                color="primary"
+              />
+            }
+            label="Internal event"
+          />
         </div>
-        <input
-          name="Password"
-          placeholder="Code"
-          className="border-black border rounded-lg px-3 h-12"
-          value={formData.password}
-          onChange={(e) => handleChange(e.target.value, ["password"])}
-          autoFocus
-          required
-        />
-        <DoubleSelectGroup {...{ Timeslots, setTimeSlots }} />
+
+        {!(formData.track_attendance ?? false) && (
+          <>
+            <label htmlFor="manual_attendance">Manual attendance</label>
+            <input
+              id="manual_attendance"
+              name="manual_attendance"
+              type="number"
+              min={0}
+              placeholder="Enter attendance count"
+              className="border-black border rounded-lg px-3 h-12"
+              value={formData.manual_attendance ?? ""}
+              onChange={(e) => handleChange(e.target.value, ["manual_attendance"])}
+            />
+          </>
+        )}
 
         <label>Event Location</label>
         <Dropdown formData={formData} handleChange={handleChange} />
-        <label htmlFor="StartTime">Attendance cap</label>
-        <input
-          value={formData.attendance_cap}
-          className="border-black border rounded-lg px-3 h-12 flex items-center"
-          onChange={(e) => handleChange(e.target.value, ["attendance_cap"])}
-        />
-        <label>Tags</label>
-        <MultipleSelectChip formData={formData} handleChange={handleChange} />
-        <label>Event Poster</label>
-        <input
-          name="poster"
-          placeholder={profile_picture_src}
-          className="border-black border rounded-lg px-3 h-12"
-          value={formData.poster}
-          onChange={(e) => setFormData({ ...formData, ["poster"]: e.target.value })}
-          autoFocus
-        />
-        {formData.poster && <img src={formData.poster} alt="" className="rounded-2xl" />}
+        {!(formData.internal ?? false) && (
+          <>
+            <label htmlFor="StartTime">Attendance cap</label>
+            <input
+              value={formData.attendance_cap}
+              className="border-black border rounded-lg px-3 h-12 flex items-center"
+              onChange={(e) => handleChange(e.target.value, ["attendance_cap"])}
+            />
+            <label>Tags</label>
+            <MultipleSelectChip formData={formData} handleChange={handleChange} />
+            <label>Event Poster</label>
+            <input
+              name="poster"
+              placeholder={profile_picture_src}
+              className="border-black border rounded-lg px-3 h-12"
+              value={formData.poster}
+              onChange={(e) => setFormData({ ...formData, ["poster"]: e.target.value })}
+              autoFocus
+            />
+            {formData.poster && <img src={formData.poster} alt="" className="rounded-2xl" />}
+          </>
+        )}
         <Editor content={formData.content} setEditorContent={(e) => handleChange(e, ["content"])} />
         <button
           type="submit"
