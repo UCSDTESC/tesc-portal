@@ -6,7 +6,7 @@ import Modal from "@mui/material/Modal";
 import NewProfile from "./NewProfile";
 import EditProfileForm from "./EditMemberProfile";
 
-import PageAllAttendEvents from "@components/User/PageAllAttendEvents"; 
+import PageAllAttendEvents from "@components/User/PageAllAttendEvents";
 
 // TODO: code clean-up
 export default function Profile() {
@@ -81,8 +81,8 @@ export default function Profile() {
 
   if (User?.role === "internal") {
     return (
-      <div className="flex flex-nowrap items-start w-screen min-h-screen mt-8 px-15 gap-6">
-        <div className="flex flex-[0_0_10%] w-full flex-col items-center justify-center gap-2 min-w-0 px-1">
+      <div className="flex flex-col lg:flex-row lg:flex-nowrap items-start w-screen min-h-screen mt-8 px-[min(15px,2vw)] gap-6">
+        <div className="flex w-[max(30vw,300px)] max-w-full lg:flex-[0_0_10%] lg:w-full flex-col items-center justify-center gap-2 min-w-0 px-1 shrink-0 self-center lg:self-start">
           <div className="w-full aspect-square rounded-full overflow-hidden relative border border-slate-400">
             <img src={imageUrl} alt="" className="w-full h-full object-cover" />
             <button
@@ -96,7 +96,7 @@ export default function Profile() {
             {orgname}
           </h1>
         </div>
-        <div className="flex flex-[1_1_90%] min-w-0 flex flex-col">
+        <div className="flex flex-[1_1_90%] min-w-0 flex-col">
           <DataTable />
         </div>
         <Modal
