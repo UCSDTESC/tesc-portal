@@ -166,6 +166,7 @@ export const locations: string[] = [
   "Student Center Courtyard",
   "Town Square",
   "Matthews Quad",
+  "Powell-Focht Bioengineering Hall",
   "Sun God Lawn",
   "Warren Mall",
   "The Hump",
