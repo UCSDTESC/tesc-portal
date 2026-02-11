@@ -5,6 +5,10 @@ import DataTable from "../Data/DataTable";
 import Modal from "@mui/material/Modal";
 import NewProfile from "./NewProfile";
 import EditProfileForm from "./EditMemberProfile";
+import TescOrgProfileEditor from "./TescOrgProfileEditor";
+import EditOrgModal from "./EditOrgModal";
+
+
 
 import PageAllAttendEvents from "@components/User/PageAllAttendEvents";
 
@@ -98,6 +102,9 @@ export default function Profile() {
         </div>
         <div className="flex flex-[1_1_90%] min-w-0 flex-col">
           <DataTable />
+
+           
+
         </div>
         <Modal
           open={editModal}
@@ -105,8 +112,8 @@ export default function Profile() {
           aria-labelledby="modal-modal-title"
           aria-describedby="modal-modal-description"
         >
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-fit h-fit  rounded-lg p-4">
-            <NewProfile controlModal={controlEditModal} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+            <EditOrgModal orgUuid={42} controlModal={controlEditModal} />
           </div>
         </Modal>
       </div>
