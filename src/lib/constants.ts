@@ -1,5 +1,14 @@
 /** Event category tags for filtering/display. Used in: DataTable, Form, event services, Bulletin. */
-export const tags = ["fundraiser", "social", "workshop", "GBM", "panels/talks", "other"];
+export const tags = [
+  "fundraiser",
+  "social",
+  "career",
+  "workshop",
+  "hackathon",
+  "GBM",
+  "panels/talks",
+  "other",
+];
 
 /** Default org profile picture (base64). Used in: org/profile display. */
 export const profile_picture_src =
