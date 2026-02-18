@@ -26,7 +26,7 @@ export default function Form({
   onSuccess: () => void;
 }) {
   const form = useRef<HTMLFormElement>(null);
-  const { User } = useContext(UserContext);
+  const { User,activeOrgName} = useContext(UserContext);
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [formData, setFormData] = useState<formdata>(formdata ? formdata : getFormDataDefault());
@@ -55,7 +55,7 @@ export default function Form({
         DisplayToast("Succesfully updated event", "success");
       }
     } else if (User?.id) {
-      const error = await createEvent(User, formData);
+      const error = await createEvent(formData,activeOrgName);
       if (error) {
         console.log(error);
         setError(error.message);

@@ -11,10 +11,10 @@ import TableItem from "./TableItem";
 
 // TODO: Loading and Error state for the data
 // TODO: styling of the component
-export default function DataTable() {
+export default function DataTable({ orgName }: { orgName?: string }) {
   const { User } = useContext(UserContext);
   // data hook also returns error and loading state variables to be implemented later for error and loading states
-  const { data, handleDelete, fetchData } = useData(User);
+  const { data, handleDelete, fetchData } = useData(User, orgName);
   const { showEditModal, curID, currEdit, setShowEditModal, openEditModal } = useEditModal();
 
   if (data)

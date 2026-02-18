@@ -22,6 +22,7 @@ export type Event = {
   };
   poster: string;
   attendance_cap?: number;
+  org_id: string;
 };
 
 export type Member = {

@@ -1,6 +1,5 @@
 import supabase from "@server/supabase";
 import { formdata } from "@lib/constants";
-import { User } from "@lib/UserContext";
 import { logAttendance } from './user';
 
 export const fetchEventByOrg = async (uid: string) => {
@@ -13,7 +12,7 @@ export const fetchEventByOrg = async (uid: string) => {
   else {
     const { data, error } = await supabase
       .from("events")
-      .select()
+      .select("*, orgs (name)")
       .in(
         "org_id",
         orgs.map((org) => org.org_uuid)
@@ -23,11 +22,11 @@ export const fetchEventByOrg = async (uid: string) => {
   }
 };
 
-export const createEvent = async (User: User, formData: formdata) => {
+export const createEvent = async (formData: formdata, activeOrgName:string) => {
   const { data: org_name } = await supabase
-    .from("user_org_roles")
-    .select("org_uuid")
-    .eq("user_uuid", User.id);
+    .from("orgs")
+    .select("uuid")
+    .eq("name", activeOrgName);
   if (org_name) {
     console.log("----------INSERT NEW EVENT-----------");
     const { error } = await supabase.from("events").insert({
@@ -39,7 +38,7 @@ export const createEvent = async (User: User, formData: formdata) => {
       location_str: formData.location_str,
       content: formData.content,
       tags: formData.tags,
-      org_id: org_name[0].org_uuid,
+      org_id: org_name[0].uuid,
       poster: formData.poster
     });
     return error;
