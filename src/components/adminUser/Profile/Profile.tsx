@@ -5,8 +5,12 @@ import DataTable from "../Data/DataTable";
 import Modal from "@mui/material/Modal";
 import NewProfile from "./NewProfile";
 import EditProfileForm from "./EditMemberProfile";
+import TescOrgProfileEditor from "./TescOrgProfileEditor";
+import EditOrgModal from "./EditOrgModal";
 
-import PageAllAttendEvents from "@components/User/PageAllAttendEvents"; 
+
+
+import PageAllAttendEvents from "@components/User/PageAllAttendEvents";
 
 // TODO: code clean-up
 export default function Profile() {
@@ -81,22 +85,24 @@ export default function Profile() {
 
   if (User?.role === "internal") {
     return (
-      <div className="flex flex-wrap justify-between items-start w-screen min-h-screen mt-8 px-15 gap-8">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="w-32 h-32 aspect-square rounded-full overflow-hidden relative border-1 border-slate-400">
-            <img src={imageUrl} alt="" className="w-full h-full object-cover " />
+      <div className="flex flex-col lg:flex-row lg:flex-nowrap items-start w-screen min-h-screen mt-8 px-[min(15px,2vw)] gap-6">
+        <div className="flex w-[max(30vw,300px)] max-w-full lg:flex-[0_0_10%] lg:w-full flex-col items-center justify-center gap-2 min-w-0 px-1 shrink-0 self-center lg:self-start">
+          <div className="w-full aspect-square rounded-full overflow-hidden relative border border-slate-400">
+            <img src={imageUrl} alt="" className="w-full h-full object-cover" />
             <button
               onClick={controlEditModal}
-              className="absolute bottom-0 w-full h-fit flex justify-center bg-black/30 cursor-pointer text-white"
+              className="absolute bottom-0 w-full h-fit flex justify-center bg-black/30 cursor-pointer text-white text-[clamp(0.5rem,2vw,0.75rem)] py-0.5"
             >
               Edit +
             </button>
           </div>
-          <h1 className="text-3xl mt-8 text-blue font-bold">{activeOrgName}</h1>
+          <h1 className="text-[clamp(0.875rem,2.5vw,1.25rem)] text-blue font-bold text-center leading-tight break-words w-full">
+            {activeOrgName}
+          </h1>
         </div>
-        <div className="w-max flex flex-col justify-end gap-3">
+        <div className="flex flex-[1_1_90%] min-w-0 flex-col">
           <h1 className="text-xl font-semibold">My Posted Events</h1>
-          <DataTable orgName={activeOrgName}/>
+          <DataTable orgName={activeOrgName} />
         </div>
         <Modal
           open={editModal}
@@ -104,8 +110,8 @@ export default function Profile() {
           aria-labelledby="modal-modal-title"
           aria-describedby="modal-modal-description"
         >
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-fit h-fit  rounded-lg p-4">
-            <NewProfile controlModal={controlEditModal} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+            <EditOrgModal orgUuid={42} controlModal={controlEditModal} />
           </div>
         </Modal>
       </div>

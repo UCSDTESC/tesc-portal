@@ -21,12 +21,19 @@ export function SidebarClub({
   return (
     <button
       key={daton.id}
-      className={` cursor-pointer flex flex-col p-1 h-[100px] font-DM ${
+      className={`w-full cursor-pointer flex flex-col p-1 h-[100px] font-DM ${
         selection !== String(daton.id) ? "opacity-80" : ""
       }`}
       onClick={() => {
-        navigate(selection != "-1" ? "/bulletin/-1" : `/bulletin/${daton.id}`);
-        setSelection(selection != "-1" && selection == String(daton.id) ? "-1" : String(daton.id));
+        const id = String(daton.id);
+        const isCurrentlySelected = selection === id;
+        if (isCurrentlySelected) {
+          navigate("/bulletin/-1");
+          setSelection("-1");
+        } else {
+          navigate(`/bulletin/${daton.id}`);
+          setSelection(id);
+        }
       }}
     >
       <div className="flex flex-col justify-between rounded-lg bg-white h-full w-full p-1">
@@ -55,7 +62,7 @@ export function SidebarClub({
         </div>
         <span className="w-full flex flex-col items-start">
           <p className="text-[12px] line-clamp-1 text-muted-foreground">
-            {new Date(daton.created_at).toUTCString().slice(0, 16)} <br />
+            {new Date(daton.start_date).toUTCString().slice(0, 16)} <br />
           </p>
           <p className="w-full text-left text-[12px] line-clamp-1 font-bold text-muted-foreground">
             {daton.location_str ? daton.location_str : "N/A"}
@@ -79,12 +86,18 @@ export function SidebarCompany({
   return (
     <button
       key={daton.email}
-      className={` cursor-pointer flex flex-col p-1 h-[100px] font-DM ${
+      className={`w-full cursor-pointer flex flex-col p-1 h-[100px] font-DM ${
         selection !== daton.email ? "opacity-80" : ""
       }`}
       onClick={() => {
-        navigate(selection != "-1" ? "/bulletin/-1" : `/bulletin/${daton.email}`);
-        setSelection(selection != "-1" && selection == daton.email ? "-1" : daton.email);
+        const isCurrentlySelected = selection === daton.email;
+        if (isCurrentlySelected) {
+          navigate("/bulletin/-1");
+          setSelection("-1");
+        } else {
+          navigate(`/bulletin/${daton.email}`);
+          setSelection(daton.email);
+        }
       }}
     >
       <div className="flex flex-col rounded-lg bg-white h-full w-full px-4">

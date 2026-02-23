@@ -9,7 +9,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogCancel,
-  AlertDialogAction
+  AlertDialogAction,
 } from "@components/components/ui/alert-dialog";
 
 type DeleteConfirmationModalProps = {
@@ -23,7 +23,7 @@ export function DeleteConfirmationModal({
   itemName = "this item",
   isDeleting = false,
   onConfirm,
-  trigger
+  trigger,
 }: DeleteConfirmationModalProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -39,15 +39,15 @@ export function DeleteConfirmationModal({
       <AlertDialogContent className="max-w-xl p-0 overflow-hidden border-none bg-transparent">
         {/* Outer white card to match portal style */}
         <div className="w-full rounded-3xl bg-white shadow-xl ">
-          {/* Gradient header – like the TESC hero */}
-          <div className="rounded-t-3xl bg-gradient-to-r to-navy via-sky-900 from-sky-700 px-8 py-6 text-white">
+          {/* Header – matches DataTable navy */}
+          <div className="rounded-t-3xl bg-[#114675] px-8 py-6 text-white">
             <h1 className="mt-2 text-2xl font-semibold flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10 border-2 border-red-400 ">
-                <span className="text-red-400 text-xl">!</span>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-600/20 border-2 border-red-600 ">
+                <span className="text-red-600 text-xl font-bold">!</span>
               </div>
               Delete {itemName}?
             </h1>
-            <p className="mt-1 text-sm text-sky-100/90">
+            <p className="mt-1 text-sm text-white/90">
               This will permanently remove {itemName}. This action cannot be undone.
             </p>
           </div>
@@ -81,7 +81,7 @@ export function DeleteConfirmationModal({
               <AlertDialogAction
                 disabled={isDeleting}
                 onClick={handleConfirm}
-                className="bg-red-600 hover:bg-red-700 text-white disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+                className="bg-red-700 hover:bg-red-800 text-white disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isDeleting ? "Deleting…" : `Delete ${itemName}`}
               </AlertDialogAction>

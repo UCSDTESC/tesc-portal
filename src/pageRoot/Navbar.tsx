@@ -6,7 +6,7 @@ import LoginModal from "./LoginModal";
 import TESC from "/TESC.png";
 import BasicMenu from "@components/User/BasicMenu";
 import { Button } from "@components/components/ui/button";
-import { OrgDropdown } from "@components/components/ui/org-dropdown"
+import { OrgDropdown } from "@components/components/ui/org-dropdown";
 
 export default function Navbar() {
   const { User, myOrgs, activeOrgName, handleOrgSwitch } = useContext(UserContext);
@@ -23,10 +23,10 @@ export default function Navbar() {
         <div className="flex items-center gap-6">
           {myOrgs.length > 0 && (
             <div className="flex items-center gap-2">
-              <div className="w-30 text-black text-base"> 
-                <OrgDropdown 
-                  organizations={myOrgs} 
-                  value={activeOrgName} 
+              <div className="w-30 text-black text-base">
+                <OrgDropdown
+                  organizations={myOrgs}
+                  value={activeOrgName}
                   onValueChange={handleOrgSwitch}
                   placeholder="Select Club"
                 />
@@ -43,7 +43,6 @@ export default function Navbar() {
         (!User.id && (
           <>
             <Button
-              // className="rounded-full h-8 px-4 text-sm"
               className="font-DM text-lg font-semibold  px-5 cursor-pointer h-[40px] right-10 bg-navy rounded-full"
               onClick={() => {
                 setShowLoginModal(true);
