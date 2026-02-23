@@ -4,7 +4,7 @@ import { User } from "@lib/UserContext";
 import { Event } from "@lib/constants";
 import DisplayToast from "@lib/hooks/useToast";
 // useData custom hook used in DataTable component
-export function useData(User: User | null) {
+export function useData(User: User | null, orgName?: string) {
   const [data, setData] = useState<Event[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -18,7 +18,12 @@ export function useData(User: User | null) {
     }
     const { data, error } = await fetchEventByOrg(User.id);
     if (data) {
-      setData(data);
+      console.log(data)
+      const filteredData = orgName 
+      ? data.filter((event: Event) => String(event.orgs.name) === String(orgName))
+      : data;
+
+      setData(filteredData);
       setError("");
       setLoading(false);
     } else if (error) {
@@ -26,7 +31,7 @@ export function useData(User: User | null) {
       setLoading(false);
       DisplayToast("Unable to fetch your posted events", "error");
     }
-  }, [User]);
+  }, [User,orgName]);
 
   // fetch events posted by user on component render
   useEffect(() => {

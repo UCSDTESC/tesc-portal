@@ -34,6 +34,7 @@ export type Event = {
   };
   poster: string;
   attendance_cap?: number;
+  org_id: string;
   track_attendance?: boolean;
   manual_attendance?: number | null;
   internal?: boolean;

@@ -39,9 +39,11 @@ import {
 import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, Columns2, FilterIcon } from "lucide-react";
 import { useOutsideClicks } from "@lib/hooks/useOutsideClick";
 
-export default function DataTable() {
+// TODO: Loading and Error state for the data
+// TODO: styling of the component
+export default function DataTable({ orgName }: { orgName?: string }) {
   const { User } = useContext(UserContext);
-  const { data, handleDelete, fetchData } = useData(User);
+  const { data, handleDelete, fetchData } = useData(User, orgName);
   const { showEditModal, curID, currEdit, setShowEditModal, openEditModal } = useEditModal();
   const isLgOrSmaller = useMediaQuery("(max-width: 1024px)");
 
