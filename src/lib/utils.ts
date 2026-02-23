@@ -47,11 +47,6 @@ export const getFormDataDefault = (): formdata => {
   };
 };
 
-const MONTH_NAMES = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-];
-
 /** Parses and displays date/time as stored (no timezone conversion). Expects YYYY-MM-DDTHH:mm or similar. */
 /** Short month names for DateParser. */
 const MONTH_NAMES = [
