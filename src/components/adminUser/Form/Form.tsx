@@ -46,6 +46,11 @@ export default function Form({
 
   const handlePosterUpload = async (file: File | null | undefined) => {
     if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      setError("Event poster must be 2MB or smaller.");
+      DisplayToast("File size exceeds 2MB limit.", "error");
+      return;
+    }
     if (!activeOrgName) {
       setError("No active organization selected for event poster upload.");
       return;

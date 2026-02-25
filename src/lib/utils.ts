@@ -39,7 +39,7 @@ export const getFormDataDefault = (): formdata => {
     content: "",
     tags: [],
     poster: "https://placehold.co/600x400",
-    track_attendance: false,
+    track_attendance: true,
     manual_attendance: "",
     internal: false,
     recurring_rate: "none",
