@@ -6,12 +6,13 @@ import UserContext from "@lib/UserContext";
 import { formdata, profile_picture_src, RECURRING_RATES } from "@lib/constants";
 import { getFormDataDefault } from "@lib/utils";
 import { createEvent, updateEvent } from "@services/event";
+import supabase from "@server/supabase";
 
 import Editor from "./Editor";
 import { MultipleSelectChip, Dropdown } from "./Dropdowns";
 import DisplayToast from "@lib/hooks/useToast";
 import { Tooltip, Switch, FormControlLabel } from "@mui/material";
-import { IoInformationCircleOutline } from "react-icons/io5";
+import { IoCloudUploadOutline, IoInformationCircleOutline } from "react-icons/io5";
 
 // TODO: refactor label and input components into an individual component
 export default function Form({
@@ -26,10 +27,11 @@ export default function Form({
   onSuccess: () => void;
 }) {
   const form = useRef<HTMLFormElement>(null);
-  const { User,activeOrgName} = useContext(UserContext);
+  const { User, activeOrgName } = useContext(UserContext);
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [formData, setFormData] = useState<formdata>(formdata ? formdata : getFormDataDefault());
+  const [uploadingPoster, setUploadingPoster] = useState(false);
 
   useEffect(() => {
     document.title = "New Event | TESC Portal";
@@ -41,6 +43,42 @@ export default function Form({
       currform = { ...currform, [col]: value };
     });
     setFormData(currform);
+  };
+
+  const handlePosterUpload = async (file: File | null | undefined) => {
+    if (!file) return;
+    if (!activeOrgName) {
+      setError("No active organization selected for event poster upload.");
+      return;
+    }
+
+    try {
+      setUploadingPoster(true);
+      setError("");
+
+      const safeOrgName = activeOrgName.replace(/[^\w\-]+/g, "_");
+      const filePath = `${safeOrgName}/${Date.now()}-${file.name}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("event.images")
+        .upload(filePath, file, { cacheControl: "3600", upsert: true });
+
+      if (uploadError) {
+        console.error("Failed to upload event poster:", uploadError);
+        setError("Failed to upload event poster. Please try again.");
+        return;
+      }
+
+      const { data: publicData } = supabase.storage.from("event.images").getPublicUrl(filePath);
+      const publicUrl = publicData?.publicUrl ?? "";
+
+      setFormData((prev) => ({
+        ...prev,
+        poster: publicUrl,
+      }));
+    } finally {
+      setUploadingPoster(false);
+    }
   };
 
   // update event or create new event
@@ -295,15 +333,24 @@ export default function Form({
             <label>Tags</label>
             <MultipleSelectChip formData={formData} handleChange={handleChange} />
             <label>Event Poster</label>
-            <input
-              name="poster"
-              placeholder={profile_picture_src}
-              className="border-black border rounded-lg px-3 h-12"
-              value={formData.poster}
-              onChange={(e) => setFormData({ ...formData, ["poster"]: e.target.value })}
-              autoFocus
-            />
-            {formData.poster && <img src={formData.poster} alt="" className="rounded-2xl" />}
+            <label
+              htmlFor="event-poster-upload"
+              className="inline-flex items-center justify-center w-12 h-12 rounded-lg border-2 border-black border-dashed cursor-pointer hover:bg-gray-100 transition-colors"
+              title="Upload poster image"
+            >
+              <IoCloudUploadOutline className="w-6 h-6 text-navy" />
+              <input
+                id="event-poster-upload"
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={(e) => handlePosterUpload(e.target.files?.[0] ?? null)}
+              />
+            </label>
+            {uploadingPoster && <p className="text-sm text-gray-600">Uploading poster…</p>}
+            {formData.poster && !uploadingPoster && (
+              <img src={formData.poster} alt="Event poster preview" className="mt-2 rounded-2xl" />
+            )}
           </>
         )}
         <Editor content={formData.content} setEditorContent={(e) => handleChange(e, ["content"])} />

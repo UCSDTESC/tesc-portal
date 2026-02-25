@@ -41,6 +41,17 @@ function addDurationToDate(dateStr: string, durationMs: number): string {
   return d.toISOString().slice(0, 16);
 }
 
+const EVENT_IMAGES_BUCKET = "event.images";
+
+/** Extract storage path from a Supabase public URL for event.images bucket, or null if not from this bucket. */
+function getEventImageStoragePath(posterUrl: string): string | null {
+  if (!posterUrl || typeof posterUrl !== "string") return null;
+  const prefix = `/storage/v1/object/public/${EVENT_IMAGES_BUCKET}/`;
+  const i = posterUrl.indexOf(prefix);
+  if (i === -1) return null;
+  return posterUrl.slice(i + prefix.length);
+}
+
 export const fetchEventByOrg = async (uid: string) => {
   console.log("FETCH USER ORGS");
   const { data: orgs, error } = await supabase
@@ -130,6 +141,14 @@ export const createEvent = async (formData: formdata, activeOrgName: string) => 
 
 export const deleteEvent = async (id: string) => {
   console.log("-------------DELETE EVENT-------------");
+
+  const { data: eventRow } = await supabase.from("events").select("poster").eq("id", id).single();
+  const poster = (eventRow as { poster?: string } | null)?.poster;
+  const storagePath = getEventImageStoragePath(poster ?? "");
+  if (storagePath) {
+    await supabase.storage.from(EVENT_IMAGES_BUCKET).remove([storagePath]);
+  }
+
   const { error } = await supabase.from("events").update({ deleted: true }).eq("id", id);
   return error;
 };
