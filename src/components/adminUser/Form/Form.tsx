@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from "react";
-import { useContext } from "react";
+import { useEffect, useRef, useState, useContext } from "react";
 import { useNavigate } from "react-router";
 
 import UserContext from "@lib/UserContext";
-import { formdata, profile_picture_src, RECURRING_RATES } from "@lib/constants";
+import { formdata, RECURRING_RATES } from "@lib/constants";
 import { getFormDataDefault } from "@lib/utils";
 import { createEvent, updateEvent } from "@services/event";
 import supabase from "@server/supabase";
@@ -110,7 +109,7 @@ export default function Form({
         DisplayToast("Succesfully updated event", "success");
       }
     } else if (User?.id) {
-      const error = await createEvent(formData,activeOrgName);
+      const error = await createEvent(formData, activeOrgName);
       if (error) {
         console.log(error);
         setError(error.message);
