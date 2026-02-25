@@ -36,9 +36,9 @@ const ProfilePicUploader = forwardRef<ProfilePicUploaderHandle>(function Profile
 
       if (error) throw error;
 
-      const org = data as { orgs: { name: string; pfp_str: string | null } } | null;
-      const orgName = org?.orgs?.name;
-      const pfpStr = org?.orgs?.pfp_str;
+      const org = data as { orgs: { name: string; pfp_str: string | null }[] } | null;
+      const orgName = org?.orgs?.[0]?.name;
+      const pfpStr = org?.orgs?.[0]?.pfp_str;
 
       // If no picture set yet, stop loading and show "Add Photo"
       if (!orgName || !pfpStr) return;

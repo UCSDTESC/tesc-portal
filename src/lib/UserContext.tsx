@@ -20,21 +20,20 @@ interface UserContext {
   handleSignUp: (user: UserCredentials, OnSuccess: () => void) => void;
   handleVerifyOTP: (
     { email, password, type }: UserCredentials & { type: "email" | "recovery" },
-    OnSuccess: () => void
+    OnSuccess: () => void,
   ) => void;
   handleSendRecovery: (email: string, OnSuccess: () => void) => void;
   handleUpdatePassword: (password: string, OnSuccess: () => void) => void;
   handleOrgSwitch: (selectedName: string) => void;
   myOrgs: { id: string; name: string }[];
   activeOrgName: string;
-
 }
 const UserContext = createContext<UserContext>({
   User: null,
   Error: "",
   showLoginModal: false,
-  myOrgs: [{id:"0",name:""}],
-  activeOrgName:"",
+  myOrgs: [{ id: "0", name: "" }],
+  activeOrgName: "",
   setShowLoginModal: () => {},
   setError: (error: string) => {
     console.log(error);
@@ -49,7 +48,7 @@ const UserContext = createContext<UserContext>({
   handleVerifyOTP: ({
     email,
     password,
-    type
+    type,
   }: UserCredentials & { type: "email" | "recovery" }) => {
     console.log(email, password, type);
   },
@@ -61,8 +60,8 @@ const UserContext = createContext<UserContext>({
     OnSuccess?.();
     console.log(password);
   },
-  handleOrgSwitch: (selectedName: string) =>{
-    console.log("");
-  }
+  handleOrgSwitch: (selectedName: string) => {
+    console.log("Switching to org: ", selectedName);
+  },
 });
 export default UserContext;

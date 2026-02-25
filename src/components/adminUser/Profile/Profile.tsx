@@ -3,18 +3,14 @@ import supabase from "@server/supabase";
 import { useContext, useEffect, useState } from "react";
 import DataTable from "../Data/DataTable";
 import Modal from "@mui/material/Modal";
-import NewProfile from "./NewProfile";
 import EditProfileForm from "./EditMemberProfile";
-import TescOrgProfileEditor from "./TescOrgProfileEditor";
 import EditOrgModal from "./EditOrgModal";
-
-
 
 import PageAllAttendEvents from "@components/User/PageAllAttendEvents";
 
 // TODO: code clean-up
 export default function Profile() {
-  const { User, activeOrgName,handleOrgSwitch} = useContext(UserContext);
+  const { User, activeOrgName, handleOrgSwitch } = useContext(UserContext);
   const [imageUrl, setImageUrl] = useState("");
   const [editModal, setEditModal] = useState(false);
   useEffect(() => {
