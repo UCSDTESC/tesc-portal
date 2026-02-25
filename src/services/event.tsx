@@ -1,6 +1,5 @@
 import supabase from "@server/supabase";
 import { formdata } from "@lib/constants";
-import { User } from "@lib/UserContext";
 import { logAttendance } from "./user";
 
 function generateRecurringDates(
@@ -10,7 +9,6 @@ function generateRecurringDates(
 ): string[] {
   const dates: string[] = [];
   const start = new Date(startDateStr);
-  // recurrence_end_date is YYYY-MM-DD; include occurrences that start on or before this date
   const endDate = new Date(recurrenceEndStr + "T23:59:59");
   if (endDate < start) return [startDateStr];
 
@@ -53,7 +51,7 @@ export const fetchEventByOrg = async (uid: string) => {
   else {
     const { data, error } = await supabase
       .from("events")
-      .select()
+      .select("*, orgs (name)")
       .in(
         "org_id",
         orgs.map((org) => org.org_uuid)
@@ -63,12 +61,12 @@ export const fetchEventByOrg = async (uid: string) => {
   }
 };
 
-export const createEvent = async (User: User, formData: formdata) => {
+export const createEvent = async (formData: formdata, activeOrgName: string) => {
   const { data: org_name } = await supabase
-    .from("user_org_roles")
-    .select("org_uuid")
-    .eq("user_uuid", User.id);
-  if (!org_name) return { message: "No org found" };
+    .from("orgs")
+    .select("uuid")
+    .eq("name", activeOrgName);
+  if (!org_name || org_name.length === 0) return { message: "No org found" };
 
   const isInternal = formData.internal ?? false;
   const recurringRate = formData.recurring_rate ?? "none";
@@ -83,13 +81,13 @@ export const createEvent = async (User: User, formData: formdata) => {
     location_str: formData.location_str,
     content: formData.content,
     tags: isInternal ? [] : formData.tags,
-    org_id: org_name[0].org_uuid,
+    org_id: org_name[0].uuid,
     poster: isInternal ? "" : formData.poster,
     attendance_cap: isInternal
       ? null
       : formData.attendance_cap
-      ? Number(formData.attendance_cap)
-      : null,
+        ? Number(formData.attendance_cap)
+        : null,
     track_attendance: formData.track_attendance ?? false,
     internal: formData.internal ?? false,
     manual_attendance:
