@@ -191,7 +191,8 @@ export const queryEventsBySearchAndFilters = async (
   orgFilters: string[],
   sortMethod: string,
   userId: string | undefined,
-  internalFilter?: boolean
+  internalFilter?: boolean,
+  isSuperOrg: boolean = false,
 ) => {
   let query = supabase
     .from("events")
@@ -217,6 +218,11 @@ export const queryEventsBySearchAndFilters = async (
 
   // Filter internal events: only show to users with org membership matching event's org_id
   let filteredEvents = data ?? [];
+
+  if (isSuperOrg) {
+    return { events: filteredEvents, error }; 
+  }
+
   if (filteredEvents.length > 0) {
     const internalEvents = filteredEvents.filter(
       (e: { internal?: boolean }) => e.internal === true
