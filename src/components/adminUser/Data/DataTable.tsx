@@ -84,8 +84,14 @@ export default function DataTable({ orgName }: { orgName?: string }) {
   }, [hiddenColumnKeys]);
 
   const visibleColumns = useMemo(
-    () => DATA_TABLE_COLUMNS.filter((col) => !hiddenColumnKeys.has(col.key)),
-    [hiddenColumnKeys]
+    () => DATA_TABLE_COLUMNS.filter((col) => {
+      // Hide org_name column when viewing a specific org (not super_org)
+      if (col.key === "org_name" && orgName !== undefined) {
+        return false;
+      }
+      return !hiddenColumnKeys.has(col.key);
+    }),
+    [hiddenColumnKeys, orgName]
   );
 
   const filteredData = useMemo(() => {
@@ -93,6 +99,8 @@ export default function DataTable({ orgName }: { orgName?: string }) {
     return data.filter((daton) => {
       for (const col of DATA_TABLE_COLUMNS) {
         if (col.key === "actions" || !("filterType" in col)) continue;
+        // Skip org_name filtering when viewing a specific org (not super_org)
+        if (col.key === "org_name" && orgName !== undefined) continue;
         const filterVal = columnFilters[col.key];
         const filterType = "filterType" in col ? col.filterType : undefined;
         if (
@@ -103,7 +111,7 @@ export default function DataTable({ orgName }: { orgName?: string }) {
       }
       return true;
     });
-  }, [data, columnFilters]);
+  }, [data, columnFilters, orgName]);
 
   const sortedData = useMemo(() => {
     if (!sortColumn) return filteredData;
@@ -217,7 +225,15 @@ export default function DataTable({ orgName }: { orgName?: string }) {
               <div className="px-3 py-1.5 text-xs font-semibold text-slate-500 border-b border-slate-100">
                 Show columns
               </div>
-              {(DATA_TABLE_COLUMNS as readonly { key: string; label: string }[]).map((col) => (
+              {(DATA_TABLE_COLUMNS as readonly { key: string; label: string }[])
+                .filter((col) => {
+                  // Hide org_name checkbox for non-super_org accounts
+                  if (col.key === "org_name" && orgName !== undefined) {
+                    return false;
+                  }
+                  return true;
+                })
+                .map((col) => (
                 <label
                   key={col.key}
                   className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm"

@@ -9,7 +9,7 @@ import DisplayToast from "@lib/hooks/useToast";
 
 // custom hook for bulletin component
 export function useBulletin(User: User | null) {
-  const { setShowLoginModal } = useContext(UserContext);
+  const { setShowLoginModal, activeOrgName } = useContext(UserContext);
   const [data, setData] = useState<Event[]>();
   const [People, setPeople] = useState<Member[]>();
   const [isLoading, setIsLoading] = useState(true);
@@ -52,7 +52,10 @@ export function useBulletin(User: User | null) {
       return;
     }
     setIsLoading(true);
+
     console.log("----FETCH EVENTS---");
+    const isSuperOrg = activeOrgName === "super_org";
+
     if (User?.role === "company") {
       const { People, error } = await queryPeopleBySearchAndFilters(
         search,
@@ -74,6 +77,7 @@ export function useBulletin(User: User | null) {
         sortMethod,
         User?.id,
         internalFilter,
+        isSuperOrg
       );
       if (events) {
         setData(events as unknown as Event[]);
@@ -83,7 +87,7 @@ export function useBulletin(User: User | null) {
       }
       setIsLoading(false);
     }
-  }, [search, tagFilters, orgFilters, sortMethod, User, internalFilter]);
+  }, [search, tagFilters, orgFilters, sortMethod, User, internalFilter, activeOrgName]);
 
   useEffect(() => {
     fetchData();
@@ -175,6 +179,7 @@ export function useBulletin(User: User | null) {
     sortMethod,
     setSortMethod,
     fetchData,
+    activeOrgName,
   };
 }
 
@@ -201,6 +206,8 @@ export interface BulletinContextProps {
   openEditModal?: (event: Event) => void;
   showEditModal?: boolean;
   setShowEditModal?: (show: boolean) => void;
+  isSuperOrg?: boolean;
+  activeOrgName?: string;
 }
 
 export const BulletinContext = createContext<BulletinContextProps>({
@@ -226,4 +233,6 @@ export const BulletinContext = createContext<BulletinContextProps>({
   openEditModal: () => {},
   showEditModal: false,
   setShowEditModal: () => {},
+  isSuperOrg: false,
+  activeOrgName: "",
 } as BulletinContextProps);

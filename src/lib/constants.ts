@@ -474,5 +474,12 @@ export const DATA_TABLE_COLUMNS = [
     widthPx: 80,
     filterType: "tags" as DataTableFilterType,
   },
+  {
+    key: "org_name",
+    label: "Organization",
+    width: "12%",
+    widthPx: 100,
+    filterType: "textPopup" as DataTableFilterType,
+  },
   { key: "actions", label: "Actions", width: "6%", widthPx: 75 },
 ] as const;
