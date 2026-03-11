@@ -476,7 +476,7 @@ export const DATA_TABLE_COLUMNS = [
   },
   {
     key: "org_name",
-    label: "Organization Name",
+    label: "Organization",
     width: "12%",
     widthPx: 100,
     filterType: "textPopup" as DataTableFilterType,
