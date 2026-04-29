@@ -41,6 +41,17 @@ function addDurationToDate(dateStr: string, durationMs: number): string {
   return d.toISOString().slice(0, 16);
 }
 
+const EVENT_IMAGES_BUCKET = "event.images";
+
+/** Extract storage path from a Supabase public URL for event.images bucket, or null if not from this bucket. */
+function getEventImageStoragePath(posterUrl: string): string | null {
+  if (!posterUrl || typeof posterUrl !== "string") return null;
+  const prefix = `/storage/v1/object/public/${EVENT_IMAGES_BUCKET}/`;
+  const i = posterUrl.indexOf(prefix);
+  if (i === -1) return null;
+  return posterUrl.slice(i + prefix.length);
+}
+
 export const fetchEventByOrg = async (uid: string, includeAllEvents: boolean = false) => {
   if (includeAllEvents) {
     const { data, error } = await supabase
@@ -144,6 +155,14 @@ export const createEvent = async (formData: formdata, activeOrgName: string) => 
 
 export const deleteEvent = async (id: string) => {
   console.log("-------------DELETE EVENT-------------");
+
+  const { data: eventRow } = await supabase.from("events").select("poster").eq("id", id).single();
+  const poster = (eventRow as { poster?: string } | null)?.poster;
+  const storagePath = getEventImageStoragePath(poster ?? "");
+  if (storagePath) {
+    await supabase.storage.from(EVENT_IMAGES_BUCKET).remove([storagePath]);
+  }
+
   const { error } = await supabase.from("events").update({ deleted: true }).eq("id", id);
   return error;
 };
@@ -190,7 +209,7 @@ export const queryEventsBySearchAndFilters = async (
   typeFilters: string[],
   sortMethod: string,
   userId: string | undefined,
-  options?: { internalFilter?: boolean; isSuperOrg?: boolean },
+  internalFilter?: boolean
 ) => {
   const { internalFilter = false, isSuperOrg = false } = options ?? {};
   let query = supabase
@@ -220,9 +239,6 @@ export const queryEventsBySearchAndFilters = async (
 
   // Filter internal events: only show to users with org membership matching event's org_id
   let filteredEvents = data ?? [];
-  if (isSuperOrg) {
-    return { events: filteredEvents, error };
-  }
   if (filteredEvents.length > 0) {
     const internalEvents = filteredEvents.filter((e: { type?: string }) => e.type === "internal");
     if (internalEvents.length > 0 && userId) {

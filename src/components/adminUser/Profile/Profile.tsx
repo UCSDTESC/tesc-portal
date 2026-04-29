@@ -6,13 +6,11 @@ import Modal from "@mui/material/Modal";
 import EditProfileForm from "./EditMemberProfile";
 import EditOrgModal from "./EditOrgModal";
 
-
-
 import PageAllAttendEvents from "@components/User/PageAllAttendEvents";
 
 // TODO: code clean-up
 export default function Profile() {
-  const { User, activeOrgName,handleOrgSwitch} = useContext(UserContext);
+  const { User, activeOrgName, handleOrgSwitch } = useContext(UserContext);
   const [imageUrl, setImageUrl] = useState("");
   const [editModal, setEditModal] = useState(false);
   useEffect(() => {
@@ -100,7 +98,7 @@ export default function Profile() {
         </div>
         <div className="flex flex-[1_1_90%] min-w-0 flex-col">
           <h1 className="text-xl font-semibold">My Posted Events</h1>
-          <DataTable orgName={activeOrgName} />
+          <DataTable orgName={activeOrgName === "super_org" ? undefined : activeOrgName} />
         </div>
         <Modal
           open={editModal}

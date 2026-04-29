@@ -39,7 +39,7 @@ export const getFormDataDefault = (): formdata => {
     content: "",
     tags: [],
     poster: "https://placehold.co/600x400",
-    track_attendance: false,
+    track_attendance: true,
     manual_attendance: "",
     type: "external",
     recurring_rate: "none",
@@ -195,6 +195,8 @@ export function getDataTableCellValue(daton: Event, key: string): string {
       return daton.track_attendance ? "Yes" : "No";
     case "tags":
       return Array.isArray(daton.tags) ? daton.tags.join(", ") : "";
+    case "org_name":
+      return daton.orgs?.name ?? "";
     case "actions":
       return "";
     default:

@@ -53,8 +53,8 @@ export function useBulletin(User: User | null) {
       return;
     }
     setIsLoading(true);
+
     console.log("----FETCH EVENTS---");
-    const isSuperOrg = activeOrgName === "super_org";
     if (User?.role === "company") {
       const { People, error } = await queryPeopleBySearchAndFilters(
         search,
@@ -76,7 +76,7 @@ export function useBulletin(User: User | null) {
         typeFilters,
         sortMethod,
         User?.id,
-        { internalFilter, isSuperOrg },
+        internalFilter,
       );
       if (events) {
         setData(events as unknown as Event[]);
@@ -86,7 +86,7 @@ export function useBulletin(User: User | null) {
       }
       setIsLoading(false);
     }
-  }, [search, tagFilters, orgFilters, typeFilters, sortMethod, User, internalFilter, activeOrgName]);
+  }, [search, tagFilters, orgFilters, sortMethod, User, internalFilter]);
 
   useEffect(() => {
     fetchData();
@@ -180,6 +180,7 @@ export function useBulletin(User: User | null) {
     sortMethod,
     setSortMethod,
     fetchData,
+    activeOrgName,
   };
 }
 
@@ -209,6 +210,8 @@ export interface BulletinContextProps {
   openEditModal?: (event: Event) => void;
   showEditModal?: boolean;
   setShowEditModal?: (show: boolean) => void;
+  isSuperOrg?: boolean;
+  activeOrgName?: string;
 }
 
 export const BulletinContext = createContext<BulletinContextProps>({
@@ -237,4 +240,6 @@ export const BulletinContext = createContext<BulletinContextProps>({
   openEditModal: () => {},
   showEditModal: false,
   setShowEditModal: () => {},
+  isSuperOrg: false,
+  activeOrgName: "",
 } as BulletinContextProps);

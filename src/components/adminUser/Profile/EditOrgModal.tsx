@@ -36,7 +36,7 @@ const ProfilePicUploader = forwardRef<ProfilePicUploaderHandle>(function Profile
 
       if (error) throw error;
 
-      const org = data as unknown as { orgs: { name: string; pfp_str: string | null } } | null;
+      const org = data as { orgs: { name: string; pfp_str: string | null } } | null;
       const orgName = org?.orgs?.name;
       const pfpStr = org?.orgs?.pfp_str;
 

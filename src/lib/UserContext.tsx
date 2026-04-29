@@ -7,6 +7,7 @@ export interface User {
   id: string;
   email: string;
   role: string;
+  name?: string;
 }
 
 interface UserContext {
@@ -21,21 +22,20 @@ interface UserContext {
   handleGoogleAuth: () => void;
   handleVerifyOTP: (
     { email, password, type }: UserCredentials & { type: "email" | "recovery" },
-    OnSuccess: () => void
+    OnSuccess: () => void,
   ) => void;
   handleSendRecovery: (email: string, OnSuccess: () => void) => void;
   handleUpdatePassword: (password: string, OnSuccess: () => void) => void;
   handleOrgSwitch: (selectedName: string) => void;
   myOrgs: { id: string; name: string }[];
   activeOrgName: string;
-
 }
 const UserContext = createContext<UserContext>({
   User: null,
   Error: "",
   showLoginModal: false,
-  myOrgs: [{id:"0",name:""}],
-  activeOrgName:"",
+  myOrgs: [{ id: "0", name: "" }],
+  activeOrgName: "",
   setShowLoginModal: () => {},
   setError: (error: string) => {
     console.log(error);
@@ -51,7 +51,7 @@ const UserContext = createContext<UserContext>({
   handleVerifyOTP: ({
     email,
     password,
-    type
+    type,
   }: UserCredentials & { type: "email" | "recovery" }) => {
     console.log(email, password, type);
   },
@@ -63,8 +63,8 @@ const UserContext = createContext<UserContext>({
     OnSuccess?.();
     console.log(password);
   },
-  handleOrgSwitch: (selectedName: string) => {
-    console.log(selectedName);
-  },
+  handleOrgSwitch: (selectedName: string) =>{
+    console.log("");
+  }
 });
 export default UserContext;
