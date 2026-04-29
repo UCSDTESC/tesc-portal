@@ -209,13 +209,13 @@ export const queryEventsBySearchAndFilters = async (
   typeFilters: string[],
   sortMethod: string,
   userId: string | undefined,
-  internalFilter?: boolean
+  options?: { internalFilter?: boolean; isSuperOrg?: boolean },
 ) => {
   const { internalFilter = false, isSuperOrg = false } = options ?? {};
   let query = supabase
     .from("events")
     .select(
-      "id,content,created_at,end_date,id,location_str,start_date,tags,title,attendance,poster,rsvp,org_id, orgs!inner(name, pfp_str), attendance_cap, track_attendance, type, password, manual_attendance"
+      "id,content,created_at,end_date,location_str,start_date,tags,title,attendance,poster,rsvp,org_id, orgs!inner(name, pfp_str), attendance_cap, track_attendance, type, password, manual_attendance"
     )
     .ilike("title", `%${keyword}%`)
     .eq("deleted", false);
@@ -239,6 +239,11 @@ export const queryEventsBySearchAndFilters = async (
 
   // Filter internal events: only show to users with org membership matching event's org_id
   let filteredEvents = data ?? [];
+
+  if (isSuperOrg) {
+    return { events: filteredEvents, error };
+  }
+
   if (filteredEvents.length > 0) {
     const internalEvents = filteredEvents.filter((e: { type?: string }) => e.type === "internal");
     if (internalEvents.length > 0 && userId) {

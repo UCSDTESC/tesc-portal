@@ -30,6 +30,49 @@ export default function Form({
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [formData, setFormData] = useState<formdata>(formdata ? formdata : getFormDataDefault());
+  const isForum = (formData.type ?? "external") === "forum";
+  const [uploadingPoster, setUploadingPoster] = useState(false);
+
+  const handlePosterUpload = async (file: File | null | undefined) => {
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      setError("Event poster must be 2MB or smaller.");
+      DisplayToast("File size exceeds 2MB limit.", "error");
+      return;
+    }
+    if (!activeOrgName) {
+      setError("No active organization selected for event poster upload.");
+      return;
+    }
+
+    try {
+      setUploadingPoster(true);
+      setError("");
+
+      const safeOrgName = activeOrgName.replace(/[^\w-]+/g, "_");
+      const filePath = `${safeOrgName}/${Date.now()}-${file.name}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("event.images")
+        .upload(filePath, file, { cacheControl: "3600", upsert: true });
+
+      if (uploadError) {
+        console.error("Failed to upload event poster:", uploadError);
+        setError("Failed to upload event poster. Please try again.");
+        return;
+      }
+
+      const { data: publicData } = supabase.storage.from("event.images").getPublicUrl(filePath);
+      const publicUrl = publicData?.publicUrl ?? "";
+
+      setFormData((prev) => ({
+        ...prev,
+        poster: publicUrl,
+      }));
+    } finally {
+      setUploadingPoster(false);
+    }
+  };
 
   useEffect(() => {
     document.title = "New Event | TESC Portal";
@@ -337,15 +380,24 @@ export default function Form({
               </>
             )}
             <label>Event Poster</label>
-            <input
-              name="poster"
-              placeholder={profile_picture_src}
-              className="border-black border rounded-lg px-3 h-12"
-              value={formData.poster}
-              onChange={(e) => setFormData({ ...formData, ["poster"]: e.target.value })}
-              autoFocus
-            />
-            {formData.poster && <img src={formData.poster} alt="" className="rounded-2xl" />}
+            <label
+              htmlFor="event-poster-upload"
+              className="inline-flex items-center justify-center w-12 h-12 rounded-lg border-2 border-black border-dashed cursor-pointer hover:bg-gray-100 transition-colors"
+              title="Upload poster image"
+            >
+              <IoCloudUploadOutline className="w-6 h-6 text-navy" />
+              <input
+                id="event-poster-upload"
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={(e) => handlePosterUpload(e.target.files?.[0] ?? null)}
+              />
+            </label>
+            {uploadingPoster && <p className="text-sm text-gray-600">Uploading poster…</p>}
+            {formData.poster && !uploadingPoster && (
+              <img src={formData.poster} alt="" className="rounded-2xl max-w-[220px]" />
+            )}
           </>
         )}
         <Editor content={formData.content} setEditorContent={(e) => handleChange(e, ["content"])} />

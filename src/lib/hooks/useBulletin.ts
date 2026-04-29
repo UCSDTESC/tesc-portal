@@ -55,6 +55,7 @@ export function useBulletin(User: User | null) {
     setIsLoading(true);
 
     console.log("----FETCH EVENTS---");
+    const isSuperOrg = activeOrgName === "super_org";
     if (User?.role === "company") {
       const { People, error } = await queryPeopleBySearchAndFilters(
         search,
@@ -76,7 +77,7 @@ export function useBulletin(User: User | null) {
         typeFilters,
         sortMethod,
         User?.id,
-        internalFilter,
+        { internalFilter, isSuperOrg }
       );
       if (events) {
         setData(events as unknown as Event[]);
@@ -86,7 +87,7 @@ export function useBulletin(User: User | null) {
       }
       setIsLoading(false);
     }
-  }, [search, tagFilters, orgFilters, sortMethod, User, internalFilter]);
+  }, [search, tagFilters, orgFilters, typeFilters, sortMethod, User, internalFilter, activeOrgName]);
 
   useEffect(() => {
     fetchData();
