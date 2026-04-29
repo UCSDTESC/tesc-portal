@@ -16,12 +16,14 @@ export function useData(User: User | null, orgName?: string) {
     if (!User) {
       return;
     }
-    const { data, error } = await fetchEventByOrg(User.id);
+    const shouldFetchAllEvents = orgName === undefined;
+    const { data, error } = await fetchEventByOrg(User.id, shouldFetchAllEvents);
     if (data) {
+      const typedEvents = data as unknown as Event[];
       console.log(data)
-      const filteredData = orgName 
-      ? data.filter((event: Event) => String(event.orgs.name) === String(orgName))
-      : data;
+      const filteredData = orgName
+        ? typedEvents.filter((event: Event) => String(event.orgs?.name) === String(orgName))
+        : typedEvents;
 
       setData(filteredData);
       setError("");

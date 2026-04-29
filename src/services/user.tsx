@@ -87,6 +87,20 @@ export const signUp = async (email: string, password: string) => {
   return { user: data.user, error };
 };
 
+export const signInWithGoogle = async () => {
+  const redirectTo =
+    typeof globalThis !== "undefined" && "location" in globalThis
+      ? globalThis.location.origin
+      : undefined;
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo
+    }
+  });
+  return { data, error };
+};
+
 export const verifyOTP = async (email: string, token: string, type: "email" | "recovery") => {
   console.log("-----------verify User otp-------------");
   const { data, error } = await supabase.auth.verifyOtp({ email: email, token: token, type: type });

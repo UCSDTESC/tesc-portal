@@ -4,7 +4,9 @@ export const fetchOrgs = async () => {
   console.log("------------FECTHING ORG NAMES----------------");
   const { data, error } = await supabase.from("orgs").select("name");
   if (data) {
-    const events = data.map((item) => item.name);
+    const events = data
+      .map((item) => item.name)
+      .filter((name) => String(name).toLowerCase() !== "super_org");
     return { events, error };
   }
   return { events: null, error };

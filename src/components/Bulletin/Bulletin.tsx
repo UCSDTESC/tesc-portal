@@ -1,6 +1,7 @@
 import { useContext, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useParams } from "react-router";
+import { AnimatePresence, motion } from "motion/react";
 
 import UserContext from "@lib/UserContext";
 
@@ -23,6 +24,7 @@ export default function Bulletin() {
   const [selection, setSelection] = useState<string>(String(postId.postId));
   const [displaysideBar, setDisplaySideBar] = useState(true);
   const [eventTimeFilter, setEventTimeFilter] = useState<EventTimeFilter>("current");
+  const [forumMode, setForumMode] = useState(false);
   const {
     data,
     People,
@@ -37,6 +39,8 @@ export default function Bulletin() {
     setSearch,
     orgFilters,
     setOrgFilters,
+    typeFilters,
+    setTypeFilters,
     orgs,
     internalFilter,
     setInternalFilter,
@@ -44,13 +48,28 @@ export default function Bulletin() {
     setSortMethod,
     fetchData,
   } = useBulletin(User);
-  const { showEditModal, setShowEditModal, curID, currEdit, openEditModal } = useEditModal();
+  const {
+    showEditModal,
+    setShowEditModal,
+    curID,
+    currEdit,
+    openEditModal,
+    openCreateForumPostModal,
+  } = useEditModal();
 
   // Sync selection with URL when navigating (e.g. direct link, browser back/forward)
   useEffect(() => {
     const id = String(postId.postId ?? "-1");
     setSelection(id);
   }, [postId.postId]);
+
+  const parseEventTime = (value: unknown): number | null => {
+    if (value === null || value === undefined) return null;
+    const str = String(value).trim();
+    if (!str) return null;
+    const t = new Date(str).getTime();
+    return Number.isFinite(t) ? t : null;
+  };
 
   // Auto-select Current/Past tab when loading an event from URL so it displays correctly
   useEffect(() => {
@@ -59,9 +78,16 @@ export default function Bulletin() {
     if (!eventId || eventId === "-1") return;
     const event = data.find((e) => String(e.id) === String(eventId));
     if (event) {
-      const endTime = new Date(event.end_date).getTime();
-      const isCurrent = endTime >= Date.now();
-      setEventTimeFilter(isCurrent ? "current" : "past");
+      if (event.type === "forum") {
+        setForumMode(true);
+      } else {
+        setForumMode(false);
+        const now = Date.now();
+        // Prefer end_date, but if it's missing/invalid, fall back to start_date.
+        const endTime = parseEventTime(event.end_date) ?? parseEventTime(event.start_date);
+        const isCurrent = endTime !== null ? endTime >= now : false;
+        setEventTimeFilter(isCurrent ? "current" : "past"); // if we can't parse, treat as past
+      }
     }
   }, [data, postId.postId, User?.role]);
 
@@ -69,10 +95,15 @@ export default function Bulletin() {
     if (!data || User?.role === "company") return data;
     const now = Date.now();
     return data.filter((event) => {
-      const endTime = new Date(event.end_date).getTime();
-      return eventTimeFilter === "current" ? endTime >= now : endTime < now;
+      if (forumMode) return event.type === "forum";
+      // In Upcoming/Past mode, hide forum entries.
+      if (event.type === "forum") return false;
+      // Prefer end_date for classification; fall back to start_date when missing/invalid.
+      const endTime = parseEventTime(event.end_date) ?? parseEventTime(event.start_date);
+      const isCurrent = endTime !== null ? endTime >= now : false;
+      return eventTimeFilter === "current" ? isCurrent : !isCurrent;
     });
-  }, [data, eventTimeFilter, User?.role]);
+  }, [data, eventTimeFilter, forumMode, User?.role]);
 
   return (
     <BulletinContext.Provider
@@ -90,12 +121,15 @@ export default function Bulletin() {
         setSearch,
         orgFilters,
         setOrgFilters,
+        typeFilters,
+        setTypeFilters,
         orgs,
         internalFilter,
         setInternalFilter,
         sortMethod,
         setSortMethod,
         eventTimeFilter,
+        forumMode,
         openEditModal,
         showEditModal,
         setShowEditModal,
@@ -116,48 +150,146 @@ export default function Bulletin() {
               onClick={() => setDisplaySideBar(false)}
             />
             {User?.role !== "company" && (
-              <div className="flex shrink-0 justify-center p-2">
-                <div className="relative flex w-full max-w-[200px] items-center rounded-full bg-white/80 p-0.5 shadow-sm">
+              <div className="relative isolate flex shrink-0 items-center justify-center p-2 gap-2">
+                <AnimatePresence mode="wait">
+                  {!forumMode ? (
+                    <motion.div
+                      key="upPast"
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.25 }}
+                      className="relative z-40 flex w-full max-w-[200px] items-center rounded-full bg-white/80 p-0.5 shadow-sm"
+                    >
+                      <div
+                        className="absolute top-0.5 bottom-0.5 rounded-full bg-blue shadow-sm transition-transform duration-200 ease-out"
+                        style={{
+                          width: "calc(50% - 4px)",
+                          left: "2px",
+                          transform:
+                            eventTimeFilter === "current" ? "translateX(0)" : "translateX(100%)",
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (eventTimeFilter !== "current") {
+                            setEventTimeFilter("current");
+                            setSelection("-1");
+                            navigate("/bulletin/-1");
+                          }
+                        }}
+                        className="relative z-10 flex flex-1 items-center justify-center rounded-full py-1.5 text-sm font-medium transition-colors duration-200 text-slate-600 hover:text-slate-900"
+                        style={{
+                          color: eventTimeFilter === "current" ? "white" : undefined,
+                        }}
+                      >
+                        Upcoming
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (eventTimeFilter !== "past") {
+                            setEventTimeFilter("past");
+                            setSelection("-1");
+                            navigate("/bulletin/-1");
+                          }
+                        }}
+                        className="relative z-10 flex flex-1 items-center justify-center rounded-full py-1.5 text-sm font-medium transition-colors duration-200 text-slate-600 hover:text-slate-900"
+                        style={{
+                          color: eventTimeFilter === "past" ? "white" : undefined,
+                        }}
+                      >
+                        Past
+                      </button>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="forumPill"
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 6 }}
+                      transition={{ duration: 0.25 }}
+                      className="relative z-40 flex w-full max-w-[200px] items-center rounded-full bg-white/80 p-0.5 shadow-sm border border-white/30"
+                      role="status"
+                      aria-label="Forum"
+                    >
+                      <div
+                        className="absolute inset-y-0 left-0 right-0 rounded-full bg-blue"
+                        aria-hidden="true"
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white text-navy flex items-center justify-center shadow-sm hover:opacity-90 cursor-pointer"
+                        onClick={() => {
+                          setSelection("-1");
+                          openCreateForumPostModal();
+                          navigate("/bulletin/-1");
+                        }}
+                        aria-label="Create forum post"
+                      >
+                        +
+                      </button>
+                      <div className="relative flex flex-1 items-center justify-center rounded-full py-1.5 text-sm font-medium text-white">
+                        Forum
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Three-cell vertical navigation: active dot expands into middle cell */}
+                <div className="relative z-0 grid h-10 w-3 grid-rows-3 items-center justify-items-center">
                   <div
-                    className="absolute top-0.5 bottom-0.5 rounded-full bg-blue shadow-sm transition-transform duration-200 ease-out"
+                    aria-hidden="true"
+                    className="absolute left-0 w-3 rounded-full bg-blue transition-all duration-300 ease-in-out z-0"
                     style={{
-                      width: "calc(50% - 4px)",
-                      left: "2px",
-                      transform:
-                        eventTimeFilter === "current" ? "translateX(0)" : "translateX(100%)",
+                      top: forumMode ? "33.3333%" : "0%",
+                      height: "66.6667%",
                     }}
                   />
+
+                  {/* Top dot: Upcoming/Past */}
                   <button
                     type="button"
+                    aria-label="Upcoming/Past mode"
                     onClick={() => {
-                      if (eventTimeFilter !== "current") {
-                        setEventTimeFilter("current");
+                      if (forumMode) {
+                        setForumMode(false);
+                        setTypeFilters([]);
                         setSelection("-1");
                         navigate("/bulletin/-1");
                       }
                     }}
-                    className="relative z-10 flex flex-1 items-center justify-center rounded-full py-1.5 text-sm font-medium transition-colors duration-200 text-slate-600 hover:text-slate-900"
-                    style={{
-                      color: eventTimeFilter === "current" ? "white" : undefined,
-                    }}
+                    className="relative w-2 h-2 rounded-full bg-white/40 hover:bg-white/80 shadow-sm border border-white/30 transition-colors duration-200 ease-in-out z-0"
                   >
-                    Upcoming
+                    <span className="sr-only">Upcoming/Past</span>
                   </button>
+
+                  {/* Middle dot (purely visual / selection extension) */}
+                  <div
+                    aria-hidden="true"
+                    className="relative w-2 h-2 rounded-full bg-blue border border-blue transition-colors duration-200 ease-in-out z-0"
+                  />
+
+                  {/* Bottom dot: Forum */}
                   <button
                     type="button"
+                    aria-label="Forum mode"
                     onClick={() => {
-                      if (eventTimeFilter !== "past") {
-                        setEventTimeFilter("past");
+                      if (!forumMode) {
+                        setForumMode(true);
+                        setTypeFilters(["forum"]);
                         setSelection("-1");
                         navigate("/bulletin/-1");
                       }
                     }}
-                    className="relative z-10 flex flex-1 items-center justify-center rounded-full py-1.5 text-sm font-medium transition-colors duration-200 text-slate-600 hover:text-slate-900"
+                    className="relative w-2 h-2 rounded-full bg-white/40 hover:bg-white/80 shadow-sm border border-white/30 transition-colors duration-200 ease-in-out z-0"
                     style={{
-                      color: eventTimeFilter === "past" ? "white" : undefined,
+                      backgroundColor: forumMode ? "#114675" : undefined,
+                      borderColor: forumMode ? "#114675" : undefined,
                     }}
                   >
-                    Past
+                    <span className="sr-only">Forum</span>
                   </button>
                 </div>
               </div>
@@ -215,7 +347,7 @@ function BulletinEditModal({
           setShowEditModal(false);
           fetchData();
         }}
-        editEvent={true}
+        editEvent={curID !== ""}
       />
     </div>
   );

@@ -37,7 +37,7 @@ export type Event = {
   org_id: string;
   track_attendance?: boolean;
   manual_attendance?: number | null;
-  internal?: boolean;
+  type?: "internal" | "external" | "forum";
 };
 
 /** Member record. Used in: Bulletin (people tab). */
@@ -67,7 +67,7 @@ export type formdata = {
   attendance_cap?: number;
   track_attendance?: boolean;
   manual_attendance?: string | number;
-  internal?: boolean;
+  type?: "internal" | "external" | "forum";
   recurring_rate?: "none" | "daily" | "weekly" | "biweekly" | "monthly";
   recurrence_end_date?: string;
 };
@@ -88,7 +88,7 @@ export const eventFormDataDefault: formdata = {
   poster: "",
   track_attendance: false,
   manual_attendance: "",
-  internal: false,
+  type: "external",
   recurring_rate: "none",
   recurrence_end_date: "",
 };
