@@ -18,6 +18,7 @@ interface UserContext {
   handleSignOut: () => void;
   handleSignIn: (user: UserCredentials, OnSuccess: () => void) => void;
   handleSignUp: (user: UserCredentials, OnSuccess: () => void) => void;
+  handleGoogleAuth: () => void;
   handleVerifyOTP: (
     { email, password, type }: UserCredentials & { type: "email" | "recovery" },
     OnSuccess: () => void
@@ -46,6 +47,7 @@ const UserContext = createContext<UserContext>({
   handleSignUp: (user: UserCredentials) => {
     console.log(user);
   },
+  handleGoogleAuth: () => {},
   handleVerifyOTP: ({
     email,
     password,
@@ -61,8 +63,8 @@ const UserContext = createContext<UserContext>({
     OnSuccess?.();
     console.log(password);
   },
-  handleOrgSwitch: (selectedName: string) =>{
-    console.log("");
-  }
+  handleOrgSwitch: (selectedName: string) => {
+    console.log(selectedName);
+  },
 });
 export default UserContext;

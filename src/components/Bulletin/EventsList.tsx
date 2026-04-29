@@ -29,7 +29,7 @@ export const EventsList = memo(function ({
   setSelection: (selection: string) => void;
   selection: string;
 }) {
-  const { data, People, eventTimeFilter, isLoading } = useContext(BulletinContext);
+  const { data, People, eventTimeFilter, forumMode, isLoading } = useContext(BulletinContext);
   const { User } = useContext(UserContext);
   const [showSkeleton, setShowSkeleton] = useState(isLoading);
   const skeletonStartRef = useRef<number | null>(isLoading ? Date.now() : null);
@@ -70,6 +70,7 @@ export const EventsList = memo(function ({
     if (User?.role === "company") {
       return (
         <motion.div
+          key={`company-${forumMode}-${eventTimeFilter}`}
           className="flex flex-col"
           variants={{ ...container, show: { opacity: 1, transition: { staggerChildren: 0.06 } } }}
           initial="hidden"
@@ -83,15 +84,20 @@ export const EventsList = memo(function ({
         </motion.div>
       );
     }
-    if (eventTimeFilter === "current" && (!data || data.length === 0)) {
+    if (!data || data.length === 0) {
       return (
         <p className="px-4 py-6 text-center text-sm text-slate-600">
-          There are no upcoming events right now. Please check back later!
+          {forumMode
+            ? "There are no forum posts right now. Please check back later!"
+            : eventTimeFilter === "current"
+              ? "There are no upcoming events right now. Please check back later!"
+              : "There are no past events right now. Please check back later!"}
         </p>
       );
     }
     return (
       <motion.div
+        key={`events-${forumMode}-${eventTimeFilter}`}
         className="flex flex-col"
         variants={{ ...container, show: { opacity: 1, transition: { staggerChildren: 0.06 } } }}
         initial="hidden"

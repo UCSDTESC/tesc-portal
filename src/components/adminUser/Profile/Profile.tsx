@@ -3,9 +3,7 @@ import supabase from "@server/supabase";
 import { useContext, useEffect, useState } from "react";
 import DataTable from "../Data/DataTable";
 import Modal from "@mui/material/Modal";
-import NewProfile from "./NewProfile";
 import EditProfileForm from "./EditMemberProfile";
-import TescOrgProfileEditor from "./TescOrgProfileEditor";
 import EditOrgModal from "./EditOrgModal";
 
 

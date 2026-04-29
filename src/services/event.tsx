@@ -41,7 +41,16 @@ function addDurationToDate(dateStr: string, durationMs: number): string {
   return d.toISOString().slice(0, 16);
 }
 
-export const fetchEventByOrg = async (uid: string) => {
+export const fetchEventByOrg = async (uid: string, includeAllEvents: boolean = false) => {
+  if (includeAllEvents) {
+    const { data, error } = await supabase
+      .from("events")
+      .select(
+        "id,content,created_at,end_date,location_str,start_date,tags,title,attendance,poster,rsvp,org_id, orgs!inner(name, pfp_str), attendance_cap, track_attendance, type, password, manual_attendance"
+      )
+      .eq("deleted", false);
+    return { data, error };
+  }
   console.log("FETCH USER ORGS");
   const { data: orgs, error } = await supabase
     .from("user_org_roles")
@@ -51,7 +60,9 @@ export const fetchEventByOrg = async (uid: string) => {
   else {
     const { data, error } = await supabase
       .from("events")
-      .select("*, orgs (name)")
+      .select(
+        "id,content,created_at,end_date,location_str,start_date,tags,title,attendance,poster,rsvp,org_id, orgs!inner(name, pfp_str), attendance_cap, track_attendance, type, password, manual_attendance"
+      )
       .in(
         "org_id",
         orgs.map((org) => org.org_uuid)
@@ -68,32 +79,35 @@ export const createEvent = async (formData: formdata, activeOrgName: string) => 
     .eq("name", activeOrgName);
   if (!org_name || org_name.length === 0) return { message: "No org found" };
 
-  const isInternal = formData.internal ?? false;
-  const recurringRate = formData.recurring_rate ?? "none";
+  const eventType = formData.type ?? "external";
+  const isInternal = eventType === "internal";
+  const isForum = eventType === "forum";
+  const recurringRate = isForum ? "none" : formData.recurring_rate ?? "none";
   const recurrenceEnd = formData.recurrence_end_date ?? "";
 
   const buildEventPayload = (startDate: string, endDate: string) => ({
     title: formData.title,
     password: formData.password,
-    start_date: startDate,
-    end_date: endDate,
-    location: formData.location,
-    location_str: formData.location_str,
+    start_date: isForum ? (null as unknown as string) : startDate,
+    end_date: isForum ? (null as unknown as string) : endDate,
+    location: isForum ? [] : formData.location,
+    location_str: isForum ? "" : formData.location_str,
     content: formData.content,
-    tags: isInternal ? [] : formData.tags,
+    tags: isInternal || isForum ? [] : formData.tags,
     org_id: org_name[0].uuid,
     poster: isInternal ? "" : formData.poster,
-    attendance_cap: isInternal
+    attendance_cap: isInternal || isForum
       ? null
       : formData.attendance_cap
         ? Number(formData.attendance_cap)
         : null,
-    track_attendance: formData.track_attendance ?? false,
-    internal: formData.internal ?? false,
-    manual_attendance:
-      !(formData.track_attendance ?? false) &&
-      formData.manual_attendance !== undefined &&
-      formData.manual_attendance !== ""
+    track_attendance: isInternal || isForum ? false : formData.track_attendance ?? false,
+    type: eventType,
+    manual_attendance: isForum
+      ? null
+      : !(formData.track_attendance ?? false) &&
+          formData.manual_attendance !== undefined &&
+          formData.manual_attendance !== ""
         ? Number(formData.manual_attendance)
         : null,
   });
@@ -135,30 +149,33 @@ export const deleteEvent = async (id: string) => {
 };
 
 export const updateEvent = async (eventId: string, formData: formdata) => {
-  const isInternal = formData.internal ?? false;
+  const eventType = formData.type ?? "external";
+  const isInternal = eventType === "internal";
+  const isForum = eventType === "forum";
   const { error } = await supabase
     .from("events")
     .update({
       title: formData.title,
       password: formData.password,
-      start_date: formData.start_date,
-      end_date: formData.end_date,
-      location: formData.location,
-      location_str: formData.location_str,
+      start_date: isForum ? (null as unknown as string) : formData.start_date,
+      end_date: isForum ? (null as unknown as string) : formData.end_date,
+      location: isForum ? [] : formData.location,
+      location_str: isForum ? "" : formData.location_str,
       content: formData.content,
-      tags: isInternal ? [] : formData.tags,
+      tags: isInternal || isForum ? [] : formData.tags,
       poster: isInternal ? "" : formData.poster,
-      attendance_cap: isInternal
+      attendance_cap: isInternal || isForum
         ? null
         : formData.attendance_cap
         ? Number(formData.attendance_cap)
         : null,
-      track_attendance: formData.track_attendance ?? false,
-      internal: formData.internal ?? false,
-      manual_attendance:
-        !(formData.track_attendance ?? false) &&
-        formData.manual_attendance !== undefined &&
-        formData.manual_attendance !== ""
+      track_attendance: isInternal || isForum ? false : formData.track_attendance ?? false,
+      type: eventType,
+      manual_attendance: isForum
+        ? null
+        : !(formData.track_attendance ?? false) &&
+            formData.manual_attendance !== undefined &&
+            formData.manual_attendance !== ""
           ? Number(formData.manual_attendance)
           : null,
     })
@@ -170,24 +187,29 @@ export const queryEventsBySearchAndFilters = async (
   keyword: string,
   tagFilters: string[],
   orgFilters: string[],
+  typeFilters: string[],
   sortMethod: string,
   userId: string | undefined,
-  internalFilter?: boolean
+  options?: { internalFilter?: boolean; isSuperOrg?: boolean },
 ) => {
+  const { internalFilter = false, isSuperOrg = false } = options ?? {};
   let query = supabase
     .from("events")
     .select(
-      "id,content,created_at,end_date,id,location_str,start_date,tags,title,attendance,poster,rsvp,org_id, orgs!inner(name, pfp_str), attendance_cap, track_attendance, internal, password, manual_attendance"
+      "id,content,created_at,end_date,id,location_str,start_date,tags,title,attendance,poster,rsvp,org_id, orgs!inner(name, pfp_str), attendance_cap, track_attendance, type, password, manual_attendance"
     )
     .ilike("title", `%${keyword}%`)
     .eq("deleted", false);
 
-  if (internalFilter) query = query.eq("internal", true);
+  if (internalFilter) query = query.eq("type", "internal");
 
   if (tagFilters.length > 0) query = query.overlaps("tags", tagFilters);
 
   if (orgFilters.length > 0) {
     query = query.in("orgs.name", orgFilters);
+  }
+  if (typeFilters.length > 0) {
+    query = query.in("type", typeFilters);
   }
 
   if (sortMethod === "Event Name (A-Z)") query = query.order("title", { ascending: true });
@@ -198,22 +220,22 @@ export const queryEventsBySearchAndFilters = async (
 
   // Filter internal events: only show to users with org membership matching event's org_id
   let filteredEvents = data ?? [];
+  if (isSuperOrg) {
+    return { events: filteredEvents, error };
+  }
   if (filteredEvents.length > 0) {
-    const internalEvents = filteredEvents.filter(
-      (e: { internal?: boolean }) => e.internal === true
-    );
+    const internalEvents = filteredEvents.filter((e: { type?: string }) => e.type === "internal");
     if (internalEvents.length > 0 && userId) {
       const { data: userOrgs } = await supabase
         .from("user_org_roles")
         .select("org_uuid")
         .eq("user_uuid", userId);
       const userOrgIds = new Set((userOrgs ?? []).map((r: { org_uuid: string }) => r.org_uuid));
-      filteredEvents = filteredEvents.filter(
-        (e: { internal?: boolean; org_id?: string }) =>
-          !e.internal || (e.internal && e.org_id && userOrgIds.has(e.org_id))
+      filteredEvents = filteredEvents.filter((e: { type?: string; org_id?: string }) =>
+        e.type !== "internal" || (e.org_id && userOrgIds.has(e.org_id))
       );
     } else if (internalEvents.length > 0 && !userId) {
-      filteredEvents = filteredEvents.filter((e: { internal?: boolean }) => !e.internal);
+      filteredEvents = filteredEvents.filter((e: { type?: string }) => e.type !== "internal");
     }
   }
 

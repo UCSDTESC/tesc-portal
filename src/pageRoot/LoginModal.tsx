@@ -26,6 +26,7 @@ export default function LoginModal({ onclose }: { onclose: () => void }) {
     setError,
     handleSignUp,
     handleSignIn,
+    handleGoogleAuth,
     handleVerifyOTP,
     handleSendRecovery,
     handleUpdatePassword
@@ -297,6 +298,17 @@ export default function LoginModal({ onclose }: { onclose: () => void }) {
             >
               {forgot ? "Send Recovery Code" : register ? "Sign up" : "Sign in"}
             </motion.button>
+
+            {!forgot && (
+              <motion.button
+                variants={item}
+                type="button"
+                className="cursor-pointer rounded-2xl py-1 px-5 w-3/4 bg-white border border-gray-300 text-black font-semibold"
+                onClick={handleGoogleAuth}
+              >
+                Continue with Google
+              </motion.button>
+            )}
           </motion.form>
         )}
       </div>

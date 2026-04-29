@@ -3,15 +3,16 @@ import { useContext } from "react";
 import { useNavigate } from "react-router";
 
 import UserContext from "@lib/UserContext";
-import { formdata, profile_picture_src, RECURRING_RATES } from "@lib/constants";
+import { formdata, RECURRING_RATES } from "@lib/constants";
 import { getFormDataDefault } from "@lib/utils";
 import { createEvent, updateEvent } from "@services/event";
+import supabase from "@server/supabase";
 
 import Editor from "./Editor";
 import { MultipleSelectChip, Dropdown } from "./Dropdowns";
 import DisplayToast from "@lib/hooks/useToast";
 import { Tooltip, Switch, FormControlLabel } from "@mui/material";
-import { IoInformationCircleOutline } from "react-icons/io5";
+import { IoCloudUploadOutline, IoInformationCircleOutline } from "react-icons/io5";
 
 // TODO: refactor label and input components into an individual component
 export default function Form({
@@ -30,6 +31,8 @@ export default function Form({
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [formData, setFormData] = useState<formdata>(formdata ? formdata : getFormDataDefault());
+  const isForum = (formData.type ?? "external") === "forum";
+  const [uploadingPoster, setUploadingPoster] = useState(false);
 
   useEffect(() => {
     document.title = "New Event | TESC Portal";
@@ -43,10 +46,51 @@ export default function Form({
     setFormData(currform);
   };
 
+  const handlePosterUpload = async (file: File | null | undefined) => {
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      setError("Event poster must be 2MB or smaller.");
+      DisplayToast("File size exceeds 2MB limit.", "error");
+      return;
+    }
+    if (!activeOrgName) {
+      setError("No active organization selected for event poster upload.");
+      return;
+    }
+
+    try {
+      setUploadingPoster(true);
+      setError("");
+
+      const safeOrgName = activeOrgName.replace(/[^\w-]+/g, "_");
+      const filePath = `${safeOrgName}/${Date.now()}-${file.name}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("event.images")
+        .upload(filePath, file, { cacheControl: "3600", upsert: true });
+
+      if (uploadError) {
+        console.error("Failed to upload event poster:", uploadError);
+        setError("Failed to upload event poster. Please try again.");
+        return;
+      }
+
+      const { data: publicData } = supabase.storage.from("event.images").getPublicUrl(filePath);
+      const publicUrl = publicData?.publicUrl ?? "";
+
+      setFormData((prev) => ({
+        ...prev,
+        poster: publicUrl,
+      }));
+    } finally {
+      setUploadingPoster(false);
+    }
+  };
+
   // update event or create new event
   const handleSubmit = async () => {
     const recurringRate = formData.recurring_rate ?? "none";
-    if (!editEvent && recurringRate !== "none") {
+    if (!editEvent && !isForum && recurringRate !== "none") {
       const recurrenceEnd = formData.recurrence_end_date ?? "";
       if (!recurrenceEnd.trim()) {
         setError("Please select a recurrence end date for recurring events.");
@@ -62,7 +106,7 @@ export default function Form({
       }
     }
 
-    if (formdata && User?.id) {
+    if (editEvent && formdata && User?.id) {
       const error = await updateEvent(id, formData);
       if (error) {
         setError(error.message);
@@ -78,10 +122,15 @@ export default function Form({
         setError(error.message);
         DisplayToast("Unable to create event", "error");
       } else {
-        form.current?.reset();
-        setFormData(getFormDataDefault());
-        navigate("/");
-        DisplayToast("Succesfully created event", "success");
+        if (isForum) {
+          onSuccess();
+          DisplayToast("Succesfully created forum post", "success");
+        } else {
+          form.current?.reset();
+          setFormData(getFormDataDefault());
+          navigate("/");
+          DisplayToast("Succesfully created event", "success");
+        }
       }
     }
   };
@@ -90,12 +139,29 @@ export default function Form({
     <div className={`w-1/2 flex flex-col m-auto bg-white z-101 ${editEvent ? "mt-5" : "mt-20"}`}>
       {!editEvent && (
         <>
-          <h1 className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A]">
-            Create a new Event!
-          </h1>
-          <p className="font-DM text-xl w-3/4 text-balance text-[#262626] hidden md:block">
-            Submit a <strong>New Event</strong> to be displayed on the Bulletin
-          </p>
+          {isForum ? (
+            <>
+              <div className="p-5">
+                <h1 className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A]">
+                  Post something to the Forum!
+                </h1>
+                <p className="font-DM text-xl w-3/4 text-balance text-[#262626] hidden md:block">
+                  Share an update with the community.
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="p-5">
+                <h1 className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A]">
+                  Create a new Event!
+                </h1>
+                <p className="font-DM text-xl w-3/4 text-balance text-[#262626] hidden md:block">
+                  Submit a <strong>New Event</strong> to be displayed on the Bulletin
+                </p>
+              </div>
+            </>
+          )}
         </>
       )}
       <form
@@ -109,11 +175,11 @@ export default function Form({
         <p className="text-red-500">{error}</p>
 
         <label htmlFor="title">
-          Event Title <span className="text-red-500">*</span>
+          Title <span className="text-red-500">*</span>
         </label>
         <input
           name="title"
-          placeholder="Title"
+          placeholder={isForum ? "Forum post title" : "Title"}
           className="border-black border rounded-lg px-3 h-12"
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, ["title"]: e.target.value })}
@@ -156,58 +222,62 @@ export default function Form({
             />
           </>
         )}
-        <label htmlFor="StartTime">
-          Start Time (date and time) <span className="text-red-500">*</span>
-        </label>
-        <div className="border-black border rounded-lg px-3 h-12 flex items-center">
-          <input
-            type="datetime-local"
-            name="StartTime"
-            value={formData.start_date}
-            required
-            onChange={(e) => handleChange(e.target.value, ["start_date", "end_date"])}
-          ></input>
-        </div>
-        <div className="flex items-center gap-1">
-          <label htmlFor="EndTime">
-            End Time (date and time) <span className="text-red-500">*</span>
-          </label>
-          <Tooltip
-            title={"Event end must be after event start"}
-            placement="bottom"
-            slotProps={{
-              popper: {
-                modifiers: [
-                  {
-                    name: "offset",
-                    options: {
-                      offset: [0, -14],
-                    },
+        {!isForum && (
+          <>
+            <label htmlFor="StartTime">
+              Start Time (date and time) <span className="text-red-500">*</span>
+            </label>
+            <div className="border-black border rounded-lg px-3 h-12 flex items-center">
+              <input
+                type="datetime-local"
+                name="StartTime"
+                value={formData.start_date}
+                required
+                onChange={(e) => handleChange(e.target.value, ["start_date", "end_date"])}
+              ></input>
+            </div>
+            <div className="flex items-center gap-1">
+              <label htmlFor="EndTime">
+                End Time (date and time) <span className="text-red-500">*</span>
+              </label>
+              <Tooltip
+                title={"Event end must be after event start"}
+                placement="bottom"
+                slotProps={{
+                  popper: {
+                    modifiers: [
+                      {
+                        name: "offset",
+                        options: {
+                          offset: [0, -14],
+                        },
+                      },
+                    ],
                   },
-                ],
-              },
-            }}
-          >
-            <IoInformationCircleOutline className="text-sm" />
-          </Tooltip>
-        </div>
-        <div className="border-black border rounded-lg px-3 h-12 flex items-center scroll-smooth">
-          <input
-            type="datetime-local"
-            name="EndTime"
-            required
-            min={formData.start_date}
-            value={formData.end_date}
-            onChange={(e) => {
-              if (new Date(e.target.value).getTime() <= new Date(formData.start_date).getTime()) {
-                return;
-              }
-              handleChange(e.target.value, ["end_date"]);
-            }}
-          ></input>
-        </div>
+                }}
+              >
+                <IoInformationCircleOutline className="text-sm" />
+              </Tooltip>
+            </div>
+            <div className="border-black border rounded-lg px-3 h-12 flex items-center scroll-smooth">
+              <input
+                type="datetime-local"
+                name="EndTime"
+                required
+                min={formData.start_date}
+                value={formData.end_date}
+                onChange={(e) => {
+                  if (new Date(e.target.value).getTime() <= new Date(formData.start_date).getTime()) {
+                    return;
+                  }
+                  handleChange(e.target.value, ["end_date"]);
+                }}
+              ></input>
+            </div>
+          </>
+        )}
 
-        {!editEvent && (
+        {!editEvent && !isForum && (
           <>
             <label htmlFor="recurring">Recurring</label>
             <select
@@ -244,29 +314,37 @@ export default function Form({
         )}
 
         <div className="flex flex-wrap items-center gap-6">
-          <FormControlLabel
-            control={
-              <Switch
-                checked={formData.track_attendance ?? false}
-                onChange={(_, checked) => handleChange(checked, ["track_attendance"])}
-                color="primary"
+          {!isForum && (
+            <>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={formData.track_attendance ?? false}
+                    onChange={(_, checked) => handleChange(checked, ["track_attendance"])}
+                    color="primary"
+                  />
+                }
+                label="Track attendance on the portal"
               />
-            }
-            label="Track attendance on the portal"
-          />
-          <FormControlLabel
-            control={
-              <Switch
-                checked={formData.internal ?? false}
-                onChange={(_, checked) => handleChange(checked, ["internal"])}
-                color="primary"
-              />
-            }
-            label="Internal event"
-          />
+              <div className="flex items-center gap-2">
+                <label htmlFor="event-type">Event type</label>
+                <select
+                  id="event-type"
+                  className="border-black border rounded-lg px-3 h-10"
+                  value={formData.type ?? "external"}
+                  onChange={(e) =>
+                    handleChange(e.target.value as "internal" | "external", ["type"])
+                  }
+                >
+                  <option value="internal">internal</option>
+                  <option value="external">external</option>
+                </select>
+              </div>
+            </>
+          )}
         </div>
 
-        {!(formData.track_attendance ?? false) && (
+        {!isForum && !(formData.track_attendance ?? false) && (
           <>
             <label htmlFor="manual_attendance">Manual attendance</label>
             <input
@@ -282,28 +360,45 @@ export default function Form({
           </>
         )}
 
-        <label>Event Location</label>
-        <Dropdown formData={formData} handleChange={handleChange} />
-        {!(formData.internal ?? false) && (
+        {!isForum && (
           <>
-            <label htmlFor="StartTime">Attendance cap</label>
-            <input
-              value={formData.attendance_cap}
-              className="border-black border rounded-lg px-3 h-12 flex items-center"
-              onChange={(e) => handleChange(e.target.value, ["attendance_cap"])}
-            />
-            <label>Tags</label>
-            <MultipleSelectChip formData={formData} handleChange={handleChange} />
+            <label>Event Location</label>
+            <Dropdown formData={formData} handleChange={handleChange} />
+          </>
+        )}
+        {(formData.type ?? "external") !== "internal" && (
+          <>
+            {!isForum && (
+              <>
+                <label htmlFor="StartTime">Attendance cap</label>
+                <input
+                  value={formData.attendance_cap}
+                  className="border-black border rounded-lg px-3 h-12 flex items-center"
+                  onChange={(e) => handleChange(e.target.value, ["attendance_cap"])}
+                />
+                <label>Tags</label>
+                <MultipleSelectChip formData={formData} handleChange={handleChange} />
+              </>
+            )}
             <label>Event Poster</label>
-            <input
-              name="poster"
-              placeholder={profile_picture_src}
-              className="border-black border rounded-lg px-3 h-12"
-              value={formData.poster}
-              onChange={(e) => setFormData({ ...formData, ["poster"]: e.target.value })}
-              autoFocus
-            />
-            {formData.poster && <img src={formData.poster} alt="" className="rounded-2xl" />}
+            <label
+              htmlFor="event-poster-upload"
+              className="inline-flex items-center justify-center w-12 h-12 rounded-lg border-2 border-black border-dashed cursor-pointer hover:bg-gray-100 transition-colors"
+              title="Upload poster image"
+            >
+              <IoCloudUploadOutline className="w-6 h-6 text-navy" />
+              <input
+                id="event-poster-upload"
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={(e) => handlePosterUpload(e.target.files?.[0] ?? null)}
+              />
+            </label>
+            {uploadingPoster && <p className="text-sm text-gray-600">Uploading poster…</p>}
+            {formData.poster && !uploadingPoster && (
+              <img src={formData.poster} alt="" className="rounded-2xl max-w-[220px]" />
+            )}
           </>
         )}
         <Editor content={formData.content} setEditorContent={(e) => handleChange(e, ["content"])} />
@@ -311,7 +406,13 @@ export default function Form({
           type="submit"
           className="bg-[#6A97BD] border border-[#6A97BD] text-white w-fit rounded-lg px-5 cursor-pointer"
         >
-          {editEvent ? "Edit Event" : "Submit New Event"}
+          {isForum
+            ? editEvent
+              ? "Edit Forum Post"
+              : "Post to the Forum"
+            : editEvent
+              ? "Edit Event"
+              : "Submit New Event"}
         </button>
       </form>
     </div>

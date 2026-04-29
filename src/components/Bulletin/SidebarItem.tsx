@@ -61,12 +61,16 @@ export function SidebarClub({
           </div>
         </div>
         <span className="w-full flex flex-col items-start">
-          <p className="text-[12px] line-clamp-1 text-muted-foreground">
-            {new Date(daton.start_date).toUTCString().slice(0, 16)} <br />
-          </p>
-          <p className="w-full text-left text-[12px] line-clamp-1 font-bold text-muted-foreground">
-            {daton.location_str ? daton.location_str : "N/A"}
-          </p>
+          {daton.type !== "forum" && (
+            <p className="text-[12px] line-clamp-1 text-muted-foreground">
+              {daton.start_date ? new Date(daton.start_date).toUTCString().slice(0, 16) : ""} <br />
+            </p>
+          )}
+          {daton.type !== "forum" && (
+            <p className="w-full text-left text-[12px] line-clamp-1 font-bold text-muted-foreground">
+              {daton.location_str ? daton.location_str : "N/A"}
+            </p>
+          )}
         </span>
       </div>
     </button>

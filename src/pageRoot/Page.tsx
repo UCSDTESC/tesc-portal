@@ -9,6 +9,7 @@ import {
   fetchUser,
   signOut,
   signUp,
+  signInWithGoogle,
   verifyOTP,
   sendPasswordRecovery,
   updatePassword
@@ -97,6 +98,14 @@ export default function Page() {
       // });
       OnSuccess();
       // DisplayToast("Succesfully logged in", "success");
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    const { error } = await signInWithGoogle();
+    if (error) {
+      console.error(error.message);
+      DisplayToast("Error connecting Google account", "error");
     }
   };
 
@@ -189,6 +198,7 @@ export default function Page() {
           handleSignIn,
           handleSignOut,
           handleSignUp,
+          handleGoogleAuth,
           handleVerifyOTP,
           handleSendRecovery,
           handleUpdatePassword,

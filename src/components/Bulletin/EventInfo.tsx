@@ -69,7 +69,7 @@ export default function EventInfo({ selection }: { selection: string }) {
                     <motion.h1 variants={item} className="font-bold text-4xl">
                       {daton.title}
                     </motion.h1>
-                    {daton.internal && openEditModal && (
+                    {daton.type === "internal" && openEditModal && (
                       <button
                         type="button"
                         onClick={() => openEditModal(daton)}
@@ -112,7 +112,7 @@ export default function EventInfo({ selection }: { selection: string }) {
                   </motion.p>
                 </motion.div>
                 <motion.div className="col-start-2 w-[95%] max-w-[800px] mx-auto" variants={item}>
-                  {!daton.internal &&
+                  {daton.type !== "internal" &&
                     (daton.poster ? (
                       <img src={daton.poster} alt="" className="w-full rounded-lg object-cover" />
                     ) : (
@@ -120,46 +120,50 @@ export default function EventInfo({ selection }: { selection: string }) {
                     ))}
                   <div className="flex w-full flex-row mt-10 justify-between flex-wrap-reverse gap-8">
                     <span className="w-fit">
-                      <h1 className="font-semibold">
-                        <span className="block">
-                          Start: {DateParser(daton.start_date)}
-                        </span>
-                        <span className="block">
-                          End: {DateParser(daton.end_date)}
-                        </span>
-                        <span className="block mt-1">{daton.location_str}</span>
-                      </h1>
+                      {daton.type !== "forum" && (
+                        <h1 className="font-semibold">
+                          <span className="block">
+                            Start: {DateParser(daton.start_date)}
+                          </span>
+                          <span className="block">
+                            End: {DateParser(daton.end_date)}
+                          </span>
+                          <span className="block mt-1">{daton.location_str}</span>
+                        </h1>
+                      )}
                       <Editor content={daton.content} />
                     </span>
-                    <div className="w-max flex flex-col gap-2 ">
-                      <a
-                        href={formatGoogleCalendarEvent(
-                          daton.title,
-                          daton.location_str,
-                          daton.start_date,
-                          daton.end_date,
-                        )}
-                        className="flex items-center gap-2 bg-blue/20 justify-center px-2 rounded-2xl text-gray-700 hover:bg-blue/40"
-                      >
-                        <img src={googleCalendar} alt="" className="h-[15px]" />
-                        Add to Google Calendar
-                      </a>
-                      <a
-                        href={formatGoogleMapsLocation(daton.location_str)}
-                        className="flex items-center gap-2 bg-blue/20 justify-center px-2 rounded-2xl text-gray-700 hover:bg-blue/40"
-                      >
-                        📍Directions to Event
-                      </a>
-                      <div className="flex gap-2">
-                        {daton.tags.map((tag) => {
-                          return (
-                            <div key={tag} className="bg-lightBlue px-2 rounded-2xl font-semibold">
-                              {tag}
-                            </div>
-                          );
-                        })}
+                    {daton.type !== "forum" && (
+                      <div className="w-max flex flex-col gap-2 ">
+                        <a
+                          href={formatGoogleCalendarEvent(
+                            daton.title,
+                            daton.location_str,
+                            daton.start_date,
+                            daton.end_date,
+                          )}
+                          className="flex items-center gap-2 bg-blue/20 justify-center px-2 rounded-2xl text-gray-700 hover:bg-blue/40"
+                        >
+                          <img src={googleCalendar} alt="" className="h-[15px]" />
+                          Add to Google Calendar
+                        </a>
+                        <a
+                          href={formatGoogleMapsLocation(daton.location_str)}
+                          className="flex items-center gap-2 bg-blue/20 justify-center px-2 rounded-2xl text-gray-700 hover:bg-blue/40"
+                        >
+                          📍Directions to Event
+                        </a>
+                        <div className="flex gap-2">
+                          {daton.tags.map((tag) => {
+                            return (
+                              <div key={tag} className="bg-lightBlue px-2 rounded-2xl font-semibold">
+                                {tag}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </motion.div>
               </motion.span>

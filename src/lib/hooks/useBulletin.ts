@@ -9,7 +9,7 @@ import DisplayToast from "@lib/hooks/useToast";
 
 // custom hook for bulletin component
 export function useBulletin(User: User | null) {
-  const { setShowLoginModal } = useContext(UserContext);
+  const { setShowLoginModal, activeOrgName } = useContext(UserContext);
   const [data, setData] = useState<Event[]>();
   const [People, setPeople] = useState<Member[]>();
   const [isLoading, setIsLoading] = useState(true);
@@ -19,6 +19,7 @@ export function useBulletin(User: User | null) {
   const [orgs, setOrgs] = useState<string[]>([]);
   const [tagFilters, setTagFilters] = useState<string[]>([]);
   const [orgFilters, setOrgFilters] = useState<string[]>([]);
+  const [typeFilters, setTypeFilters] = useState<string[]>([]);
   const [internalFilter, setInternalFilter] = useState<boolean>(false);
   const [sortMethod, setSortMethod] = useState<string>("");
   const [gradYears, setGradYears] = useState<string[]>([]);
@@ -53,6 +54,7 @@ export function useBulletin(User: User | null) {
     }
     setIsLoading(true);
     console.log("----FETCH EVENTS---");
+    const isSuperOrg = activeOrgName === "super_org";
     if (User?.role === "company") {
       const { People, error } = await queryPeopleBySearchAndFilters(
         search,
@@ -71,9 +73,10 @@ export function useBulletin(User: User | null) {
         search,
         tagFilters,
         orgFilters,
+        typeFilters,
         sortMethod,
         User?.id,
-        internalFilter,
+        { internalFilter, isSuperOrg },
       );
       if (events) {
         setData(events as unknown as Event[]);
@@ -83,7 +86,7 @@ export function useBulletin(User: User | null) {
       }
       setIsLoading(false);
     }
-  }, [search, tagFilters, orgFilters, sortMethod, User, internalFilter]);
+  }, [search, tagFilters, orgFilters, typeFilters, sortMethod, User, internalFilter, activeOrgName]);
 
   useEffect(() => {
     fetchData();
@@ -169,6 +172,8 @@ export function useBulletin(User: User | null) {
     setSearch,
     orgFilters,
     setOrgFilters,
+    typeFilters,
+    setTypeFilters,
     orgs,
     internalFilter,
     setInternalFilter,
@@ -192,12 +197,15 @@ export interface BulletinContextProps {
   setSearch: (search: string) => void;
   orgFilters: string[];
   setOrgFilters: (orgs: string[]) => void;
+  typeFilters: string[];
+  setTypeFilters: (types: string[]) => void;
   orgs: string[];
   internalFilter: boolean;
   setInternalFilter: (value: boolean) => void;
   sortMethod: string;
   setSortMethod: (sortMethod: string) => void;
   eventTimeFilter?: "current" | "past";
+  forumMode?: boolean;
   openEditModal?: (event: Event) => void;
   showEditModal?: boolean;
   setShowEditModal?: (show: boolean) => void;
@@ -217,12 +225,15 @@ export const BulletinContext = createContext<BulletinContextProps>({
   setSearch: () => {},
   orgFilters: [],
   setOrgFilters: () => {},
+  typeFilters: [],
+  setTypeFilters: () => {},
   orgs: [],
   internalFilter: false,
   setInternalFilter: () => {},
   sortMethod: "",
   setSortMethod: () => {},
   eventTimeFilter: "current",
+  forumMode: false,
   openEditModal: () => {},
   showEditModal: false,
   setShowEditModal: () => {},

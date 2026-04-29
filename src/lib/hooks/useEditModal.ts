@@ -16,8 +16,8 @@ export function useEditModal() {
     setCurrEdit({
       title: daton.title,
       password: daton.password,
-      start_date: toISO(daton.start_date),
-      end_date: toISO(daton.end_date),
+      start_date: daton.start_date ? toISO(daton.start_date) : "",
+      end_date: daton.end_date ? toISO(daton.end_date) : "",
       location: [],
       location_str: daton.location_str,
       content: daton.content,
@@ -25,10 +25,34 @@ export function useEditModal() {
       poster: daton.poster,
       attendance_cap: daton.attendance_cap,
       track_attendance: daton.track_attendance ?? false,
-      internal: daton.internal ?? false,
+      type: daton.type ?? "external",
       manual_attendance: daton.manual_attendance != null ? String(daton.manual_attendance) : "",
     });
   };
 
-  return { showEditModal, setShowEditModal, curID, currEdit, openEditModal };
+  const openCreateForumPostModal = () => {
+    setShowEditModal(true);
+    setCurrID("");
+    setCurrEdit({
+      ...eventFormDataDefault,
+      title: "Forum Post",
+      type: "forum",
+      // forum posts do not have start/end; backend will store NULLs
+      start_date: "",
+      end_date: "",
+      location: [],
+      location_str: "",
+      tags: [],
+      poster: "",
+      track_attendance: false,
+      attendance_cap: undefined,
+      manual_attendance: "",
+      recurring_rate: "none",
+      recurrence_end_date: "",
+      password: "",
+      content: "",
+    });
+  };
+
+  return { showEditModal, setShowEditModal, curID, currEdit, openEditModal, openCreateForumPostModal };
 }
