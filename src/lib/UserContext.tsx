@@ -63,8 +63,8 @@ const UserContext = createContext<UserContext>({
     OnSuccess?.();
     console.log(password);
   },
-  handleOrgSwitch: (selectedName: string) =>{
-    console.log("");
-  }
+  handleOrgSwitch: (selectedName: string) => {
+    console.log(selectedName);
+  },
 });
 export default UserContext;
