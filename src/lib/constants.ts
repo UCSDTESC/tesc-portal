@@ -56,6 +56,26 @@ export type Event = {
   track_attendance?: boolean;
   manual_attendance?: number | null;
   type?: "internal" | "external" | "forum";
+  slots?: EventSlot[];
+};
+
+/** Time slot for an event with RSVP capacity. */
+export type EventSlot = {
+  id: string;
+  event_id: string;
+  starts_at: string;
+  ends_at: string;
+  capacity: number | null;
+  rsvp_count: number;
+  attended_count: number;
+};
+
+/** Form row for creating/editing event time slots. */
+export type EventSlotForm = {
+  id?: string;
+  starts_at: string;
+  ends_at: string;
+  capacity?: number | null;
 };
 
 /** Member record. Used in: Bulletin (people tab). */
@@ -89,6 +109,7 @@ export type formdata = {
   type?: "internal" | "external" | "forum";
   recurring_rate?: "none" | "daily" | "weekly" | "biweekly" | "monthly";
   recurrence_end_date?: string;
+  slots?: EventSlotForm[];
 };
 
 /** Recurrence options for event form. Used in: Form. */

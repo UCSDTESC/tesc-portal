@@ -178,74 +178,62 @@ export const fetchRSVPAndAttended = async (email: string) => {
   console.log("---fetch RSVP and Attended events---");
   const { data, error } = await supabase
     .from("events_log")
-    .select("event_id, attended, users!inner(email)")
+    .select("event_id, event_slot_id, attended, users!inner(email)")
     .eq("users.email", email);
   if (data) {
-    console.log(data);
-    return {
-      rsvp: data.filter((daton) => daton.attended == false).map((daton) => String(daton.event_id)),
-      attended: data
-        .filter((daton) => daton.attended == true)
-        .map((daton) => String(daton.event_id)),
-      error: null
-    };
-  } else return { rsvp: null, attended: null, error };
-};
-
-export const editRSVP = async (id: string, uid: string, remove: boolean) => {
-  console.log("---update RSVP info----");
-  console.log("update rsvp array in user table---");
-  // update rsvp array in user table
-  if (remove) {
-    const { error } = await supabase
-      .from("events_log")
-      .delete()
-      .eq("event_id", Number(id))
-      .eq("user_id", uid);
-    if (error) return error;
-  } else {
-    const { error } = await supabase
-      .from("events_log")
-      .insert({ user_id: uid, event_id: id, points: 1, attended: false });
-    if (error) console.log(error);
-    if (error) return error;
-  }
-  // update rsvp count in event table
-  console.log("get rsvp count in events table");
-  const { data, error } = await supabase.from("events").select("rsvp").eq("id", id);
-
-  if (data) {
-    console.log("update rsvp count in events table");
-    const { error } = await supabase
-      .from("events")
-      .update({ rsvp: remove ? data[0].rsvp - 1 : data[0].rsvp + 1 })
-      .eq("id", id);
-    if (error) {
-      return error;
+    const rsvpByEvent: Record<string, string> = {};
+    const attendedByEvent: Record<string, string> = {};
+    for (const row of data) {
+      const eventId = String(row.event_id);
+      const slotId = row.event_slot_id ? String(row.event_slot_id) : "";
+      if (row.attended) {
+        attendedByEvent[eventId] = slotId;
+      } else {
+        rsvpByEvent[eventId] = slotId;
+      }
     }
-  } else return error;
-
-  // return no errors
-  return null;
+    return { rsvpByEvent, attendedByEvent, error: null };
+  }
+  return { rsvpByEvent: null, attendedByEvent: null, error };
 };
 
-export const logAttendance = async (selection: string, id: string, userInput: string | null) => {
+export const editRSVP = async (
+  eventId: string,
+  slotId: string,
+  action: "rsvp" | "cancel" | "switch",
+) => {
+  console.log("---update RSVP info----");
+  const { error } = await supabase.rpc("manage_event_rsvp", {
+    p_event_id: Number(eventId),
+    p_event_slot_id: Number(slotId),
+    p_action: action,
+  });
+  return error;
+};
+
+export const logAttendance = async (
+  selection: string,
+  id: string,
+  userInput: string | null,
+  eventSlotId?: string | null,
+) => {
   console.log("---Validate attendance---");
   const { error } = await supabase.rpc("validate_attendance", {
-    p_event_id: selection,
+    p_user_id: id,
+    p_event_id: Number(selection),
     p_password: userInput,
-    p_user_id: id
+    p_event_slot_id: eventSlotId ? Number(eventSlotId) : null,
   });
   if (!error) {
     console.log("Get User attendance from Users");
-    const { data, error } = await supabase.from("users").select("attended").eq("uuid", id);
-    if (!error) {
+    const { data, error: userError } = await supabase.from("users").select("attended").eq("uuid", id);
+    if (!userError && data?.[0]) {
       const currAttended = data[0].attended;
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from("users")
         .update({ attended: [...currAttended, selection] })
         .eq("uuid", id);
-      if (error) return error;
+      if (updateError) return updateError;
     }
   }
   return error;
