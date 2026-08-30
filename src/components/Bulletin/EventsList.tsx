@@ -1,5 +1,5 @@
 import { BulletinContext } from "@lib/hooks/useBulletin";
-import { container, item } from "@lib/constants";
+import { container, item, canAccessRecruiterData } from "@lib/constants";
 import { memo, useContext, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { SidebarClub, SidebarCompany } from "./SidebarItem";
@@ -29,8 +29,11 @@ export const EventsList = memo(function ({
   setSelection: (selection: string) => void;
   selection: string;
 }) {
-  const { data, People, eventTimeFilter, forumMode, isLoading } = useContext(BulletinContext);
+  const { data, People, eventTimeFilter, forumMode, isLoading, portalMode } =
+    useContext(BulletinContext);
   const { User } = useContext(UserContext);
+  const showRecruiterList =
+    portalMode === "recruiter" && canAccessRecruiterData(User?.role);
   const [showSkeleton, setShowSkeleton] = useState(isLoading);
   const skeletonStartRef = useRef<number | null>(isLoading ? Date.now() : null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -67,7 +70,14 @@ export const EventsList = memo(function ({
   const fadeTransition = { duration: FADE_OUT_DURATION_MS / 1000 };
 
   const renderContent = () => {
-    if (User?.role === "company") {
+    if (portalMode === "recruiter" && !showRecruiterList) {
+      return (
+        <p className="px-4 py-6 text-center text-sm text-slate-600">
+          Log in with an approved recruiter account to browse candidates.
+        </p>
+      );
+    }
+    if (showRecruiterList) {
       return (
         <motion.div
           key={`company-${forumMode}-${eventTimeFilter}`}

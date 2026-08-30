@@ -1,12 +1,13 @@
 import { useContext } from "react";
-import UserContext from "@lib/UserContext";
+import { BulletinContext } from "@lib/hooks/useBulletin";
 import MemberResume from "./MemberResume";
 import EventInfo from "./EventInfo";
 
 export default function BulletinDisplay({ selection }: { selection: string }) {
-  const { User } = useContext(UserContext);
+  const { portalMode } = useContext(BulletinContext);
 
-  if (User?.role === "company") {
+  if (portalMode === "recruiter") {
     return <MemberResume selection={selection} />;
-  } else return <EventInfo selection={selection} />;
+  }
+  return <EventInfo selection={selection} />;
 }

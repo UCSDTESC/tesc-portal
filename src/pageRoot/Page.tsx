@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import supabase from "@server/supabase";
 
-import UserContext from "@lib/UserContext";
-import type { User, UserCredentials } from "@lib/UserContext";
+import UserContext, { PENDING_PROFILE_SETUP_KEY } from "@lib/UserContext";
+import type { User, UserCredentials, AuthSuccessResult } from "@lib/UserContext";
 import {
   signIn,
   fetchUser,
@@ -23,6 +23,8 @@ export default function Page() {
   const [User, setUser] = useState<User | null>(null);
   const [Error, setError] = useState("");
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [pendingProfileSetup, setPendingProfileSetup] = useState(false);
+  const [loginRecruiterMode, setLoginRecruiterMode] = useState(false);
   const location = useLocation();
 
   // -- USER ORGS --
@@ -31,6 +33,7 @@ export default function Page() {
     // call for the clubs that user is in, sort in alphabetical order
   const [myOrgs, setMyOrgs] = useState<{ id: string; name: string }[]>([]);
   const [activeOrgName, setActiveOrgName] = useState<string>("");
+  const [activeOrgRole, setActiveOrgRole] = useState<string>("");
   // navigate btwn org accounts
   const navigate = useNavigate();
 
@@ -61,6 +64,33 @@ export default function Page() {
     getMyClubs();
   }, [User?.id]);
 
+  useEffect(() => {
+    const loadActiveOrgRole = async () => {
+      if (!User?.id || !activeOrgName) {
+        setActiveOrgRole("");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("user_org_roles")
+        .select("roles(name), orgs!inner(name)")
+        .eq("user_uuid", User.id)
+        .eq("orgs.name", activeOrgName)
+        .maybeSingle();
+
+      if (error) {
+        console.error(error.message);
+        setActiveOrgRole("");
+        return;
+      }
+
+      const role = data as { roles: { name: string } } | null;
+      setActiveOrgRole(role?.roles?.name?.trim() ?? "");
+    };
+
+    loadActiveOrgRole();
+  }, [User?.id, activeOrgName]);
+
   // navigate btwn org accounts
   const handleOrgSwitch = (selectedName: string) => {
   setActiveOrgName(selectedName);
@@ -89,7 +119,7 @@ export default function Page() {
     const { error } = await signUp(email, password);
     if (error) {
       console.error(error.message);
-      DisplayToast("Error signing up", "error");
+      DisplayToast(error.message || "Error signing up", "error");
     } else {
       // setUser({
       //   id: user?.id,
@@ -110,20 +140,27 @@ export default function Page() {
   };
 
   const handleVerifyOTP = async (
-    { email, password: Token, type }: UserCredentials & { type: "email" | "recovery" },
-    onSuccess: () => void
+    {
+      email,
+      password: Token,
+      type,
+      resumeVisible = true,
+    }: UserCredentials & { type: "email" | "recovery"; resumeVisible?: boolean },
+    onSuccess: (result?: AuthSuccessResult) => void
   ) => {
-    const { user, error } = await verifyOTP(email, Token, type);
+    const { user, error } = await verifyOTP(email, Token, type, resumeVisible);
     if (error) {
       console.error(error.message);
-      DisplayToast("Error verifying OTP", "error");
+      DisplayToast(error.message || "Error verifying OTP", "error");
     } else {
       setUser({
         id: user?.id ? user?.id : "",
         email: user?.email ? user?.email : "",
         role: user?.role ? user.role : "unknown"
       });
-      onSuccess();
+      onSuccess({
+        needsProfileSetup: type === "email" && user?.role !== "company",
+      });
       DisplayToast("Succesfully logged in", "success");
     }
   };
@@ -186,6 +223,16 @@ export default function Page() {
     getUser();
   }, [location.pathname, navigate]);
 
+  useEffect(() => {
+    if (!User?.id) return;
+    const pendingSetup = sessionStorage.getItem(PENDING_PROFILE_SETUP_KEY);
+    if (!pendingSetup) return;
+    sessionStorage.removeItem(PENDING_PROFILE_SETUP_KEY);
+    if (User.role === "company") return;
+    setPendingProfileSetup(true);
+    setShowLoginModal(true);
+  }, [User?.id, User?.role]);
+
   return (
     <main>
       <UserContext.Provider
@@ -194,6 +241,10 @@ export default function Page() {
           Error,
           showLoginModal,
           setShowLoginModal,
+          pendingProfileSetup,
+          setPendingProfileSetup,
+          loginRecruiterMode,
+          setLoginRecruiterMode,
           setError,
           handleSignIn,
           handleSignOut,
@@ -205,6 +256,7 @@ export default function Page() {
           handleOrgSwitch,
           myOrgs,
           activeOrgName,
+          activeOrgRole,
         }}
       >
         <Navbar />

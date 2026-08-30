@@ -10,10 +10,11 @@ import { OrgDropdown } from "@components/components/ui/org-dropdown";
 
 export default function Navbar() {
   const { User, myOrgs, activeOrgName, handleOrgSwitch } = useContext(UserContext);
-  const { showLoginModal, setShowLoginModal } = useContext(UserContext);
+  const { showLoginModal, setShowLoginModal, setLoginRecruiterMode, pendingProfileSetup, setPendingProfileSetup } =
+    useContext(UserContext);
 
   return (
-    <nav className="w-full h-[10vh] bg-blue text-white text-[3vh] flex justify-between items-center px-4 absolute top-0 z-10">
+    <nav className="w-full h-[10vh] bg-blue text-white text-[3vh] flex justify-between items-center px-4 absolute top-0 z-50">
       <NavLink to="/">
         <img src={TESC} alt="" className="h-[40px]" />
       </NavLink>
@@ -45,6 +46,7 @@ export default function Navbar() {
             <Button
               className="font-DM text-lg font-semibold  px-5 cursor-pointer h-[40px] right-10 bg-navy rounded-full"
               onClick={() => {
+                setLoginRecruiterMode(false);
                 setShowLoginModal(true);
               }}
             >
@@ -55,8 +57,11 @@ export default function Navbar() {
       {showLoginModal &&
         createPortal(
           <LoginModal
+            initialProfileSetup={pendingProfileSetup}
             onclose={() => {
               setShowLoginModal(false);
+              setLoginRecruiterMode(false);
+              setPendingProfileSetup(false);
             }}
           />,
           document.body
