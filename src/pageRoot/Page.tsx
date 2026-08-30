@@ -3,7 +3,7 @@ import { Outlet, useLocation, useNavigate } from "react-router";
 import supabase from "@server/supabase";
 
 import UserContext, { PENDING_PROFILE_SETUP_KEY } from "@lib/UserContext";
-import type { User, UserCredentials, AuthSuccessResult } from "@lib/UserContext";
+import type { User, UserCredentials, AuthSuccessResult, PendingQrFlow } from "@lib/UserContext";
 import {
   signIn,
   fetchUser,
@@ -21,10 +21,13 @@ import Footer from "./Footer";
 
 export default function Page() {
   const [User, setUser] = useState<User | null>(null);
+  const [authReady, setAuthReady] = useState(false);
   const [Error, setError] = useState("");
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [pendingProfileSetup, setPendingProfileSetup] = useState(false);
   const [loginRecruiterMode, setLoginRecruiterMode] = useState(false);
+  const [pendingQrFlow, setPendingQrFlow] = useState<PendingQrFlow | null>(null);
+  const [loginModalContext, setLoginModalContext] = useState("");
   const location = useLocation();
 
   // -- USER ORGS --
@@ -105,6 +108,7 @@ export default function Page() {
     if (user && user?.email) {
       setError("");
       setUser({ id: user.id, email: user.email, role: user.role });
+      setPendingQrFlow(null);
       OnSuccess();
       DisplayToast("Succesfully logged in", "success");
     }
@@ -158,6 +162,7 @@ export default function Page() {
         email: user?.email ? user?.email : "",
         role: user?.role ? user.role : "unknown"
       });
+      setPendingQrFlow(null);
       onSuccess({
         needsProfileSetup: type === "email" && user?.role !== "company",
       });
@@ -205,7 +210,10 @@ export default function Page() {
   // get current user
   useEffect(() => {
     // if (location.pathname.includes("bulletin")) return;
-    if (User) return;
+    if (User) {
+      setAuthReady(true);
+      return;
+    }
     const getUser = async () => {
       try {
         const user = await fetchUser();
@@ -218,6 +226,8 @@ export default function Page() {
         }
       } catch (err) {
         console.error(err);
+      } finally {
+        setAuthReady(true);
       }
     };
     getUser();
@@ -238,6 +248,7 @@ export default function Page() {
       <UserContext.Provider
         value={{
           User,
+          authReady,
           Error,
           showLoginModal,
           setShowLoginModal,
@@ -245,6 +256,10 @@ export default function Page() {
           setPendingProfileSetup,
           loginRecruiterMode,
           setLoginRecruiterMode,
+          pendingQrFlow,
+          setPendingQrFlow,
+          loginModalContext,
+          setLoginModalContext,
           setError,
           handleSignIn,
           handleSignOut,

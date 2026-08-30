@@ -107,22 +107,39 @@ export function useBulletin(User: User | null, portalMode: PortalMode) {
   }, [fetchData]);
 
   // fetch RSVP and attended events
+  const refreshUserEventStatus = useCallback(async () => {
+    if (!User?.email) {
+      setRsvpByEvent(null);
+      setAttendedByEvent(null);
+      return;
+    }
+
+    const { rsvpByEvent: rsvpMap, attendedByEvent: attendedMap, error } =
+      await fetchRSVPAndAttended(User.email);
+    if (rsvpMap && attendedMap) {
+      setRsvpByEvent(rsvpMap);
+      setAttendedByEvent(attendedMap);
+    } else if (error) {
+      console.error(error.message);
+      DisplayToast("Error fetching user history", "error");
+    }
+  }, [User?.email]);
+
   useEffect(() => {
-    const fetchRSVPAndAttendedEvents = async () => {
-      if (User?.id && !(rsvpByEvent && attendedByEvent)) {
-        const { rsvpByEvent: rsvpMap, attendedByEvent: attendedMap, error } =
-          await fetchRSVPAndAttended(User.email);
-        if (rsvpMap && attendedMap) {
-          setRsvpByEvent(rsvpMap);
-          setAttendedByEvent(attendedMap);
-        } else if (error) {
-          console.error(error.message);
-          DisplayToast("Error fetching user history", "error");
-        }
-      }
-    };
-    fetchRSVPAndAttendedEvents();
-  }, [User, rsvpByEvent, attendedByEvent]);
+    refreshUserEventStatus();
+  }, [refreshUserEventStatus]);
+
+  const refreshEventView = useCallback(async () => {
+    await Promise.all([fetchData(), refreshUserEventStatus()]);
+  }, [fetchData, refreshUserEventStatus]);
+
+  const applyUserRsvp = useCallback((eventId: string, slotId: string) => {
+    setRsvpByEvent((prev) => ({ ...(prev ?? {}), [eventId]: slotId }));
+  }, []);
+
+  const applyUserAttendance = useCallback((eventId: string, slotId: string) => {
+    setAttendedByEvent((prev) => ({ ...(prev ?? {}), [eventId]: slotId }));
+  }, []);
 
   const handleRSVP = async (
     eventId: string,
@@ -153,7 +170,7 @@ export function useBulletin(User: User | null, portalMode: PortalMode) {
       }
       return next;
     });
-    await fetchData();
+    await refreshEventView();
     DisplayToast(
       action === "cancel"
         ? "Succesfully removed RSVP"
@@ -184,6 +201,7 @@ export function useBulletin(User: User | null, portalMode: PortalMode) {
       ...(prev ?? {}),
       [eventId]: slotId ?? "",
     }));
+    await refreshEventView();
     DisplayToast("Succesfully logged attendance", "success");
   };
 
@@ -209,6 +227,9 @@ export function useBulletin(User: User | null, portalMode: PortalMode) {
     sortMethod,
     setSortMethod,
     fetchData,
+    refreshEventView,
+    applyUserRsvp,
+    applyUserAttendance,
     activeOrgName,
   };
 }
@@ -243,6 +264,7 @@ export interface BulletinContextProps {
   setShowEditModal?: (show: boolean) => void;
   isSuperOrg?: boolean;
   activeOrgName?: string;
+  qrBanner?: { type: "success" | "info" | "error"; message: string } | null;
 }
 
 export const BulletinContext = createContext<BulletinContextProps>({
@@ -275,4 +297,5 @@ export const BulletinContext = createContext<BulletinContextProps>({
   setShowEditModal: () => {},
   isSuperOrg: false,
   activeOrgName: "",
+  qrBanner: null,
 } as BulletinContextProps);

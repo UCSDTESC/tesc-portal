@@ -42,6 +42,7 @@ export default function LoginModal({ onclose, initialProfileSetup = false }: Log
     handleUpdatePassword,
     loginRecruiterMode,
     setPendingProfileSetup,
+    loginModalContext,
   } = useContext(UserContext);
 
   useEffect(() => {
@@ -249,6 +250,15 @@ export default function LoginModal({ onclose, initialProfileSetup = false }: Log
                       ? "Recruiter Portal"
                       : "Welcome to TESC!"}
                 </motion.h1>
+
+                {loginModalContext && !forgot && (
+                  <motion.p
+                    className="font-DM text-sm w-3/4 text-center text-navy bg-blue/10 rounded-lg px-3 py-2"
+                    variants={item}
+                  >
+                    {loginModalContext}
+                  </motion.p>
+                )}
 
                 <motion.p
                   className="font-DM text-xl w-3/4 text-center text-balance text-[#262626] hidden md:block"

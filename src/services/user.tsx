@@ -110,13 +110,13 @@ export const signUp = async (email: string, password: string) => {
 export const signInWithGoogle = async () => {
   const redirectTo =
     typeof globalThis !== "undefined" && "location" in globalThis
-      ? globalThis.location.origin
+      ? `${globalThis.location.origin}${globalThis.location.pathname}${globalThis.location.search}`
       : undefined;
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo
-    }
+      redirectTo,
+    },
   });
   return { data, error };
 };
@@ -231,6 +231,35 @@ export const logAttendance = async (
         .update({ attended: [...currAttended, selection] })
         .eq("uuid", id);
       if (updateError) return updateError;
+    }
+  }
+  return error;
+};
+
+export const logAttendanceWithToken = async (
+  eventId: string,
+  userId: string,
+  token: string,
+  eventSlotId: string,
+) => {
+  console.log("---Validate attendance via QR token---");
+  const { error } = await supabase.rpc("validate_attendance_qr", {
+    p_user_id: userId,
+    p_event_id: Number(eventId),
+    p_token: token,
+    p_event_slot_id: Number(eventSlotId),
+  });
+  if (!error) {
+    const { data, error: userError } = await supabase.from("users").select("attended").eq("uuid", userId);
+    if (!userError && data?.[0]) {
+      const currAttended = data[0].attended ?? [];
+      if (!currAttended.includes(eventId)) {
+        const { error: updateError } = await supabase
+          .from("users")
+          .update({ attended: [...currAttended, eventId] })
+          .eq("uuid", userId);
+        if (updateError) return updateError;
+      }
     }
   }
   return error;

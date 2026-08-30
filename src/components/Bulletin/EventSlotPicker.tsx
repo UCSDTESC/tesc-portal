@@ -2,10 +2,56 @@ import { useContext, useMemo, useState } from "react";
 import { BulletinContext } from "@lib/hooks/useBulletin";
 import { EventSlot } from "@lib/constants";
 import { DateParser } from "@lib/utils";
+import { getSlotQrAction, isEventEnded, isSlotFull } from "@lib/slotTime";
 
-function isSlotFull(slot: EventSlot) {
-  if (slot.capacity == null) return false;
-  return slot.rsvp_count >= slot.capacity;
+function slotStatusLabel(
+  slot: EventSlot,
+  now: Date,
+  options: { isCurrentRsvp: boolean; isAttended: boolean },
+): string {
+  if (options.isAttended) return "Checked in";
+  if (options.isCurrentRsvp) {
+    const action = getSlotQrAction(slot, now);
+    if (action === "checkin") return "Your slot · Check in open";
+    if (action === "register") return "Your slot · Registered";
+    return "Your slot";
+  }
+  const action = getSlotQrAction(slot, now);
+  if (action === "ended") return "Ended";
+  if (action === "checkin") return "Check in open";
+  if (isSlotFull(slot)) return "Full";
+  return "RSVP open";
+}
+
+function SlotStatusCard({
+  slot,
+  message,
+  tone,
+}: {
+  slot: EventSlot;
+  message: string;
+  tone: "registered" | "attended";
+}) {
+  return (
+    <div
+      className={`w-full rounded-lg border p-4 shadow-sm ${
+        tone === "attended"
+          ? "border-green-300 bg-green-50"
+          : "border-blue/30 bg-blue/5"
+      }`}
+    >
+      <p
+        className={`text-sm font-semibold ${
+          tone === "attended" ? "text-green-800" : "text-navy"
+        }`}
+      >
+        {message}
+      </p>
+      <p className="mt-1 text-sm text-gray-700">
+        {DateParser(slot.starts_at)} – {DateParser(slot.ends_at)}
+      </p>
+    </div>
+  );
 }
 
 export default function EventSlotPicker({
@@ -18,7 +64,7 @@ export default function EventSlotPicker({
   className?: string;
 }) {
   const { rsvpByEvent, attendedByEvent, handleRSVP, handleAttendance } = useContext(BulletinContext);
-  const [selectedSlotId, setSelectedSlotId] = useState<string>("");
+  const [selectedSlotId, setSelectedSlotId] = useState("");
 
   const userRsvpSlotId = rsvpByEvent?.[eventId] ?? "";
   const userAttendedSlotId = attendedByEvent?.[eventId] ?? "";
@@ -29,121 +75,142 @@ export default function EventSlotPicker({
     [slots, activeSlotId],
   );
 
+  const attendedSlot = useMemo(
+    () => (userAttendedSlotId ? slots.find((slot) => slot.id === userAttendedSlotId) : undefined),
+    [slots, userAttendedSlotId],
+  );
+
+  const rsvpSlot = useMemo(
+    () => (userRsvpSlotId ? slots.find((slot) => slot.id === userRsvpSlotId) : undefined),
+    [slots, userRsvpSlotId],
+  );
+
   if (!rsvpByEvent || !attendedByEvent || !slots.length || !activeSlot) return null;
 
-  if (userAttendedSlotId) return null;
-
   const now = new Date();
-  const slotStart = new Date(activeSlot.starts_at.replace("+00:00", ""));
-  const eventStart = new Date(
-    (slots[0]?.starts_at ?? activeSlot.starts_at).replace("+00:00", ""),
-  );
-  const eventEnd = new Date(
-    (slots[slots.length - 1]?.ends_at ?? activeSlot.ends_at).replace("+00:00", ""),
-  );
-  const attendSlot =
-    slots.find((slot) => slot.id === userRsvpSlotId) ??
-    slots.find((slot) => {
-      const start = new Date(slot.starts_at.replace("+00:00", ""));
-      const end = new Date(slot.ends_at.replace("+00:00", ""));
-      return now >= start && now <= end;
-    }) ??
-    activeSlot;
-  const attendSlotEnd = new Date(attendSlot.ends_at.replace("+00:00", ""));
+  const buttonClassName = `border border-blue px-4 py-2 rounded-lg cursor-pointer w-fit h-fit ${className}`;
 
-  const buttonClassName = `border border-blue px-4 py-2 rounded-lg cursor-pointer w-fit h-fit my-2 ${className}`;
-
-  if (now <= eventStart || now <= slotStart) {
-    const hasRsvp = Boolean(userRsvpSlotId);
-
+  if (userAttendedSlotId && attendedSlot) {
     return (
-      <div className="absolute bottom-0 right-[5%] w-[min(100%,320px)] rounded-lg border border-blue/30 bg-white/95 p-3 shadow-sm">
-        <p className="mb-2 text-sm font-semibold text-navy">Choose a time slot</p>
-        <div className="flex max-h-40 flex-col gap-2 overflow-y-auto">
-          {slots.map((slot) => {
-            const full = isSlotFull(slot);
-            const isSelected = slot.id === activeSlotId;
-            const isCurrentRsvp = slot.id === userRsvpSlotId;
-            return (
-              <label
-                key={slot.id}
-                className={`flex cursor-pointer items-start gap-2 rounded-md border p-2 text-sm ${
-                  isSelected ? "border-blue bg-blue/10" : "border-gray-200"
-                } ${full && !isCurrentRsvp ? "opacity-60" : ""}`}
-              >
+      <SlotStatusCard
+        slot={attendedSlot}
+        message="You're checked in for this event."
+        tone="attended"
+      />
+    );
+  }
+
+  const actionSlot = rsvpSlot ?? activeSlot;
+  const slotAction = getSlotQrAction(actionSlot, now);
+  const allEnded = isEventEnded(slots, now);
+
+  return (
+    <div
+      className={`w-full rounded-lg border p-4 shadow-sm ${
+        allEnded ? "border-gray-200 bg-gray-50 opacity-80" : "border-blue/30 bg-white"
+      }`}
+    >
+      <p className={`mb-2 text-sm font-semibold ${allEnded ? "text-gray-500" : "text-navy"}`}>
+        {allEnded
+          ? "Time slots"
+          : rsvpSlot && slotAction === "register"
+            ? "Your registration"
+            : rsvpSlot && slotAction === "checkin"
+              ? "Check in to your slot"
+              : "Choose a time slot"}
+      </p>
+      <div className="flex flex-col gap-2">
+        {slots.map((slot) => {
+          const full = isSlotFull(slot);
+          const isSelected = slot.id === activeSlotId;
+          const isCurrentRsvp = slot.id === userRsvpSlotId;
+          const action = getSlotQrAction(slot, now);
+          const ended = action === "ended";
+          const disabled =
+            ended ||
+            allEnded ||
+            (full && !isCurrentRsvp) ||
+            Boolean(rsvpSlot && slotAction === "checkin" && !isCurrentRsvp);
+
+          return (
+            <div
+              key={slot.id}
+              className={`flex items-start gap-2 rounded-md border p-2 text-sm ${
+                isSelected && !allEnded ? "border-blue bg-blue/10" : "border-gray-200"
+              } ${disabled ? "opacity-60" : ""}`}
+            >
+              {!allEnded && (
                 <input
                   type="radio"
                   name={`slot-${eventId}`}
                   className="mt-1"
                   checked={isSelected}
-                  disabled={full && !isCurrentRsvp}
+                  disabled={disabled}
                   onChange={() => setSelectedSlotId(slot.id)}
                 />
-                <span>
-                  <span className="block font-medium">
-                    {DateParser(slot.starts_at)} – {DateParser(slot.ends_at)}
-                  </span>
-                  <span className="text-xs text-gray-600">
-                    {full
-                      ? "Full"
-                      : slot.capacity != null
-                        ? `${slot.rsvp_count}/${slot.capacity} spots`
-                        : `${slot.rsvp_count} RSVPs`}
-                    {isCurrentRsvp ? " · Your slot" : ""}
-                  </span>
+              )}
+              <span>
+                <span className={`block font-medium ${ended || allEnded ? "text-gray-500" : ""}`}>
+                  {DateParser(slot.starts_at)} – {DateParser(slot.ends_at)}
                 </span>
-              </label>
-            );
-          })}
-        </div>
+                <span className="text-xs text-gray-600">
+                  {slotStatusLabel(slot, now, {
+                    isCurrentRsvp,
+                    isAttended: slot.id === userAttendedSlotId,
+                  })}
+                  {slot.capacity != null
+                    ? ` · ${slot.rsvp_count}/${slot.capacity} spots`
+                    : ` · ${slot.rsvp_count} RSVPs`}
+                </span>
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      {!allEnded && (
         <div className="mt-3 flex gap-2">
-          {hasRsvp ? (
-            <>
-              <button
-                type="button"
-                className={`${buttonClassName} bg-blue text-white`}
-                disabled={!activeSlotId || activeSlotId === userRsvpSlotId || isSlotFull(activeSlot)}
-                onClick={() =>
-                  handleRSVP(eventId, activeSlotId, userRsvpSlotId ? "switch" : "rsvp")
-                }
-              >
-                Switch slot
-              </button>
-              <button
-                type="button"
-                className={buttonClassName}
-                onClick={() => handleRSVP(eventId, userRsvpSlotId, "cancel")}
-              >
-                Remove RSVP
-              </button>
-            </>
-          ) : (
+          {slotAction === "checkin" ? (
             <button
               type="button"
               className={buttonClassName}
-              disabled={!activeSlotId || isSlotFull(activeSlot)}
-              onClick={() => handleRSVP(eventId, activeSlotId, "rsvp")}
+              onClick={() => handleAttendance(eventId, userRsvpSlotId || activeSlotId)}
             >
-              RSVP
+              Attend
             </button>
-          )}
+          ) : slotAction === "register" ? (
+            userRsvpSlotId ? (
+              <>
+                <button
+                  type="button"
+                  className={`${buttonClassName} bg-blue text-white`}
+                  disabled={!activeSlotId || activeSlotId === userRsvpSlotId || isSlotFull(activeSlot)}
+                  onClick={() =>
+                    handleRSVP(eventId, activeSlotId, userRsvpSlotId ? "switch" : "rsvp")
+                  }
+                >
+                  Switch slot
+                </button>
+                <button
+                  type="button"
+                  className={buttonClassName}
+                  onClick={() => handleRSVP(eventId, userRsvpSlotId, "cancel")}
+                >
+                  Remove RSVP
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                className={buttonClassName}
+                disabled={!activeSlotId || isSlotFull(activeSlot)}
+                onClick={() => handleRSVP(eventId, activeSlotId, "rsvp")}
+              >
+                RSVP
+              </button>
+            )
+          ) : null}
         </div>
-      </div>
-    );
-  }
-
-  if (now <= eventEnd && now >= new Date(attendSlot.starts_at.replace("+00:00", "")) && now <= attendSlotEnd) {
-    const attendSlotId = userRsvpSlotId || attendSlot.id;
-    return (
-      <button
-        type="button"
-        className={buttonClassName}
-        onClick={() => handleAttendance(eventId, attendSlotId)}
-      >
-        Attend
-      </button>
-    );
-  }
-
-  return null;
+      )}
+    </div>
+  );
 }

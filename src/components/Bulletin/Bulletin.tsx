@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import UserContext from "@lib/UserContext";
 
 import { BulletinContext, useBulletin } from "@lib/hooks/useBulletin";
+import { useQrEventFlow } from "@lib/hooks/useQrEventFlow";
 import { useEditModal } from "@lib/hooks/useEditModal";
 import { formdata, PortalMode } from "@lib/constants";
 import { FaArrowRightToBracket } from "react-icons/fa6";
@@ -14,6 +15,7 @@ import CheckBoxes from "./CheckBoxes";
 import PortalToggle from "./PortalToggle";
 import { EventsList } from "./EventsList";
 import BulletinDisplay from "./BulletinDisplay";
+import QrSlotPickerModal from "./QrSlotPickerModal";
 import Form from "../adminUser/Form/Form";
 
 type EventTimeFilter = "current" | "past";
@@ -50,6 +52,9 @@ export default function Bulletin() {
     sortMethod,
     setSortMethod,
     fetchData,
+    refreshEventView,
+    applyUserRsvp,
+    applyUserAttendance,
   } = useBulletin(User, portalMode);
   const {
     showEditModal,
@@ -132,10 +137,32 @@ export default function Bulletin() {
     });
   }, [data, eventTimeFilter, forumMode, isRecruiterPortal]);
 
+  const selectedEvent = useMemo(() => {
+    if (!data || selection === "-1") return undefined;
+    return data.find((e) => String(e.id) === String(selection));
+  }, [data, selection]);
+
+  const qrFlow = useQrEventFlow({
+    eventId: selection,
+    event: selectedEvent,
+    rsvpSlotId: rsvpByEvent?.[selection],
+    attendedSlotId: attendedByEvent?.[selection],
+    onRefresh: refreshEventView,
+    onRsvp: applyUserRsvp,
+    onAttended: applyUserAttendance,
+  });
+
+  const displayData = useMemo(() => {
+    const base = filteredData ?? [];
+    if (!qrFlow.activeEvent || selection === "-1") return base;
+    if (base.some((e) => String(e.id) === String(selection))) return base;
+    return [...base, qrFlow.activeEvent];
+  }, [filteredData, qrFlow.activeEvent, selection]);
+
   return (
     <BulletinContext.Provider
       value={{
-        data: filteredData,
+        data: displayData,
         isLoading,
         gradYears,
         People,
@@ -162,6 +189,7 @@ export default function Bulletin() {
         openEditModal,
         showEditModal,
         setShowEditModal,
+        qrBanner: qrFlow.banner,
       }}
     >
       <div className="grid w-full  h-[calc(100vh-3.5rem)] grid-rows-[3.5rem_1fr] font-DM">
@@ -339,6 +367,15 @@ export default function Bulletin() {
           </div>
         </div>
       </div>
+      <QrSlotPickerModal
+        open={qrFlow.showPicker}
+        eventTitle={qrFlow.activeEvent?.title ?? "Event"}
+        slots={qrFlow.activeEvent?.slots ?? []}
+        flowState={qrFlow.flowState}
+        initialSlotId={rsvpByEvent?.[selection]}
+        onConfirm={qrFlow.handleSlotConfirm}
+        onClose={qrFlow.closePicker}
+      />
       {showEditModal &&
         createPortal(
           <BulletinEditModal

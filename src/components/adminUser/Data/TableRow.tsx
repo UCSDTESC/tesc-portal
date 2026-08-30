@@ -1,4 +1,4 @@
-import { DeleteOutlined } from "@ant-design/icons";
+import { DeleteOutlined, QrcodeOutlined } from "@ant-design/icons";
 import { Event } from "@lib/constants";
 import { useState } from "react";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa6";
@@ -6,6 +6,9 @@ import { CSVLink } from "react-csv";
 import { IoMdDownload } from "react-icons/io";
 import supabase from "@server/supabase";
 import { DeleteConfirmationModal } from "./DeleteConfirmationModal";
+import EventQrModal from "../Form/EventQrModal";
+import { fetchEventAttendanceToken } from "@services/event";
+import DisplayToast from "@lib/hooks/useToast";
 
 type ColumnDef = { key: string; label: string };
 
@@ -26,6 +29,12 @@ export default function TableRow({ daton, columns, getCellValue, onDelete, onEdi
   >([]);
   const [showAttendees, setShowAttendees] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [qrModal, setQrModal] = useState<{
+    eventId: string;
+    eventTitle: string;
+    attendanceToken: string;
+  } | null>(null);
+  const [loadingQr, setLoadingQr] = useState(false);
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -57,9 +66,32 @@ export default function TableRow({ daton, columns, getCellValue, onDelete, onEdi
     }
   };
 
+  const openQrModal = async () => {
+    setLoadingQr(true);
+    try {
+      let token = daton.attendance_token ?? null;
+      if (!token) {
+        const { token: fetched, error } = await fetchEventAttendanceToken(daton.id);
+        if (error || !fetched) {
+          DisplayToast("QR code is not available for this event", "error");
+          return;
+        }
+        token = fetched;
+      }
+      setQrModal({
+        eventId: daton.id,
+        eventTitle: daton.title,
+        attendanceToken: token,
+      });
+    } finally {
+      setLoadingQr(false);
+    }
+  };
+
   const truncate = (s: string, max = 40) => (s.length <= max ? s : s.slice(0, max) + "…");
 
   return (
+    <>
     <tr
       className="border-b border-slate-200 hover:bg-slate-50/80 transition-colors cursor-pointer"
       onClick={() => onEdit(daton)}
@@ -87,6 +119,17 @@ export default function TableRow({ daton, columns, getCellValue, onDelete, onEdi
                     </button>
                   }
                 />
+                {daton.track_attendance && (
+                  <button
+                    type="button"
+                    className="p-1.5 rounded text-slate-600 hover:bg-slate-200 cursor-pointer disabled:opacity-50"
+                    onClick={openQrModal}
+                    disabled={loadingQr}
+                    title="Show QR code"
+                  >
+                    <QrcodeOutlined />
+                  </button>
+                )}
                 {daton.track_attendance && (
                   <div className="relative inline-block">
                     <button
@@ -154,5 +197,14 @@ export default function TableRow({ daton, columns, getCellValue, onDelete, onEdi
         );
       })}
     </tr>
+    {qrModal && (
+      <EventQrModal
+        eventId={qrModal.eventId}
+        eventTitle={qrModal.eventTitle}
+        attendanceToken={qrModal.attendanceToken}
+        onClose={() => setQrModal(null)}
+      />
+    )}
+    </>
   );
 }

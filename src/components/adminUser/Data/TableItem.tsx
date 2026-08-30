@@ -1,4 +1,4 @@
-import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { DeleteOutlined, EditOutlined, QrcodeOutlined } from "@ant-design/icons";
 import { DateParser } from "@lib/utils";
 import { EditorProvider } from "@tiptap/react";
 import { ReactNode, useState } from "react";
@@ -10,6 +10,9 @@ import { CSVLink } from "react-csv";
 import { IoMdDownload } from "react-icons/io";
 import { motion } from "motion/react";
 import { DeleteConfirmationModal } from "./DeleteConfirmationModal";
+import EventQrModal from "../Form/EventQrModal";
+import { fetchEventAttendanceToken } from "@services/event";
+import DisplayToast from "@lib/hooks/useToast";
 export default function TableItem({
   daton,
   handleDelete,
@@ -27,6 +30,12 @@ export default function TableItem({
   >([]);
   const [displayAttendees, setDisplayAttendees] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [qrModal, setQrModal] = useState<{
+    eventId: string;
+    eventTitle: string;
+    attendanceToken: string;
+  } | null>(null);
+  const [loadingQr, setLoadingQr] = useState(false);
   const DeleteAction = async () => {
     setIsDeleting(true);
     try {
@@ -57,6 +66,29 @@ export default function TableItem({
       );
     }
   };
+
+  const openQrModal = async () => {
+    setLoadingQr(true);
+    try {
+      let token = daton.attendance_token ?? null;
+      if (!token) {
+        const { token: fetched, error } = await fetchEventAttendanceToken(daton.id);
+        if (error || !fetched) {
+          DisplayToast("QR code is not available for this event", "error");
+          return;
+        }
+        token = fetched;
+      }
+      setQrModal({
+        eventId: daton.id,
+        eventTitle: daton.title,
+        attendanceToken: token,
+      });
+    } finally {
+      setLoadingQr(false);
+    }
+  };
+
   return (
     <div
       className="border-slate-400 border bg-slate-100 rounded-lg w-full p-5 relative shadow-2xl min-w-[max(40vw,300px)]"
@@ -79,6 +111,17 @@ export default function TableItem({
       >
         <EditOutlined />
       </button>
+      {daton.track_attendance && (
+        <button
+          type="button"
+          className="absolute right-[75px] top-[-15px] rounded-full p-2 w-10 text-black bg-gray-300 hover:bg-gray-400 cursor-pointer disabled:opacity-50"
+          onClick={openQrModal}
+          disabled={loadingQr}
+          title="Share QR code"
+        >
+          <QrcodeOutlined />
+        </button>
+      )}
       <span className="w-full grid grid-cols-[auto_1fr] gap-x-2 ">
         <DataPair data={daton.title ?? "N/A"}>
           <p className="font-bold text-blue">Title</p>
@@ -178,6 +221,14 @@ export default function TableItem({
               class: "ml-8 w-full col-span-2 focus:outline-none max-h-[40vh] overflow-y-auto",
             },
           }}
+        />
+      )}
+      {qrModal && (
+        <EventQrModal
+          eventId={qrModal.eventId}
+          eventTitle={qrModal.eventTitle}
+          attendanceToken={qrModal.attendanceToken}
+          onClose={() => setQrModal(null)}
         />
       )}
     </div>

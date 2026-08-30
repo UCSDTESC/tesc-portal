@@ -48,6 +48,7 @@ export type Event = {
   track_attendance?: boolean;
   manual_attendance?: number | null;
   type?: "internal" | "external" | "forum";
+  attendance_token?: string | null;
   slots?: EventSlot[];
 };
 

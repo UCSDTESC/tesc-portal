@@ -26,6 +26,21 @@ export const getCurrentTime = () => {
   return currTime;
 };
 
+/** Add hours to a datetime-local string (YYYY-MM-DDTHH:MM). */
+export const addHoursToLocalDatetime = (local: string, hours: number): string => {
+  const d = new Date(local);
+  if (Number.isNaN(d.getTime())) return local;
+  d.setHours(d.getHours() + hours);
+  const tzoffset = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - tzoffset).toISOString().slice(0, 16);
+};
+
+const defaultEventSlot = (startsAt: string) => ({
+  starts_at: startsAt,
+  ends_at: addHoursToLocalDatetime(startsAt, 1),
+  capacity: null as number | null,
+});
+
 /** Default form values with current time. Used in: Form init. */
 export const getFormDataDefault = (): formdata => {
   const currTime = getCurrentTime();
@@ -44,8 +59,17 @@ export const getFormDataDefault = (): formdata => {
     type: "external",
     recurring_rate: "none",
     recurrence_end_date: "",
-    slots: [{ starts_at: currTime, ends_at: currTime, capacity: null }],
+    slots: [defaultEventSlot(currTime)],
   };
+};
+
+/** Form init: use defaults for create, or ensure non-forum edits have at least one slot row. */
+export const initializeFormData = (formdata?: formdata): formdata => {
+  if (!formdata) return getFormDataDefault();
+  const isForum = (formdata.type ?? "external") === "forum";
+  if (isForum || (formdata.slots?.length ?? 0) > 0) return formdata;
+  const currTime = getCurrentTime();
+  return { ...formdata, slots: [defaultEventSlot(currTime)] };
 };
 
 /** Parses and displays date/time as stored (no timezone conversion). Expects YYYY-MM-DDTHH:mm or similar. */
@@ -58,6 +82,11 @@ const MONTH_NAMES = [
 /** Parses and displays date/time as stored (no timezone conversion). Expects YYYY-MM-DDTHH:mm or similar. Used in: DataTable getCellValue, event display. */
 export const DateParser = (date: string) => {
   if (!date || date === "N/A") return date;
+  const parsed = new Date(date);
+  if (!Number.isNaN(parsed.getTime()) && (date.includes("+") || date.endsWith("Z"))) {
+    const tzoffset = parsed.getTimezoneOffset() * 60000;
+    date = new Date(parsed.getTime() - tzoffset).toISOString();
+  }
   const match = date.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/);
   if (!match) return date;
   const [, year, month, day, hour, min, sec] = match;
@@ -74,6 +103,14 @@ export const DateParser = (date: string) => {
 /** Truncates date to YYYY-MM-DDTHH:MM. Used in: form date inputs. */
 export const toISO = (date: string) => {
   return date.substring(0, ((date.indexOf("T") | 0) + 6) | 0);
+};
+
+/** UTC timestamptz from DB → datetime-local value for form inputs. */
+export const toLocalDatetimeInput = (date: string) => {
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return toISO(date);
+  const tzoffset = parsed.getTimezoneOffset() * 60000;
+  return new Date(parsed.getTime() - tzoffset).toISOString().slice(0, 16);
 };
 /** Builds Google Maps directions URL. Used in: event details/location links. */
 export const formatGoogleMapsLocation = (location: string) => {
