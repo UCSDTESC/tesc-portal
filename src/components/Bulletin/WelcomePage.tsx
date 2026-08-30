@@ -72,7 +72,13 @@ export function WelcomePage() {
   );
 }
 
-export function WelcomePageCompany() {
+export function WelcomePageCompany({
+  accessState = "authorized",
+  onLogin,
+}: {
+  accessState?: "authorized" | "logged_out" | "unauthorized";
+  onLogin?: () => void;
+}) {
   useEffect(() => {
     document.title = "Welcome | TESC Portal";
   }, []);
@@ -117,6 +123,44 @@ export function WelcomePageCompany() {
                 <li>Get connected with potential employees</li>
                 <li>Learn about what they do outside of just work and school</li>
               </ul>
+
+              {accessState === "logged_out" && (
+                <div className="space-y-3 pt-2">
+                  <p className="text-md text-muted-foreground">
+                    Log in with your approved work email to browse the resume bank. Recruiter
+                    accounts use non-UCSD emails that have been allowlisted by TESC.
+                  </p>
+                  {onLogin && (
+                    <button
+                      type="button"
+                      onClick={onLogin}
+                      className="rounded-full bg-navy px-5 py-2 text-sm font-semibold text-white hover:opacity-90"
+                    >
+                      Log in to Recruiter Portal
+                    </button>
+                  )}
+                  <p className="text-sm text-muted-foreground">
+                    Need access? Email{" "}
+                    <a href="mailto:contact@tescatucsd.org" className="text-blue hover:underline">
+                      contact@tescatucsd.org
+                    </a>
+                  </p>
+                </div>
+              )}
+
+              {accessState === "unauthorized" && (
+                <div className="space-y-2 pt-2">
+                  <p className="text-md text-muted-foreground">
+                    Your account does not have recruiter access yet. Email TESC with your company
+                    name and work email to request access to the resume bank.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    <a href="mailto:contact@tescatucsd.org" className="text-blue hover:underline">
+                      contact@tescatucsd.org
+                    </a>
+                  </p>
+                </div>
+              )}
 
               <Separator />
 

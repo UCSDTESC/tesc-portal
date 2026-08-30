@@ -20,6 +20,7 @@ import { isValidUrl, currentYear, getPdfPreviewUrl } from "@lib/utils";
 import supabase from "@server/supabase";
 import DisplayToast from "@lib/hooks/useToast";
 import { useNavigate } from "react-router";
+import { getResumeSignedUrl, uploadResumePdf } from "@services/resume";
 
 import ListAttendedEvents from "@components/ui/ListAttendedEvents";
 
@@ -29,7 +30,9 @@ export type EditMemberProfileProps = {
   initialMajor?: string;
   initialGradYear?: number;
   initialResumeUrl?: string;
+  mode?: "default" | "onboarding";
   onCancel?: () => void;
+  onComplete?: () => void;
 };
 
 export default function EditMemberProfile({
@@ -38,14 +41,22 @@ export default function EditMemberProfile({
   initialMajor = "",
   initialGradYear,
   initialResumeUrl = "",
-  onCancel
+  mode = "default",
+  onCancel,
+  onComplete,
 }: EditMemberProfileProps) {
+  const isOnboarding = mode === "onboarding";
   const { User } = useContext(UserContext);
   const [firstName, setFirstName] = useState(initialFirstName);
   const [lastName, setLastName] = useState(initialLastName);
   const [major, setMajor] = useState(initialMajor);
   const [gradYear, setGradYear] = useState<string>(initialGradYear ? String(initialGradYear) : "");
   const [resumeUrl, setResumeUrl] = useState(initialResumeUrl);
+  const [resumeStoragePath, setResumeStoragePath] = useState("");
+  const [resumeVisible, setResumeVisible] = useState(true);
+  const [initialResumeVisible, setInitialResumeVisible] = useState(true);
+  const [pendingResumeFile, setPendingResumeFile] = useState<File | null>(null);
+  const [storagePreviewUrl, setStoragePreviewUrl] = useState<string | null>(null);
   const [touched, setTouched] = useState<{ [k: string]: boolean }>({});
   const yearMin = currentYear() - 1;
   const yearMax = currentYear() + 15;
@@ -57,7 +68,9 @@ export default function EditMemberProfile({
       console.log(User.email);
       const { data, error } = await supabase
         .from("users")
-        .select("first_name, last_name, major, expected_grad, resume_link")
+        .select(
+          "first_name, last_name, major, expected_grad, resume_link, resume_storage_path, resume_visible",
+        )
         .eq("email", User.email)
         .limit(1)
         .single();
@@ -67,14 +80,34 @@ export default function EditMemberProfile({
         setMajor(data.major ? data.major : "");
         setGradYear(data.expected_grad ? data.expected_grad : "");
         setResumeUrl(data.resume_link ? data.resume_link : "");
+        setResumeStoragePath(data.resume_storage_path ? data.resume_storage_path : "");
+        setResumeVisible(data.resume_visible ?? true);
+        setInitialResumeVisible(data.resume_visible ?? true);
       }
       if (error) {
         DisplayToast("Error grabbing profile information", "error");
       }
     };
     fetchMemberData();
+    fetchMemberData();
   }, [User]);
-  console.log("rerender");
+
+  useEffect(() => {
+    const loadStoragePreview = async () => {
+      if (!resumeStoragePath) {
+        setStoragePreviewUrl(null);
+        return;
+      }
+      const { url } = await getResumeSignedUrl(resumeStoragePath);
+      setStoragePreviewUrl(url);
+    };
+    loadStoragePreview();
+  }, [resumeStoragePath]);
+
+  const hasResumeSource = Boolean(
+    pendingResumeFile || resumeStoragePath || (resumeUrl && isValidUrl(resumeUrl)),
+  );
+
   const errors = useMemo(() => {
     const e: {
       firstName?: string;
@@ -82,6 +115,7 @@ export default function EditMemberProfile({
       major?: string;
       gradYear?: string;
       resumeUrl?: string;
+      resumeVisible?: string;
     } = {};
 
     if (!firstName.trim()) e.firstName = "Please enter your first name.";
@@ -95,11 +129,24 @@ export default function EditMemberProfile({
     else if (gy < yearMin || gy > yearMax)
       e.gradYear = `Year should be between ${yearMin} and ${yearMax}.`;
 
-    if (!resumeUrl) e.resumeUrl = "Paste a link to your resume (PDF, Drive, etc.).";
-    else if (!isValidUrl(resumeUrl)) e.resumeUrl = "Enter a valid URL (http/https).";
+    if (resumeUrl && !isValidUrl(resumeUrl)) e.resumeUrl = "Enter a valid URL (http/https).";
+    if (!isOnboarding && resumeVisible && !hasResumeSource) {
+      e.resumeVisible = "Add a resume link or upload a PDF before sharing with recruiters.";
+    }
 
     return e;
-  }, [firstName, lastName, major, gradYear, resumeUrl, yearMin, yearMax]);
+  }, [
+    firstName,
+    lastName,
+    major,
+    gradYear,
+    resumeUrl,
+    resumeVisible,
+    hasResumeSource,
+    yearMin,
+    yearMax,
+    isOnboarding,
+  ]);
 
   const isDirty = useMemo(() => {
     const a = initialFirstName ?? "";
@@ -107,68 +154,110 @@ export default function EditMemberProfile({
     const c = initialMajor ?? "";
     const d = initialGradYear ? String(initialGradYear) : "";
     const e = initialResumeUrl ?? "";
-    return firstName !== a || lastName !== b || major !== c || gradYear !== d || resumeUrl !== e;
+    const f = initialResumeVisible;
+    return (
+      firstName !== a ||
+      lastName !== b ||
+      major !== c ||
+      gradYear !== d ||
+      resumeUrl !== e ||
+      resumeVisible !== f ||
+      Boolean(pendingResumeFile)
+    );
   }, [
     firstName,
     lastName,
     major,
     gradYear,
     resumeUrl,
+    resumeVisible,
+    initialResumeVisible,
+    pendingResumeFile,
     initialFirstName,
     initialLastName,
     initialMajor,
     initialGradYear,
-    initialResumeUrl
+    initialResumeUrl,
   ]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (Object.keys(errors).length === 0) {
-      const { error } = await supabase
-        .from("users")
-        .update({
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-          resume_link: resumeUrl,
-          major: major,
-          expected_grad: Number(gradYear)
-        })
-        .eq("email", User?.email);
-      if (error) {
-        setTouched({
-          firstName: true,
-          lastName: true,
-          major: true,
-          gradYear: true,
-          resumeUrl: true
-        });
-        DisplayToast("Error updating profile info", "error");
-      } else {
-        DisplayToast("Successfully updated profile info", "success");
-        navigate("/");
-      }
-    } else {
+    if (Object.keys(errors).length > 0) {
       setTouched({
         firstName: true,
         lastName: true,
         major: true,
         gradYear: true,
-        resumeUrl: true
+        resumeUrl: true,
+        resumeVisible: true,
       });
+      return;
+    }
+
+    let nextStoragePath = resumeStoragePath;
+    if (pendingResumeFile && User?.id) {
+      const { path, error: uploadError } = await uploadResumePdf(pendingResumeFile, User.id);
+      if (uploadError || !path) {
+        DisplayToast("Error uploading resume PDF", "error");
+        return;
+      }
+      nextStoragePath = path;
+    }
+
+    const { error } = await supabase
+      .from("users")
+      .update({
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        resume_link: resumeUrl.trim() || null,
+        resume_storage_path: nextStoragePath || null,
+        resume_visible: resumeVisible,
+        major: major,
+        expected_grad: Number(gradYear),
+      })
+      .eq("email", User?.email);
+    if (error) {
+      setTouched({
+        firstName: true,
+        lastName: true,
+        major: true,
+        gradYear: true,
+        resumeUrl: true,
+        resumeVisible: true,
+      });
+      DisplayToast("Error updating profile info", "error");
+    } else {
+      setResumeStoragePath(nextStoragePath);
+      setPendingResumeFile(null);
+      DisplayToast("Successfully updated profile info", "success");
+      if (onComplete) {
+        onComplete();
+      } else {
+        navigate("/");
+      }
     }
   };
 
-  const { previewUrl } = getPdfPreviewUrl(resumeUrl);
+  const linkPreview = resumeUrl && isValidUrl(resumeUrl) ? getPdfPreviewUrl(resumeUrl).previewUrl : null;
+  const previewUrl = pendingResumeFile
+    ? URL.createObjectURL(pendingResumeFile)
+    : storagePreviewUrl || linkPreview;
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-      <div className="flex flex-col lg:flex-row gap-6 max-w-6xl mx-auto">
+      <div
+        className={`flex flex-col gap-6 mx-auto ${isOnboarding ? "max-w-3xl" : "lg:flex-row max-w-6xl"}`}
+      >
         {/* Left: Edit Card */}
         <Card className="flex-1 shadow-lg h-fit">
           <CardHeader>
-            <CardTitle className="text-2xl">Edit Profile</CardTitle>
+            <CardTitle className="text-2xl">
+              {isOnboarding ? "Complete your profile" : "Edit Profile"}
+            </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Update your name, major, graduation year, and resume link.
+              {isOnboarding
+                ? "Tell us a bit about yourself so you can RSVP to events and connect with recruiters."
+                : "Update your profile, resume, and recruiter sharing preferences."}
             </p>
           </CardHeader>
           <CardContent>
@@ -248,7 +337,7 @@ export default function EditMemberProfile({
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="resumeUrl">Resume Link</Label>
+                <Label htmlFor="resumeUrl">Resume Link (optional)</Label>
                 <Input
                   id="resumeUrl"
                   type="url"
@@ -263,27 +352,74 @@ export default function EditMemberProfile({
                 )}
               </div>
 
+              <div className="grid gap-2">
+                <Label htmlFor="resumeFile">Upload Resume PDF (optional)</Label>
+                <Input
+                  id="resumeFile"
+                  type="file"
+                  accept="application/pdf"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null;
+                    setPendingResumeFile(file);
+                  }}
+                />
+                {resumeStoragePath && !pendingResumeFile && (
+                  <p className="text-xs text-muted-foreground">
+                    A resume PDF is stored on TESC Portal.
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-start gap-3 rounded-lg border p-3">
+                <input
+                  id="resumeVisible"
+                  type="checkbox"
+                  className="mt-1"
+                  checked={resumeVisible}
+                  onChange={(e) => {
+                    setResumeVisible(e.target.checked);
+                    setTouched((t) => ({ ...t, resumeVisible: true }));
+                  }}
+                />
+                <div className="grid gap-1">
+                  <Label htmlFor="resumeVisible" className="cursor-pointer">
+                    Share my resume with TESC recruiting partners
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Approved recruiters can view your resume, major, graduation year, and TESC
+                    events you have attended.
+                  </p>
+                  {touched.resumeVisible && errors.resumeVisible && (
+                    <p className="text-sm text-destructive">{errors.resumeVisible}</p>
+                  )}
+                </div>
+              </div>
+
               <div className="flex items-center gap-3 pt-2">
                 <Button
                   type="submit"
-                  disabled={Object.keys(errors).length > 0 || !isDirty}
+                  disabled={Object.keys(errors).length > 0 || (!isOnboarding && !isDirty)}
                   className="bg-blue"
                 >
-                  Save changes
+                  {isOnboarding ? "Save profile" : "Save changes"}
                 </Button>
-                <Button type="button" variant="secondary" onClick={() => onCancel?.()}>
-                  Cancel
-                </Button>
-                <span className="ml-auto text-xs text-muted-foreground">
-                  {isDirty ? "Unsaved changes" : "All changes saved"}
-                </span>
+                {!isOnboarding && (
+                  <Button type="button" variant="secondary" onClick={() => onCancel?.()}>
+                    Cancel
+                  </Button>
+                )}
+                {!isOnboarding && (
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {isDirty ? "Unsaved changes" : "All changes saved"}
+                  </span>
+                )}
               </div>
             </form>
           </CardContent>
         </Card>
 
         {/* Right: PDF Preview */}
-        {resumeUrl && isValidUrl(resumeUrl) && previewUrl && (
+        {previewUrl && (
           <Card className="flex-1 shadow-lg h-full">
             <CardHeader>
               <CardTitle className="text-2xl">Resume Preview</CardTitle>
@@ -300,9 +436,9 @@ export default function EditMemberProfile({
       </div>
 
       {/* recently attended events list */}
-      {User && User.id && (
+      {!isOnboarding && User && User.id && (
         <div className="max-w-6xl mx-auto pt-12">
-            <ListAttendedEvents userId={User.id} />
+          <ListAttendedEvents userId={User.id} />
         </div>
       )}
 

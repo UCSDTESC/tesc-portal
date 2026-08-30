@@ -1,23 +1,33 @@
-import { FormEvent, useContext, useState } from "react";
+import { FormEvent, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
-import UserContext from "@lib/UserContext";
+import UserContext, { PENDING_PROFILE_SETUP_KEY } from "@lib/UserContext";
 import { MuiOtpInput } from "mui-one-time-password-input";
 import DisplayToast from "@lib/hooks/useToast";
 import { motion } from "motion/react";
 import { container_login, item } from "@lib/constants";
-export default function LoginModal({ onclose }: { onclose: () => void }) {
+import EditMemberProfile from "@components/adminUser/Profile/EditMemberProfile";
+
+type LoginModalProps = {
+  onclose: () => void;
+  initialProfileSetup?: boolean;
+};
+
+export default function LoginModal({ onclose, initialProfileSetup = false }: LoginModalProps) {
   const [register, setRegister] = useState(false);
   const [OTPFlag, setOTPFlag] = useState(false);
   const [forgot, setForgot] = useState(false);
   const [forgotOTPFlag, setForgotOTPFlag] = useState(false);
   const [resetFlag, setResetFlag] = useState(false);
+  const [showProfileSetup, setShowProfileSetup] = useState(initialProfileSetup);
 
   const [otp, setOtp] = useState("");
   const [email, setEmail] = useState("");
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
+
+  const [resumeVisible, setResumeVisible] = useState(true);
 
   const navigate = useNavigate();
 
@@ -29,8 +39,22 @@ export default function LoginModal({ onclose }: { onclose: () => void }) {
     handleGoogleAuth,
     handleVerifyOTP,
     handleSendRecovery,
-    handleUpdatePassword
+    handleUpdatePassword,
+    loginRecruiterMode,
+    setPendingProfileSetup,
   } = useContext(UserContext);
+
+  useEffect(() => {
+    if (initialProfileSetup) {
+      setShowProfileSetup(true);
+      setPendingProfileSetup(false);
+    }
+  }, [initialProfileSetup, setPendingProfileSetup]);
+
+  const finishProfileSetup = () => {
+    setShowProfileSetup(false);
+    onclose();
+  };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -80,7 +104,13 @@ export default function LoginModal({ onclose }: { onclose: () => void }) {
       });
     } else {
       // registration OTP
-      handleVerifyOTP({ email: email, password: otp, type: "email" }, onclose);
+      handleVerifyOTP({ email: email, password: otp, type: "email", resumeVisible }, (result) => {
+        if (result?.needsProfileSetup) {
+          setShowProfileSetup(true);
+        } else {
+          onclose();
+        }
+      });
     }
   };
 
@@ -97,219 +127,294 @@ export default function LoginModal({ onclose }: { onclose: () => void }) {
     });
   };
 
+  const handleBackdropClick = () => {
+    if (showProfileSetup) return;
+    onclose();
+  };
+
   return (
     <div className="w-screen h-screen flex justify-center items-center text-black z-100 fixed top-0 left-0">
       <div
         className="w-full h-full bg-black opacity-35 absolute top-0 cursor-pointer"
-        onClick={onclose}
+        onClick={handleBackdropClick}
       />
-      <div className="min-w-80 w-1/2 h-3/4 max-w-[500px] bg-white rounded-lg z-1 flex justify-center">
-        {/* ----- OTP ENTRY (signup or recovery) ----- */}
-        {OTPFlag || forgotOTPFlag ? (
-          <form
-            className="flex items-center justify-center gap-5 flex-col w-full h-full"
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleOTPSubmit();
-            }}
-          >
-            <h1 className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A]">
-              Check your Email!
-            </h1>
-            <p className="font-DM text-xl w-3/4 text-[#262626] hidden md:block">
-              Please check your <strong>Email</strong> for a one-time 6-digit verification code
-            </p>
-            <div className="w-full flex justify-center">
-              <MuiOtpInput
-                value={otp}
-                length={6}
-                onChange={(val) => setOtp(val)}
-                className="rounded-lg w-3/4 !gap-1 flex max-w-[500px]"
-              />
+      <div
+        className={`bg-white rounded-lg z-1 flex flex-col ${
+          showProfileSetup
+            ? "w-[95vw] max-w-5xl h-[90vh] min-w-80"
+            : "min-w-80 w-1/2 h-3/4 max-w-[500px] justify-center"
+        }`}
+      >
+        {showProfileSetup ? (
+          <div className="flex h-full min-h-0 flex-col p-4 md:p-6">
+            <div className="mb-4 flex shrink-0 items-center justify-between gap-4">
+              <h1 className="font-DM text-xl font-bold text-navy md:text-2xl">
+                Welcome to TESC!
+              </h1>
+              <button
+                type="button"
+                className="shrink-0 text-sm text-navy underline hover:opacity-80"
+                onClick={finishProfileSetup}
+              >
+                Complete later
+              </button>
             </div>
-            <button
-              type="submit"
-              className="cursor-pointer rounded-2xl max-w-[500px] py-1 px-5 w-3/4 bg-white border border-navy text-navy font-bold"
-            >
-              Submit Code
-            </button>
-          </form>
-        ) : resetFlag ? (
-          /* ----- RESET PASSWORD AFTER RECOVERY OTP ----- */
-          <motion.form
-            variants={container_login}
-            initial="hidden"
-            animate="show"
-            onSubmit={handleResetSubmit}
-            className="flex items-center justify-center gap-5 flex-col w-full h-full"
-          >
-            <h1 className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A]">
-              Set a new password
-            </h1>
-            <input
-              name="newPassword"
-              type="password"
-              placeholder="🔒 New Password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="rounded-lg w-3/4 bg-[#EDEDED] grayscale px-1"
-            />
-            <input
-              name="confirmNewPassword"
-              type="password"
-              placeholder="🔒 Confirm New Password"
-              value={confirmNewPassword}
-              onChange={(e) => setConfirmNewPassword(e.target.value)}
-              className="rounded-lg w-3/4 bg-[#EDEDED] grayscale px-1"
-            />
-            <button
-              type="submit"
-              className="cursor-pointer rounded-2xl max-w-[500px] py-1 px-5 w-3/4 bg-white border border-navy text-navy font-bold"
-            >
-              Submit
-            </button>
-          </motion.form>
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <EditMemberProfile mode="onboarding" onComplete={finishProfileSetup} />
+            </div>
+          </div>
         ) : (
-          /* ----- DEFAULT LOGIN / REGISTER / FORGOT ----- */
-          <motion.form
-            variants={container_login}
-            initial="hidden"
-            animate="show"
-            onSubmit={handleSubmit}
-            className="flex items-center justify-center gap-5 flex-col w-full h-full"
-          >
-            <motion.h1
-              className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A] text-center"
-              variants={item}
-            >
-              {forgot ? "Reset your password" : "Welcome to TESC!"}
-            </motion.h1>
-
-            <motion.p
-              className="font-DM text-xl w-3/4 text-center text-balance text-[#262626] hidden md:block"
-              variants={item}
-            >
-              {forgot ? (
-                "Enter your UCSD email and we'll send you a 6-digit recovery code."
-              ) : (
-                <>
-                  Whether you are a <strong>returning member</strong> or a{" "}
-                  <strong>new member</strong>, we're glad to have you!
-                </>
-              )}
-            </motion.p>
-
-            {/* always need email */}
-            <motion.input
-              variants={item}
-              name="email"
-              type="text"
-              placeholder="✉ UCSD email"
-              className="rounded-lg w-3/4 bg-[#EDEDED] px-1"
-              required
-            />
-            <motion.div
-              variants={item}
-              className={`w-3/4 gap-5 flex flex-col h-fit ${forgot ? "hidden" : "block"}`}
-            >
-              {/* hide password fields in forgot flow */}
-              {!forgot && (
-                <>
-                  <input
-                    key="password"
-                    name="password"
-                    type="password"
-                    placeholder="🔒 Password"
-                    className="rounded-lg w-full bg-[#EDEDED] grayscale px-1"
-                    required
+          <>
+            {/* ----- OTP ENTRY (signup or recovery) ----- */}
+            {OTPFlag || forgotOTPFlag ? (
+              <form
+                className="flex items-center justify-center gap-5 flex-col w-full h-full"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleOTPSubmit();
+                }}
+              >
+                <h1 className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A]">
+                  Check your Email!
+                </h1>
+                <p className="font-DM text-xl w-3/4 text-[#262626] hidden md:block">
+                  Please check your <strong>Email</strong> for a one-time 6-digit verification code
+                </p>
+                <div className="w-full flex justify-center">
+                  <MuiOtpInput
+                    value={otp}
+                    length={6}
+                    onChange={(val) => setOtp(val)}
+                    className="rounded-lg w-3/4 !gap-1 flex max-w-[500px]"
                   />
-
-                  {register && (
-                    <input
-                      name="confirmPassword"
-                      type="password"
-                      placeholder="🔒 Confirm Password"
-                      className="rounded-lg w-full bg-[#EDEDED] grayscale px-1"
-                      required
-                    />
-                  )}
-                </>
-              )}
-            </motion.div>
-
-            {Error && <div className="text-red-600 text-sm">Error: {Error}</div>}
-
-            <motion.div className="w-3/4" variants={item}>
-              <div className="flex items-center justify-between">
-                {/* left link: register toggle OR back-to-login */}
+                </div>
                 <button
-                  type="button"
-                  className="text-navy cursor-pointer mr-auto underline hover:opacity-80 text-left"
-                  onClick={() => {
-                    if (forgot) {
-                      // leave forgot mode -> go back to sign in
-                      setForgot(false);
-                      setRegister(false);
-                      setError("");
-                    } else {
-                      // toggle register vs login
-                      setRegister(!register);
-                      setForgot(false);
-                      setError("");
-                    }
-                  }}
+                  type="submit"
+                  className="cursor-pointer rounded-2xl max-w-[500px] py-1 px-5 w-3/4 bg-white border border-navy text-navy font-bold"
+                >
+                  Submit Code
+                </button>
+              </form>
+            ) : resetFlag ? (
+              /* ----- RESET PASSWORD AFTER RECOVERY OTP ----- */
+              <motion.form
+                variants={container_login}
+                initial="hidden"
+                animate="show"
+                onSubmit={handleResetSubmit}
+                className="flex items-center justify-center gap-5 flex-col w-full h-full"
+              >
+                <h1 className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A]">
+                  Set a new password
+                </h1>
+                <input
+                  name="newPassword"
+                  type="password"
+                  placeholder="🔒 New Password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="rounded-lg w-3/4 bg-[#EDEDED] grayscale px-1"
+                />
+                <input
+                  name="confirmNewPassword"
+                  type="password"
+                  placeholder="🔒 Confirm New Password"
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  className="rounded-lg w-3/4 bg-[#EDEDED] grayscale px-1"
+                />
+                <button
+                  type="submit"
+                  className="cursor-pointer rounded-2xl max-w-[500px] py-1 px-5 w-3/4 bg-white border border-navy text-navy font-bold"
+                >
+                  Submit
+                </button>
+              </motion.form>
+            ) : (
+              /* ----- DEFAULT LOGIN / REGISTER / FORGOT ----- */
+              <motion.form
+                variants={container_login}
+                initial="hidden"
+                animate="show"
+                onSubmit={handleSubmit}
+                className="flex items-center justify-center gap-5 flex-col w-full h-full"
+              >
+                <motion.h1
+                  className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A] text-center"
+                  variants={item}
                 >
                   {forgot
-                    ? "Back to sign in"
-                    : register
-                    ? "Already a user? Log in"
-                    : "Register a new account"}
-                </button>
+                    ? "Reset your password"
+                    : loginRecruiterMode
+                      ? "Recruiter Portal"
+                      : "Welcome to TESC!"}
+                </motion.h1>
 
-                {/* right link: forgot password (only show on login) */}
-                {!register && !forgot && (
-                  <button
+                <motion.p
+                  className="font-DM text-xl w-3/4 text-center text-balance text-[#262626] hidden md:block"
+                  variants={item}
+                >
+                  {forgot ? (
+                    loginRecruiterMode ? (
+                      "Enter your work email and we'll send you a 6-digit recovery code."
+                    ) : (
+                      "Enter your UCSD email and we'll send you a 6-digit recovery code."
+                    )
+                  ) : loginRecruiterMode ? (
+                    <>
+                      Sign in with your <strong>approved work email</strong> to browse the TESC member
+                      resume bank.
+                    </>
+                  ) : (
+                    <>
+                      Whether you are a <strong>returning member</strong> or a{" "}
+                      <strong>new member</strong>, we're glad to have you!
+                    </>
+                  )}
+                </motion.p>
+
+                {/* always need email */}
+                <motion.input
+                  variants={item}
+                  name="email"
+                  type="text"
+                  placeholder={loginRecruiterMode ? "✉ Work email" : "✉ UCSD email"}
+                  className="rounded-lg w-3/4 bg-[#EDEDED] px-1"
+                  required
+                />
+                <motion.div
+                  variants={item}
+                  className={`w-3/4 gap-5 flex flex-col h-fit ${forgot ? "hidden" : "block"}`}
+                >
+                  {/* hide password fields in forgot flow */}
+                  {!forgot && (
+                    <>
+                      <input
+                        key="password"
+                        name="password"
+                        type="password"
+                        placeholder="🔒 Password"
+                        className="rounded-lg w-full bg-[#EDEDED] grayscale px-1"
+                        required
+                      />
+
+                      {register && (
+                        <input
+                          name="confirmPassword"
+                          type="password"
+                          placeholder="🔒 Confirm Password"
+                          className="rounded-lg w-full bg-[#EDEDED] grayscale px-1"
+                          required
+                        />
+                      )}
+
+                      {register && !loginRecruiterMode && (
+                        <label className="flex items-start gap-2 text-left text-sm text-[#262626]">
+                          <input
+                            type="checkbox"
+                            className="mt-0.5"
+                            checked={resumeVisible}
+                            onChange={(e) => setResumeVisible(e.target.checked)}
+                          />
+                          <span>
+                            Share my resume with TESC recruiting partners once I add it to my profile
+                          </span>
+                        </label>
+                      )}
+                    </>
+                  )}
+                </motion.div>
+
+                {Error && <div className="text-red-600 text-sm">Error: {Error}</div>}
+
+                {loginRecruiterMode && !forgot && (
+                  <motion.p className="text-sm text-[#262626] w-3/4 text-center" variants={item}>
+                    Need access? Email{" "}
+                    <a href="mailto:contact@tescatucsd.org" className="text-navy underline">
+                      contact@tescatucsd.org
+                    </a>
+                  </motion.p>
+                )}
+
+                <motion.div className="w-3/4" variants={item}>
+                  <div className="flex items-center justify-between">
+                    {/* left link: register toggle OR back-to-login */}
+                    <button
+                      type="button"
+                      className="text-navy cursor-pointer mr-auto underline hover:opacity-80 text-left"
+                      onClick={() => {
+                        if (forgot) {
+                          // leave forgot mode -> go back to sign in
+                          setForgot(false);
+                          setRegister(false);
+                          setError("");
+                        } else {
+                          // toggle register vs login
+                          setRegister(!register);
+                          setResumeVisible(true);
+                          setForgot(false);
+                          setError("");
+                        }
+                      }}
+                    >
+                      {forgot
+                        ? "Back to sign in"
+                        : register
+                        ? "Already a user? Log in"
+                        : "Register a new account"}
+                    </button>
+
+                    {/* right link: forgot password (only show on login) */}
+                    {!register && !forgot && (
+                      <button
+                        type="button"
+                        className="text-navy cursor-pointer underline hover:opacity-80 text-right"
+                        onClick={() => {
+                          // switch to forgot password flow
+                          setForgot(true);
+                          setRegister(false);
+                          setError("");
+                        }}
+                      >
+                        Forgot Password?
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+
+                <motion.button
+                  variants={item}
+                  type="submit"
+                  className={`cursor-pointer rounded-2xl py-1 px-5 w-3/4 text-navy font-bold ${
+                    forgot
+                      ? "bg-white border border-navy"
+                      : register
+                      ? "bg-white border border-navy"
+                      : "bg-[#6A97BD] border border-[#6A97BD]"
+                  }
+              `}
+                >
+                  {forgot ? "Send Recovery Code" : register ? "Sign up" : "Sign in"}
+                </motion.button>
+
+                {!forgot && !loginRecruiterMode && (
+                  <motion.button
+                    variants={item}
                     type="button"
-                    className="text-navy cursor-pointer underline hover:opacity-80 text-right"
+                    className="cursor-pointer rounded-2xl py-1 px-5 w-3/4 bg-white border border-gray-300 text-black font-semibold"
                     onClick={() => {
-                      // switch to forgot password flow
-                      setForgot(true);
-                      setRegister(false);
-                      setError("");
+                      if (register) {
+                        sessionStorage.setItem(PENDING_PROFILE_SETUP_KEY, "1");
+                      }
+                      handleGoogleAuth();
                     }}
                   >
-                    Forgot Password?
-                  </button>
+                    Continue with Google
+                  </motion.button>
                 )}
-              </div>
-            </motion.div>
-
-            <motion.button
-              variants={item}
-              type="submit"
-              className={`cursor-pointer rounded-2xl py-1 px-5 w-3/4 text-navy font-bold ${
-                forgot
-                  ? "bg-white border border-navy"
-                  : register
-                  ? "bg-white border border-navy"
-                  : "bg-[#6A97BD] border border-[#6A97BD]"
-              }
-              `}
-            >
-              {forgot ? "Send Recovery Code" : register ? "Sign up" : "Sign in"}
-            </motion.button>
-
-            {!forgot && (
-              <motion.button
-                variants={item}
-                type="button"
-                className="cursor-pointer rounded-2xl py-1 px-5 w-3/4 bg-white border border-gray-300 text-black font-semibold"
-                onClick={handleGoogleAuth}
-              >
-                Continue with Google
-              </motion.button>
+              </motion.form>
             )}
-          </motion.form>
+          </>
         )}
       </div>
     </div>

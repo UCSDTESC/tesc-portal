@@ -271,9 +271,16 @@ export const queryPeopleBySearchAndFilters = async (
 ) => {
   let query = supabase
     .from("users")
-    .select("email,created_at,points,resume_link,expected_grad,major,first_name,last_name")
-    .or(`first_name.ilike.%${keyword}%, last_name.ilike.%${keyword}%, email.ilike.%${keyword}%`)
-    .not("resume_link", "is", null);
+    .select(
+      "uuid,email,created_at,points,resume_link,resume_storage_path,expected_grad,major,first_name,last_name",
+    )
+    .eq("resume_visible", true);
+
+  if (keyword.trim()) {
+    query = query.or(
+      `first_name.ilike.%${keyword}%,last_name.ilike.%${keyword}%,major.ilike.%${keyword}%`,
+    );
+  }
   if (tagFilters.length > 0) query = query.in("expected_grad", tagFilters);
 
   if (orgFilters.length > 0) {
@@ -287,7 +294,12 @@ export const queryPeopleBySearchAndFilters = async (
   else query = query.order("created_at", { ascending: false });
 
   const { data, error } = await query;
-  return { People: data, error };
+  const People = (data ?? []).filter(
+    (person) =>
+      (person.resume_link && String(person.resume_link).trim()) ||
+      (person.resume_storage_path && String(person.resume_storage_path).trim()),
+  );
+  return { People, error };
 };
 
 // for attended events list

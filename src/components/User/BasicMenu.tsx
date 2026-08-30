@@ -9,13 +9,14 @@ import MenuList from "@mui/material/MenuList";
 import Stack from "@mui/material/Stack";
 import { useContext } from "react";
 import UserContext from "@lib/UserContext";
+import { canManageOrgProfile } from "@lib/constants";
 import { NavLink } from "react-router";
 import { CgProfile } from "react-icons/cg";
 
 export default function BasicMenu() {
   const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef<HTMLButtonElement>(null);
-  const { User, handleSignOut, setShowLoginModal } = useContext(UserContext);
+  const { User, handleSignOut, setShowLoginModal, activeOrgRole } = useContext(UserContext);
   const isLoggedIn = User && User.id;
   const handleToggle = () => {
     setOpen((prevOpen) => !prevOpen);
@@ -73,8 +74,8 @@ export default function BasicMenu() {
           role={undefined}
           placement="bottom-end"
           transition
-          disablePortal
-          className="!mt-2"
+          className="!z-[200]"
+          style={{ zIndex: 200 }}
         >
           {({ TransitionProps, placement }) => (
             <Grow
@@ -103,7 +104,7 @@ export default function BasicMenu() {
                             </NavLink>
                           </>
                         )}
-                        {User?.role === "internal" && (
+                        {canManageOrgProfile(activeOrgRole) && (
                           <NavLink to="/form">
                             <MenuItem onClick={handleClose}>New Event</MenuItem>
                           </NavLink>

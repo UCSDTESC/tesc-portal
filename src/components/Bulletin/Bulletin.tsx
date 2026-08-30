@@ -7,10 +7,11 @@ import UserContext from "@lib/UserContext";
 
 import { BulletinContext, useBulletin } from "@lib/hooks/useBulletin";
 import { useEditModal } from "@lib/hooks/useEditModal";
-import { formdata } from "@lib/constants";
+import { formdata, PortalMode } from "@lib/constants";
 import { FaArrowRightToBracket } from "react-icons/fa6";
 import { FaArrowRightFromBracket } from "react-icons/fa6";
 import CheckBoxes from "./CheckBoxes";
+import PortalToggle from "./PortalToggle";
 import { EventsList } from "./EventsList";
 import BulletinDisplay from "./BulletinDisplay";
 import Form from "../adminUser/Form/Form";
@@ -25,6 +26,8 @@ export default function Bulletin() {
   const [displaysideBar, setDisplaySideBar] = useState(true);
   const [eventTimeFilter, setEventTimeFilter] = useState<EventTimeFilter>("current");
   const [forumMode, setForumMode] = useState(false);
+  const [portalMode, setPortalMode] = useState<PortalMode>("events");
+  const isRecruiterPortal = portalMode === "recruiter";
   const {
     data,
     People,
@@ -47,7 +50,7 @@ export default function Bulletin() {
     sortMethod,
     setSortMethod,
     fetchData,
-  } = useBulletin(User);
+  } = useBulletin(User, portalMode);
   const {
     showEditModal,
     setShowEditModal,
@@ -63,6 +66,30 @@ export default function Bulletin() {
     setSelection(id);
   }, [postId.postId]);
 
+  // Default portal mode when auth state changes
+  useEffect(() => {
+    if (User?.role === "company") {
+      setPortalMode("recruiter");
+    } else if (User?.id) {
+      setPortalMode("events");
+    }
+  }, [User?.id, User?.role]);
+
+  const handlePortalChange = (mode: PortalMode) => {
+    setPortalMode(mode);
+    setSelection("-1");
+    if (mode === "events") {
+      setForumMode(false);
+      setTypeFilters([]);
+    } else {
+      setForumMode(false);
+      setTypeFilters([]);
+      setTagFilters([]);
+      setOrgFilters([]);
+    }
+    navigate("/bulletin/-1");
+  };
+
   const parseEventTime = (value: unknown): number | null => {
     if (value === null || value === undefined) return null;
     const str = String(value).trim();
@@ -73,7 +100,7 @@ export default function Bulletin() {
 
   // Auto-select Current/Past tab when loading an event from URL so it displays correctly
   useEffect(() => {
-    if (User?.role === "company" || !data) return;
+    if (isRecruiterPortal || !data) return;
     const eventId = postId.postId;
     if (!eventId || eventId === "-1") return;
     const event = data.find((e) => String(e.id) === String(eventId));
@@ -89,10 +116,10 @@ export default function Bulletin() {
         setEventTimeFilter(isCurrent ? "current" : "past"); // if we can't parse, treat as past
       }
     }
-  }, [data, postId.postId, User?.role]);
+  }, [data, postId.postId, isRecruiterPortal]);
 
   const filteredData = useMemo(() => {
-    if (!data || User?.role === "company") return data;
+    if (!data || isRecruiterPortal) return data;
     const now = Date.now();
     return data.filter((event) => {
       if (forumMode) return event.type === "forum";
@@ -103,7 +130,7 @@ export default function Bulletin() {
       const isCurrent = endTime !== null ? endTime >= now : false;
       return eventTimeFilter === "current" ? isCurrent : !isCurrent;
     });
-  }, [data, eventTimeFilter, forumMode, User?.role]);
+  }, [data, eventTimeFilter, forumMode, isRecruiterPortal]);
 
   return (
     <BulletinContext.Provider
@@ -128,6 +155,8 @@ export default function Bulletin() {
         setInternalFilter,
         sortMethod,
         setSortMethod,
+        portalMode,
+        setPortalMode,
         eventTimeFilter,
         forumMode,
         openEditModal,
@@ -136,8 +165,9 @@ export default function Bulletin() {
       }}
     >
       <div className="grid w-full  h-[calc(100vh-3.5rem)] grid-rows-[3.5rem_1fr] font-DM">
-        <div className="bg-linear-to-r from-0% from-blue via-70% via-[#3B7DB6] to-blue flex min-h-[2.25rem] items-center gap-3 [&>*]:min-h-[2.25rem]">
+        <div className="relative z-0 bg-linear-to-r from-0% from-blue via-70% via-[#3B7DB6] to-blue flex min-h-[2.25rem] items-center gap-3 px-2 [&>*]:min-h-[2.25rem]">
           <CheckBoxes />
+          <PortalToggle portalMode={portalMode} onChange={handlePortalChange} />
         </div>
         <div className="flex w-full h-full flex-row relative">
           <div
@@ -149,7 +179,7 @@ export default function Bulletin() {
               className="rotate-180 ml-auto w-[3.5rem] text-[20px] mr-2 mt-2 text-gray shrink-0 md:hidden"
               onClick={() => setDisplaySideBar(false)}
             />
-            {User?.role !== "company" && (
+            {!isRecruiterPortal && (
               <div className="relative isolate flex shrink-0 items-center justify-center p-2 gap-2">
                 <AnimatePresence mode="wait">
                   {!forumMode ? (

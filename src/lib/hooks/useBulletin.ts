@@ -4,11 +4,11 @@ import { fetchGradYears, fetchOrgs } from "@services/organization";
 import { editRSVP, fetchRSVPAndAttended, logAttendance } from "@services/user";
 import { queryEventsBySearchAndFilters, queryPeopleBySearchAndFilters } from "@services/event";
 import UserContext, { User } from "@lib/UserContext";
-import { Event, Member } from "@lib/constants";
+import { Event, Member, PortalMode, canAccessRecruiterData } from "@lib/constants";
 import DisplayToast from "@lib/hooks/useToast";
 
 // custom hook for bulletin component
-export function useBulletin(User: User | null) {
+export function useBulletin(User: User | null, portalMode: PortalMode) {
   const { setShowLoginModal, activeOrgName } = useContext(UserContext);
   const [data, setData] = useState<Event[]>();
   const [People, setPeople] = useState<Member[]>();
@@ -48,15 +48,28 @@ export function useBulletin(User: User | null) {
   }, []);
 
   const fetchData = useCallback(async () => {
+    const recruiterView = portalMode === "recruiter";
+    const recruiterAccess = recruiterView && canAccessRecruiterData(User?.role);
+
     if (!User) {
       setIsLoading(false);
+      if (recruiterView) {
+        setPeople(undefined);
+      }
       return;
     }
+
+    if (recruiterView && !recruiterAccess) {
+      setIsLoading(false);
+      setPeople(undefined);
+      return;
+    }
+
     setIsLoading(true);
 
     console.log("----FETCH EVENTS---");
     const isSuperOrg = activeOrgName === "super_org";
-    if (User?.role === "company") {
+    if (recruiterAccess) {
       const { People, error } = await queryPeopleBySearchAndFilters(
         search,
         tagFilters,
@@ -87,7 +100,7 @@ export function useBulletin(User: User | null) {
       }
       setIsLoading(false);
     }
-  }, [search, tagFilters, orgFilters, typeFilters, sortMethod, User, internalFilter, activeOrgName]);
+  }, [search, tagFilters, orgFilters, typeFilters, sortMethod, User, internalFilter, activeOrgName, portalMode]);
 
   useEffect(() => {
     fetchData();
@@ -206,6 +219,8 @@ export interface BulletinContextProps {
   setInternalFilter: (value: boolean) => void;
   sortMethod: string;
   setSortMethod: (sortMethod: string) => void;
+  portalMode: PortalMode;
+  setPortalMode: (mode: PortalMode) => void;
   eventTimeFilter?: "current" | "past";
   forumMode?: boolean;
   openEditModal?: (event: Event) => void;
@@ -236,6 +251,8 @@ export const BulletinContext = createContext<BulletinContextProps>({
   setInternalFilter: () => {},
   sortMethod: "",
   setSortMethod: () => {},
+  portalMode: "events",
+  setPortalMode: () => {},
   eventTimeFilter: "current",
   forumMode: false,
   openEditModal: () => {},

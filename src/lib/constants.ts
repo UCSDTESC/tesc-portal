@@ -1,3 +1,21 @@
+/** Bulletin view mode: events feed vs recruiter resume bank. */
+export type PortalMode = "events" | "recruiter";
+
+export function canAccessRecruiterData(role: string | undefined) {
+  return role === "company";
+}
+
+/** True when the user can manage org profile/events for the active org. */
+export function canManageOrgProfile(role: string | undefined) {
+  if (!role) return false;
+  const normalized = role.trim().toLowerCase();
+  return (
+    normalized === "internal" ||
+    normalized === "org leader" ||
+    normalized === "super_user"
+  );
+}
+
 /** Event category tags for filtering/display. Used in: DataTable, Form, event services, Bulletin. */
 export const tags = [
   "fundraiser",
@@ -47,6 +65,7 @@ export type Member = {
   created_at: string;
   points: number;
   resume_link: string;
+  resume_storage_path?: string | null;
   expected_grad: number;
   major: string;
   first_name: string;
