@@ -1,13 +1,13 @@
 import UserContext from "@lib/UserContext";
-import { canManageOrgProfile } from "@lib/constants";
+import { canManageOrgMembers, canManageOrgProfile, canManageUsers } from "@lib/constants";
 import supabase from "@server/supabase";
 import { useContext, useEffect, useMemo, useState } from "react";
-import { NavLink, useLocation } from "react-router";
-import DataTable from "../Data/DataTable";
+import { useLocation } from "react-router";
 import Modal from "@mui/material/Modal";
 import EditProfileForm from "./EditMemberProfile";
 import EditOrgModal from "./EditOrgModal";
 import PageAllAttendEvents from "@components/User/PageAllAttendEvents";
+import ProfileAdminTables from "./ProfileAdminTables";
 
 export default function Profile() {
   const { User, activeOrgName, activeOrgRole, myOrgs } = useContext(UserContext);
@@ -16,6 +16,8 @@ export default function Profile() {
   const [editModal, setEditModal] = useState(false);
 
   const canManageOrg = canManageOrgProfile(activeOrgRole);
+  const showUserAdmin = canManageUsers(activeOrgName, activeOrgRole);
+  const showOrgMembers = canManageOrgMembers(activeOrgName, activeOrgRole);
   const activeOrgId = useMemo(
     () => myOrgs.find((org) => org.name === activeOrgName)?.id,
     [myOrgs, activeOrgName],
@@ -85,16 +87,12 @@ export default function Profile() {
             </h1>
           </div>
           <div className="flex flex-[1_1_90%] min-w-0 flex-col gap-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-xl font-semibold">My Posted Events</h2>
-              <NavLink
-                to="/form"
-                className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
-              >
-                New Event
-              </NavLink>
-            </div>
-            <DataTable orgName={activeOrgName === "super_org" ? undefined : activeOrgName} />
+            <ProfileAdminTables
+              orgName={activeOrgName === "super_org" ? undefined : activeOrgName}
+              orgId={activeOrgId}
+              showUserAdmin={showUserAdmin}
+              showOrgMembers={showOrgMembers}
+            />
           </div>
           {activeOrgId && (
             <Modal

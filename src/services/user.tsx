@@ -1,15 +1,12 @@
 import supabase from "@server/supabase";
+import { resolveUserRoleFromNames } from "@lib/roles";
 
 type RoleRow = { roles: { name: string } };
 
 function resolveUserRole(roleRows: RoleRow[] | null | undefined): string {
   if (!roleRows?.length) return "member";
-  const names = roleRows.map((row) => row.roles.name.trim());
-  if (names.includes("company")) return "company";
-  if (names.includes("super_user")) return "super_user";
-  if (names.includes("internal")) return "internal";
-  if (names.includes("org leader")) return "org leader";
-  return names[0] ?? "member";
+  const names = roleRows.map((row) => row.roles.name);
+  return resolveUserRoleFromNames(names);
 }
 
 async function fetchUserRole(userId: string) {

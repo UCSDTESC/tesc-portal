@@ -317,3 +317,84 @@ export function getDataTableSortValue(daton: Event, key: string): string | numbe
       return getDataTableCellValue(daton, key).toLowerCase();
   }
 }
+
+type UserAdminRow = {
+  uuid: string;
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+  major: string | null;
+  expected_grad: string | null;
+  points: number;
+  roles_summary: string;
+};
+
+export function getUserAdminCellValue(row: UserAdminRow, key: string): string {
+  switch (key) {
+    case "name":
+      return `${row.first_name ?? ""} ${row.last_name ?? ""}`.trim();
+    case "email":
+      return row.email ?? "";
+    case "major":
+      return row.major ?? "";
+    case "expected_grad":
+      return row.expected_grad ?? "";
+    case "points":
+      return String(row.points ?? 0);
+    case "roles_summary":
+      return row.roles_summary ?? "";
+    default:
+      return "";
+  }
+}
+
+export function getUserAdminSortValue(row: UserAdminRow, key: string): string | number {
+  if (key === "points") return row.points ?? 0;
+  return getUserAdminCellValue(row, key).toLowerCase();
+}
+
+export function matchesUserAdminColumnFilter(
+  row: UserAdminRow,
+  key: string,
+  filterType: DataTableFilterType | undefined,
+  filterValue: DataTableColumnFilter | undefined,
+): boolean {
+  if (filterValue == null || filterValue === "") return true;
+  if (typeof filterValue === "object" && !Array.isArray(filterValue)) {
+    const nf = filterValue as DataTableNumericFilter;
+    if (filterType === "numeric" && (!nf.value || nf.value.trim() === "")) return true;
+  }
+
+  if (filterType === "numeric" && typeof filterValue === "object" && !Array.isArray(filterValue)) {
+    const { op, value } = filterValue as DataTableNumericFilter;
+    const num = Number.parseFloat(value);
+    if (Number.isNaN(num)) return true;
+    const colVal = row.points ?? 0;
+    switch (op) {
+      case "eq":
+        return colVal === num;
+      case "gt":
+        return colVal > num;
+      case "gte":
+        return colVal >= num;
+      case "lt":
+        return colVal < num;
+      case "lte":
+        return colVal <= num;
+      default:
+        return true;
+    }
+  }
+
+  if (filterType === "textPopup" && typeof filterValue === "string") {
+    const cell = getUserAdminCellValue(row, key).toLowerCase();
+    const q = filterValue.trim().toLowerCase();
+    return q === "" || cell.includes(q);
+  }
+
+  return true;
+}
+
+export function getInitialUserAdminHiddenColumnKeys(): Set<string> {
+  return new Set<string>();
+}
