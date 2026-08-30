@@ -6,15 +6,7 @@ export function canAccessRecruiterData(role: string | undefined) {
 }
 
 /** True when the user can manage org profile/events for the active org. */
-export function canManageOrgProfile(role: string | undefined) {
-  if (!role) return false;
-  const normalized = role.trim().toLowerCase();
-  return (
-    normalized === "internal" ||
-    normalized === "org leader" ||
-    normalized === "super_user"
-  );
-}
+export { canManageOrgProfile, canManageOrgMembers, canManageUsers } from "@lib/roles";
 
 /** Event category tags for filtering/display. Used in: DataTable, Form, event services, Bulletin. */
 export const tags = [
@@ -395,6 +387,74 @@ export const item = {
 
 /** Pagination size options (rows per page). Used in: DataTable. */
 export const DATA_TABLE_PAGE_SIZE_OPTIONS = [5, 10, 20] as const;
+
+/** Shared pagination state for profile admin tables. */
+export type TablePaginationProps = {
+  pageSize: number;
+  currentPage: number;
+  onPageSizeChange: (size: number) => void;
+  onCurrentPageChange: (page: number) => void;
+};
+
+/** Column definitions for super-admin user table. */
+export const USER_ADMIN_TABLE_COLUMNS = [
+  {
+    key: "name",
+    label: "Name",
+    width: "16%",
+    widthPx: 130,
+    filterType: "textPopup" as DataTableFilterType,
+  },
+  {
+    key: "email",
+    label: "Email",
+    width: "20%",
+    widthPx: 160,
+    filterType: "textPopup" as DataTableFilterType,
+  },
+  {
+    key: "major",
+    label: "Major",
+    width: "16%",
+    widthPx: 130,
+    filterType: "textPopup" as DataTableFilterType,
+  },
+  {
+    key: "expected_grad",
+    label: "Grad Year",
+    width: "10%",
+    widthPx: 90,
+    filterType: "textPopup" as DataTableFilterType,
+  },
+  {
+    key: "points",
+    label: "Points",
+    width: "8%",
+    widthPx: 80,
+    filterType: "numeric" as DataTableFilterType,
+  },
+  {
+    key: "roles_summary",
+    label: "Roles",
+    width: "22%",
+    widthPx: 200,
+    filterType: "textPopup" as DataTableFilterType,
+  },
+  { key: "actions", label: "Actions", width: "8%", widthPx: 90 },
+];
+
+export const USER_ADMIN_COLUMNS_STORAGE_KEY = "userAdminTable-hiddenColumns";
+
+/** Column definitions for org leader member table. */
+export const ORG_MEMBER_TABLE_COLUMNS = [
+  { key: "name", label: "Name", width: "18%", widthPx: 140 },
+  { key: "email", label: "Email", width: "22%", widthPx: 180 },
+  { key: "major", label: "Major", width: "16%", widthPx: 130 },
+  { key: "expected_grad", label: "Grad Year", width: "10%", widthPx: 90 },
+  { key: "points", label: "Points", width: "8%", widthPx: 80 },
+  { key: "role_name", label: "Role", width: "14%", widthPx: 120 },
+  { key: "actions", label: "Actions", width: "12%", widthPx: 100 },
+];
 
 /** Column keys hidden by default. Used in: DataTable, getInitialHiddenColumnKeys. */
 export const DATA_TABLE_DEFAULT_HIDDEN_COLUMNS = [

@@ -1,35 +1,15 @@
-import { forwardRef, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-
-import UserContext from "@lib/UserContext";
-import { useEditModal } from "@lib/hooks/useEditModal";
-import { useData } from "@lib/hooks/useData";
 import {
-  DATA_TABLE_COLUMNS,
-  DATA_TABLE_COLUMNS_STORAGE_KEY,
-  DATA_TABLE_NUMERIC_OPS,
-  DATA_TABLE_PAGE_SIZE_OPTIONS,
-  formdata,
-  tags as TAGS_CONST,
-} from "@lib/constants";
-import type {
-  DataTableColumnFilter,
-  DataTableDateFilter,
-  DataTableFilterType,
-  DataTableNumericFilter,
-} from "@lib/constants";
-import {
-  getDataTableCellValue,
-  getDataTableSortValue,
-  getInitialHiddenColumnKeys,
-  matchesDataTableColumnFilter,
-} from "@lib/utils";
-import type { TablePaginationProps } from "@lib/constants";
-import { useMediaQuery } from "@lib/hooks/useMediaQuery";
+  ArrowDownIcon,
+  ArrowUpDownIcon,
+  ArrowUpIcon,
+  Columns2,
+  FilterIcon,
+} from "lucide-react";
 
-import Form from "../Form/Form";
-import TableRow from "./TableRow";
 import { Button } from "@components/components/ui/button";
+import { Input } from "@components/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -37,25 +17,49 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@components/components/ui/select";
-import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, Columns2, FilterIcon } from "lucide-react";
+import {
+  DATA_TABLE_NUMERIC_OPS,
+  DATA_TABLE_PAGE_SIZE_OPTIONS,
+  USER_ADMIN_COLUMNS_STORAGE_KEY,
+  USER_ADMIN_TABLE_COLUMNS,
+} from "@lib/constants";
+import type {
+  DataTableColumnFilter,
+  DataTableFilterType,
+  DataTableNumericFilter,
+  TablePaginationProps,
+} from "@lib/constants";
+import DisplayToast from "@lib/hooks/useToast";
+import { useMediaQuery } from "@lib/hooks/useMediaQuery";
 import { useOutsideClicks } from "@lib/hooks/useOutsideClick";
+import {
+  getInitialUserAdminHiddenColumnKeys,
+  getUserAdminCellValue,
+  getUserAdminSortValue,
+  matchesUserAdminColumnFilter,
+} from "@lib/utils";
+import type { AdminUserRow } from "@services/adminUsers";
+import { listAllUsersAdmin } from "@services/adminUsers";
+import UserDetailDrawer from "./UserDetailDrawer";
 
-// TODO: Loading and Error state for the data
-// TODO: styling of the component
-export default function DataTable({
-  orgName,
+function formatName(row: AdminUserRow) {
+  const name = getUserAdminCellValue(row, "name");
+  return name || "—";
+}
+
+export default function UserAdminPanel({
   pagination,
   embedded = false,
 }: {
-  orgName?: string;
   pagination?: TablePaginationProps;
   embedded?: boolean;
 }) {
-  const { User } = useContext(UserContext);
-  const { data, handleDelete, fetchData } = useData(User, orgName);
-  const { showEditModal, curID, currEdit, setShowEditModal, openEditModal } = useEditModal();
   const isLgOrSmaller = useMediaQuery("(max-width: 1024px)");
-
+  const [users, setUsers] = useState<AdminUserRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [columnFilters, setColumnFilters] = useState<Record<string, DataTableColumnFilter>>({});
   const [internalPageSize, setInternalPageSize] = useState<number>(10);
   const [internalCurrentPage, setInternalCurrentPage] = useState(1);
@@ -71,74 +75,79 @@ export default function DataTable({
   } | null>(null);
   const filterPopupRef = useRef<HTMLDivElement>(null);
   const columnsPopupRef = useRef<HTMLDivElement>(null);
-  const [hiddenColumnKeys, setHiddenColumnKeys] = useState<Set<string>>(getInitialHiddenColumnKeys);
+  const [hiddenColumnKeys, setHiddenColumnKeys] = useState<Set<string>>(
+    getInitialUserAdminHiddenColumnKeys,
+  );
   const [showColumnsPopup, setShowColumnsPopup] = useState(false);
 
-  const toggleColumnVisibility = (key: string) => {
-    setHiddenColumnKeys((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  };
+  const loadUsers = useCallback(async () => {
+    setLoading(true);
+    const { users: rows, error } = await listAllUsersAdmin(search);
+    setLoading(false);
+    if (error) {
+      DisplayToast(error.message, "error");
+      return;
+    }
+    setUsers(rows ?? []);
+  }, [search]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setSearch(searchInput.trim());
+      setCurrentPage(1);
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [searchInput, setCurrentPage]);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-    window.localStorage.setItem(
-      DATA_TABLE_COLUMNS_STORAGE_KEY,
-        JSON.stringify(Array.from(hiddenColumnKeys))
+      window.localStorage.setItem(
+        USER_ADMIN_COLUMNS_STORAGE_KEY,
+        JSON.stringify(Array.from(hiddenColumnKeys)),
       );
     } catch {
-      // ignore quota / disabled storage
+      // ignore
     }
   }, [hiddenColumnKeys]);
 
   const visibleColumns = useMemo(
-    () => DATA_TABLE_COLUMNS.filter((col) => {
-      // Hide org_name column when viewing a specific org (not super_org)
-      if (col.key === "org_name" && orgName !== undefined) {
-        return false;
-      }
-      return !hiddenColumnKeys.has(col.key);
-    }),
-    [hiddenColumnKeys, orgName]
+    () => USER_ADMIN_TABLE_COLUMNS.filter((col) => !hiddenColumnKeys.has(col.key)),
+    [hiddenColumnKeys],
   );
 
   const filteredData = useMemo(() => {
-    if (!data) return [];
-    return data.filter((daton) => {
-      for (const col of DATA_TABLE_COLUMNS) {
+    return users.filter((row) => {
+      for (const col of USER_ADMIN_TABLE_COLUMNS) {
         if (col.key === "actions" || !("filterType" in col)) continue;
-        // Skip org_name filtering when viewing a specific org (not super_org)
-        if (col.key === "org_name" && orgName !== undefined) continue;
         const filterVal = columnFilters[col.key];
         const filterType = "filterType" in col ? col.filterType : undefined;
         if (
           filterVal != null &&
-          !matchesDataTableColumnFilter(daton, col.key, filterType, filterVal, getDataTableCellValue)
-        )
+          !matchesUserAdminColumnFilter(row, col.key, filterType, filterVal)
+        ) {
           return false;
+        }
       }
       return true;
     });
-  }, [data, columnFilters, orgName]);
+  }, [users, columnFilters]);
 
   const sortedData = useMemo(() => {
     if (!sortColumn) return filteredData;
-    const sorted = [...filteredData].sort((a, b) => {
-      const aVal = getDataTableSortValue(a, sortColumn);
-      const bVal = getDataTableSortValue(b, sortColumn);
+    return [...filteredData].sort((a, b) => {
+      const aVal = getUserAdminSortValue(a, sortColumn);
+      const bVal = getUserAdminSortValue(b, sortColumn);
       if (typeof aVal === "number" && typeof bVal === "number") {
         return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
       }
-      const aStr = String(aVal);
-      const bStr = String(bVal);
-      const cmp = aStr.localeCompare(bStr);
+      const cmp = String(aVal).localeCompare(String(bVal));
       return sortDirection === "asc" ? cmp : -cmp;
     });
-    return sorted;
   }, [filteredData, sortColumn, sortDirection]);
 
   const totalPages = useMemo(
@@ -192,6 +201,15 @@ export default function DataTable({
     setFilterAnchorRect({ top: rect.bottom + 4, left: rect.left });
   };
 
+  const toggleColumnVisibility = (key: string) => {
+    setHiddenColumnKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
   useOutsideClicks([filterPopupRef], (e) => {
     if ((e.target as Element).closest("[data-filter-trigger]")) return;
     setActiveFilterKey(null);
@@ -199,28 +217,39 @@ export default function DataTable({
 
   useOutsideClicks([columnsPopupRef], () => setShowColumnsPopup(false));
 
-  const uniqueLocations = useMemo(() => {
-    if (!data) return [];
-    const locs = new Set<string>();
-    data.forEach((e) => {
-      const l = (e.location_str ?? "").trim();
-      if (l) locs.add(l);
-    });
-    return Array.from(locs).sort();
-  }, [data]);
+  const isFilterActive = (key: string) => {
+    const filter = columnFilters[key];
+    if (filter == null) return false;
+    if (typeof filter === "string") return filter.trim() !== "";
+    if (Array.isArray(filter)) return filter.length > 0;
+    if (typeof filter === "object") {
+      const nf = filter as DataTableNumericFilter;
+      if ("value" in nf) return Boolean(nf.value?.trim());
+      return Object.keys(filter).length > 0;
+    }
+    return false;
+  };
 
-  if (!data) {
+  if (loading && users.length === 0) {
     return (
-      <Wrapper embedded={embedded}>
-        <div className="text-slate-500">Loading events…</div>
-      </Wrapper>
+      <div className={embedded ? "grid w-full gap-4" : "grid w-full gap-4 px-4 pb-4 pt-0"}>
+        {!embedded && <h2 className="text-xl font-semibold">User Management</h2>}
+        <div className="text-slate-500">Loading users…</div>
+      </div>
     );
   }
 
   return (
-    <Wrapper embedded={embedded}>
-      {/* Toolbar: columns */}
+    <div className={embedded ? "grid w-full gap-4" : "grid w-full gap-4 px-4 pb-4 pt-0"}>
+      {!embedded && <h2 className="text-xl font-semibold">User Management</h2>}
+
       <div className="flex flex-wrap items-center gap-3">
+        <Input
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Search users"
+          className="max-w-sm"
+        />
         <div className="relative" ref={columnsPopupRef}>
           <button
             type="button"
@@ -243,15 +272,7 @@ export default function DataTable({
               <div className="px-3 py-1.5 text-xs font-semibold text-slate-500 border-b border-slate-100">
                 Show columns
               </div>
-              {(DATA_TABLE_COLUMNS as readonly { key: string; label: string }[])
-                .filter((col) => {
-                  // Hide org_name checkbox for non-super_org accounts
-                  if (col.key === "org_name" && orgName !== undefined) {
-                    return false;
-                  }
-                  return true;
-                })
-                .map((col) => (
+              {USER_ADMIN_TABLE_COLUMNS.map((col) => (
                 <label
                   key={col.key}
                   className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm"
@@ -270,8 +291,11 @@ export default function DataTable({
         </div>
       </div>
 
-      {/* Database-style table */}
-      <div className="border border-slate-300 rounded-lg overflow-hidden bg-white shadow-sm">
+      <div
+        className={`border border-slate-300 rounded-lg overflow-hidden bg-white shadow-sm transition-opacity ${
+          loading && users.length > 0 ? "opacity-60" : ""
+        }`}
+      >
         <div className={isLgOrSmaller ? "overflow-x-auto" : ""}>
           <table
             className={
@@ -286,10 +310,7 @@ export default function DataTable({
                   key={col.key}
                   style={
                     isLgOrSmaller
-                      ? {
-                          width: `${col.widthPx}px`,
-                          minWidth: `${col.widthPx}px`,
-                        }
+                      ? { width: `${col.widthPx}px`, minWidth: `${col.widthPx}px` }
                       : { width: col.width }
                   }
                 />
@@ -306,26 +327,12 @@ export default function DataTable({
                       {col.label}
                       {col.key !== "actions" &&
                         "filterType" in col &&
-                        (col.filterType === "date" ||
-                          col.filterType === "location" ||
-                          col.filterType === "numeric" ||
-                          col.filterType === "tags" ||
-                          col.filterType === "textPopup" ||
-                          col.filterType === "yesno") && (
+                        (col.filterType === "numeric" || col.filterType === "textPopup") && (
                           <button
                             type="button"
                             onClick={(e) => openFilterPopup(col.key, e)}
                             className={`p-0.5 rounded hover:bg-white/20 focus:outline-none focus:ring-1 focus:ring-white shrink-0 ${
-                              columnFilters[col.key] != null &&
-                              ((typeof columnFilters[col.key] === "string" &&
-                                (columnFilters[col.key] as string).trim() !== "") ||
-                                (typeof columnFilters[col.key] === "object" &&
-                                  !Array.isArray(columnFilters[col.key]) &&
-                                  Object.keys(columnFilters[col.key] as object).length > 0) ||
-                                (Array.isArray(columnFilters[col.key]) &&
-                                  (columnFilters[col.key] as string[]).length > 0))
-                                ? "text-blue-200"
-                                : "text-white/70"
+                              isFilterActive(col.key) ? "text-blue-200" : "text-white/70"
                             }`}
                             title={`Filter ${col.label}`}
                             data-filter-trigger
@@ -339,14 +346,12 @@ export default function DataTable({
                         }`}
                         onClick={() => handleSort(col.key)}
                       >
-                        {col.key !== "actions" &&
-                          sortColumn === col.key &&
-                          sortDirection === "asc" && <ArrowUpIcon className="size-3.5 shrink-0" />}
-                        {col.key !== "actions" &&
-                          sortColumn === col.key &&
-                          sortDirection === "desc" && (
-                            <ArrowDownIcon className="size-3.5 shrink-0" />
-                          )}
+                        {col.key !== "actions" && sortColumn === col.key && sortDirection === "asc" && (
+                          <ArrowUpIcon className="size-3.5 shrink-0" />
+                        )}
+                        {col.key !== "actions" && sortColumn === col.key && sortDirection === "desc" && (
+                          <ArrowDownIcon className="size-3.5 shrink-0" />
+                        )}
                         {col.key !== "actions" && sortColumn !== col.key && (
                           <ArrowUpDownIcon className="size-3.5 shrink-0 opacity-50" />
                         )}
@@ -363,21 +368,49 @@ export default function DataTable({
                     colSpan={visibleColumns.length}
                     className="px-3 py-6 text-center text-slate-500 border-b border-slate-200"
                   >
-                    {data.length === 0
-                      ? "No events yet."
-                      : "No events match your search or filters."}
+                    {users.length === 0
+                      ? "No users yet."
+                      : "No users match your filters."}
                   </td>
                 </tr>
               ) : (
-                paginatedData.map((daton) => (
-                  <TableRow
-                    key={daton.id}
-                    daton={daton}
-                    columns={visibleColumns}
-                    getCellValue={getDataTableCellValue}
-                    onDelete={handleDelete}
-                    onEdit={openEditModal}
-                  />
+                paginatedData.map((row) => (
+                  <tr
+                    key={row.uuid}
+                    className="border-b border-slate-200 hover:bg-slate-50/80 transition-colors"
+                  >
+                    {visibleColumns.map((col) => {
+                      if (col.key === "actions") {
+                        return (
+                          <td
+                            key={col.key}
+                            className="px-3 py-2 border-r border-slate-200 last:border-r-0 whitespace-nowrap"
+                          >
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => setSelectedUserId(row.uuid)}
+                            >
+                              View
+                            </Button>
+                          </td>
+                        );
+                      }
+                      const raw = getUserAdminCellValue(row, col.key);
+                      const display =
+                        col.key === "name" ? formatName(row) : raw || "—";
+                      return (
+                        <td
+                          key={col.key}
+                          className="px-3 py-2 border-r border-slate-200 last:border-r-0 text-slate-700 overflow-hidden text-ellipsis min-w-0"
+                          title={raw !== display ? raw : undefined}
+                        >
+                          <span className="block truncate">{display}</span>
+                        </td>
+                      );
+                    })}
+                  </tr>
                 ))
               )}
             </tbody>
@@ -385,8 +418,7 @@ export default function DataTable({
         </div>
       </div>
 
-      {/* Pagination */}
-      {sortedData.length > 0 && (
+      {users.length > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-4">
           <div className="flex items-center gap-2">
             <span className="text-sm text-slate-600">Rows per page</span>
@@ -434,48 +466,34 @@ export default function DataTable({
       {activeFilterKey &&
         filterAnchorRect &&
         createPortal(
-          <FilterPopup
+          <UserAdminFilterPopup
             ref={filterPopupRef}
             anchorRect={filterAnchorRect}
             columnKey={activeFilterKey}
-            columnLabel={DATA_TABLE_COLUMNS.find((c) => c.key === activeFilterKey)?.label ?? ""}
+            columnLabel={
+              USER_ADMIN_TABLE_COLUMNS.find((c) => c.key === activeFilterKey)?.label ?? ""
+            }
             filterType={
-              DATA_TABLE_COLUMNS.find((c) => c.key === activeFilterKey && "filterType" in c) as
+              USER_ADMIN_TABLE_COLUMNS.find((c) => c.key === activeFilterKey && "filterType" in c) as
                 | { filterType?: DataTableFilterType }
                 | undefined
             }
             columnFilters={columnFilters}
             setColumnFilter={setColumnFilter}
-            uniqueLocations={uniqueLocations}
-            tagsOptions={TAGS_CONST}
-            NUMERIC_OPS={DATA_TABLE_NUMERIC_OPS}
           />,
           document.body,
         )}
 
-      {showEditModal &&
-        createPortal(
-          <EditModal {...{ setShowEditModal, fetchData, currEdit, curID }} />,
-          document.body,
-        )}
-    </Wrapper>
+      <UserDetailDrawer
+        userId={selectedUserId}
+        onClose={() => setSelectedUserId(null)}
+        onRolesChanged={loadUsers}
+      />
+    </div>
   );
 }
 
-function Wrapper({
-  embedded,
-  children,
-}: {
-  embedded: boolean;
-  children: ReactNode;
-}) {
-  if (embedded) {
-    return <div className="grid w-full gap-4">{children}</div>;
-  }
-  return <main className="grid w-full gap-4 px-4 pb-4 pt-0">{children}</main>;
-}
-
-const FilterPopup = forwardRef<
+const UserAdminFilterPopup = forwardRef<
   HTMLDivElement,
   {
     anchorRect: { top: number; left: number };
@@ -484,94 +502,13 @@ const FilterPopup = forwardRef<
     filterType: { filterType?: DataTableFilterType } | undefined;
     columnFilters: Record<string, DataTableColumnFilter>;
     setColumnFilter: (key: string, value: DataTableColumnFilter) => void;
-    uniqueLocations: string[];
-    tagsOptions: readonly string[];
-    NUMERIC_OPS: readonly { value: string; label: string }[];
   }
->(function FilterPopup(
-  {
-    anchorRect,
-    columnKey,
-    columnLabel,
-    filterType,
-    columnFilters,
-    setColumnFilter,
-    uniqueLocations,
-    tagsOptions,
-    NUMERIC_OPS,
-  },
+>(function UserAdminFilterPopup(
+  { anchorRect, columnKey, columnLabel, filterType, columnFilters, setColumnFilter },
   ref,
 ) {
   const content =
-    filterType?.filterType === "date" ? (
-      <div className="flex flex-col gap-2 p-3 min-w-[160px]">
-        <span className="text-xs font-medium text-slate-600">{columnLabel}</span>
-        <label className="text-xs text-slate-500">From</label>
-        <input
-          type="date"
-          className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={(columnFilters[columnKey] as DataTableDateFilter)?.from ?? ""}
-          onChange={(e) =>
-            setColumnFilter(columnKey, {
-              ...((columnFilters[columnKey] as DataTableDateFilter) ?? {}),
-              from: e.target.value || undefined,
-            })
-          }
-        />
-        <label className="text-xs text-slate-500">To</label>
-        <input
-          type="date"
-          className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={(columnFilters[columnKey] as DataTableDateFilter)?.to ?? ""}
-          onChange={(e) =>
-            setColumnFilter(columnKey, {
-              ...((columnFilters[columnKey] as DataTableDateFilter) ?? {}),
-              to: e.target.value || undefined,
-            })
-          }
-        />
-      </div>
-    ) : filterType?.filterType === "location" ? (
-      <div className="flex flex-col gap-2 p-3 min-w-[200px] max-h-64">
-        <span className="text-xs font-medium text-slate-600">{columnLabel}</span>
-        <select
-          multiple
-          title="Ctrl+click to select multiple"
-          className="w-full px-2 py-2 text-sm border border-slate-300 rounded bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 overflow-y-auto"
-          value={(columnFilters[columnKey] as string[]) ?? []}
-          onChange={(e) => {
-            const selected = Array.from(e.target.selectedOptions, (o) => o.value);
-            setColumnFilter(columnKey, selected);
-          }}
-        >
-          {uniqueLocations.map((loc) => (
-            <option key={loc} value={loc}>
-              {loc}
-            </option>
-          ))}
-        </select>
-      </div>
-    ) : filterType?.filterType === "tags" ? (
-      <div className="flex flex-col gap-2 p-3 min-w-[200px] max-h-64">
-        <span className="text-xs font-medium text-slate-600">{columnLabel}</span>
-        <select
-          multiple
-          title="Ctrl+click to select multiple"
-          className="w-full px-2 py-2 text-sm border border-slate-300 rounded bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 overflow-y-auto"
-          value={(columnFilters[columnKey] as string[]) ?? []}
-          onChange={(e) => {
-            const selected = Array.from(e.target.selectedOptions, (o) => o.value);
-            setColumnFilter(columnKey, selected);
-          }}
-        >
-          {tagsOptions.map((tag) => (
-            <option key={tag} value={tag}>
-              {tag}
-            </option>
-          ))}
-        </select>
-      </div>
-    ) : filterType?.filterType === "textPopup" ? (
+    filterType?.filterType === "textPopup" ? (
       <div className="flex flex-col gap-2 p-3 min-w-[200px]">
         <span className="text-xs font-medium text-slate-600">{columnLabel}</span>
         <input
@@ -581,19 +518,6 @@ const FilterPopup = forwardRef<
           value={(columnFilters[columnKey] as string) ?? ""}
           onChange={(e) => setColumnFilter(columnKey, e.target.value)}
         />
-      </div>
-    ) : filterType?.filterType === "yesno" ? (
-      <div className="flex flex-col gap-2 p-3 min-w-[140px]">
-        <span className="text-xs font-medium text-slate-600">{columnLabel}</span>
-        <select
-          className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={(columnFilters[columnKey] as string) ?? ""}
-          onChange={(e) => setColumnFilter(columnKey, e.target.value === "" ? "" : e.target.value)}
-        >
-          <option value="">All</option>
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-        </select>
       </div>
     ) : filterType?.filterType === "numeric" ? (
       <div className="flex flex-col gap-2 p-3 min-w-[160px]">
@@ -609,7 +533,7 @@ const FilterPopup = forwardRef<
               })
             }
           >
-            {NUMERIC_OPS.map((o) => (
+            {DATA_TABLE_NUMERIC_OPS.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
               </option>
@@ -635,43 +559,10 @@ const FilterPopup = forwardRef<
   return (
     <div
       ref={ref}
-      className="fixed z-50 rounded-lg border border-slate-200 bg-white shadow-lg"
-      style={{
-        top: anchorRect.top,
-        left: anchorRect.left,
-      }}
+      className="fixed z-[1400] rounded-lg border border-slate-200 bg-white shadow-lg"
+      style={{ top: anchorRect.top, left: anchorRect.left }}
     >
       {content}
     </div>
   );
 });
-
-function EditModal({
-  setShowEditModal,
-  fetchData,
-  currEdit,
-  curID,
-}: {
-  setShowEditModal: (show: boolean) => void;
-  currEdit: formdata;
-  fetchData: () => void;
-  curID: string;
-}) {
-  return (
-    <div className="w-screen h-screen fixed top-0 flex justify-center items-center z-100 overflow-scroll">
-      <div
-        className="fixed top-0 w-full h-full bg-black opacity-35 cursor-pointer"
-        onClick={() => setShowEditModal(false)}
-      />
-      <Form
-        formdata={currEdit}
-        id={curID}
-        onSuccess={() => {
-          setShowEditModal(false);
-          fetchData();
-        }}
-        editEvent={true}
-      />
-    </div>
-  );
-}
