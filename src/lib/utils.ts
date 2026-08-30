@@ -32,8 +32,8 @@ export const getFormDataDefault = (): formdata => {
   return {
     title: "",
     password: "",
-    start_date: currTime,
-    end_date: currTime,
+    start_date: "",
+    end_date: "",
     location: [0, 0],
     location_str: "",
     content: "",
@@ -44,6 +44,7 @@ export const getFormDataDefault = (): formdata => {
     type: "external",
     recurring_rate: "none",
     recurrence_end_date: "",
+    slots: [{ starts_at: currTime, ends_at: currTime, capacity: null }],
   };
 };
 

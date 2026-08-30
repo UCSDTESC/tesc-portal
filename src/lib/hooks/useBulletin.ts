@@ -13,8 +13,8 @@ export function useBulletin(User: User | null, portalMode: PortalMode) {
   const [data, setData] = useState<Event[]>();
   const [People, setPeople] = useState<Member[]>();
   const [isLoading, setIsLoading] = useState(true);
-  const [RSVP, setRSVP] = useState<string[] | null>(null);
-  const [attendance, setAttendance] = useState<string[] | null>(null);
+  const [rsvpByEvent, setRsvpByEvent] = useState<Record<string, string> | null>(null);
+  const [attendedByEvent, setAttendedByEvent] = useState<Record<string, string> | null>(null);
   const [search, setSearch] = useState("");
   const [orgs, setOrgs] = useState<string[]>([]);
   const [tagFilters, setTagFilters] = useState<string[]>([]);
@@ -90,7 +90,7 @@ export function useBulletin(User: User | null, portalMode: PortalMode) {
         typeFilters,
         sortMethod,
         User?.id,
-        { internalFilter, isSuperOrg }
+        { internalFilter, isSuperOrg },
       );
       if (events) {
         setData(events as unknown as Event[]);
@@ -109,11 +109,12 @@ export function useBulletin(User: User | null, portalMode: PortalMode) {
   // fetch RSVP and attended events
   useEffect(() => {
     const fetchRSVPAndAttendedEvents = async () => {
-      if (User?.id && !(RSVP && attendance)) {
-        const { rsvp, attended, error } = await fetchRSVPAndAttended(User.email);
-        if (rsvp && attended) {
-          setRSVP(rsvp);
-          setAttendance(attended);
+      if (User?.id && !(rsvpByEvent && attendedByEvent)) {
+        const { rsvpByEvent: rsvpMap, attendedByEvent: attendedMap, error } =
+          await fetchRSVPAndAttended(User.email);
+        if (rsvpMap && attendedMap) {
+          setRsvpByEvent(rsvpMap);
+          setAttendedByEvent(attendedMap);
         } else if (error) {
           console.error(error.message);
           DisplayToast("Error fetching user history", "error");
@@ -121,55 +122,69 @@ export function useBulletin(User: User | null, portalMode: PortalMode) {
       }
     };
     fetchRSVPAndAttendedEvents();
-  }, [User, RSVP, attendance]);
+  }, [User, rsvpByEvent, attendedByEvent]);
 
-  const handleRSVP = async (id: string, remove: boolean) => {
-    // if user is not logged in, show login modal
+  const handleRSVP = async (
+    eventId: string,
+    slotId: string,
+    action: "rsvp" | "cancel" | "switch",
+  ) => {
     if (!User?.id) {
       setShowLoginModal(true);
-    } else {
-      // update rsvp array
-      let currRSVP = RSVP ? RSVP : [];
-      if (remove) {
-        currRSVP = currRSVP.filter((item) => item !== id);
-      } else {
-        currRSVP = [...currRSVP, id];
-      }
-      // edit database rsvp array and count
-      const error = await editRSVP(id, User.id, remove);
-      if (error) {
-        console.error(error.message);
-        DisplayToast(remove === true ? "Unable to remove RSVP" : "Unable to RSVP", "error");
-      } else {
-        setRSVP(currRSVP);
-        DisplayToast(
-          remove === true ? "Succesfully removed RSVP" : "Succesfully RSVP'd",
-          "success",
-        );
-      }
+      return;
     }
+
+    const error = await editRSVP(eventId, slotId, action);
+    if (error) {
+      console.error(error.message);
+      DisplayToast(
+        action === "cancel" ? "Unable to remove RSVP" : "Unable to RSVP for this slot",
+        "error",
+      );
+      return;
+    }
+
+    setRsvpByEvent((prev) => {
+      const next = { ...(prev ?? {}) };
+      if (action === "cancel") {
+        delete next[eventId];
+      } else {
+        next[eventId] = slotId;
+      }
+      return next;
+    });
+    await fetchData();
+    DisplayToast(
+      action === "cancel"
+        ? "Succesfully removed RSVP"
+        : action === "switch"
+          ? "Succesfully switched time slot"
+          : "Succesfully RSVP'd",
+      "success",
+    );
   };
 
-  const handleAttendance = async (selection: string) => {
-    // if user is not logged in, show login modal
-
+  const handleAttendance = async (eventId: string, slotId?: string) => {
     if (!User?.id) {
       setShowLoginModal(true);
-    } else {
-      //log attendance
-      const userInput = prompt("Please enter password:", "password");
-      const filtered = data?.filter((daton) => String(daton.id) === String(selection))[0];
-      if (filtered && userInput) {
-        const error = await logAttendance(selection, User.id, userInput);
-        if (error) {
-          console.error(error.message);
-          DisplayToast("Error logging attendance", "error");
-        } else {
-          setAttendance(attendance ? [...attendance, selection] : [selection]);
-          DisplayToast("Succesfully logged attendance", "success");
-        }
-      }
+      return;
     }
+
+    const userInput = prompt("Please enter password:", "password");
+    if (!userInput) return;
+
+    const error = await logAttendance(eventId, User.id, userInput, slotId);
+    if (error) {
+      console.error(error.message);
+      DisplayToast("Error logging attendance", "error");
+      return;
+    }
+
+    setAttendedByEvent((prev) => ({
+      ...(prev ?? {}),
+      [eventId]: slotId ?? "",
+    }));
+    DisplayToast("Succesfully logged attendance", "success");
   };
 
   return {
@@ -178,8 +193,8 @@ export function useBulletin(User: User | null, portalMode: PortalMode) {
     isLoading,
     tagFilters,
     gradYears,
-    RSVP,
-    attendance,
+    rsvpByEvent,
+    attendedByEvent,
     handleAttendance,
     handleRSVP,
     setTagFilters,
@@ -204,10 +219,10 @@ export interface BulletinContextProps {
   isLoading?: boolean;
   tagFilters: string[];
   gradYears: string[];
-  RSVP: string[] | null;
-  attendance: string[] | null;
-  handleAttendance: (selection: string) => void;
-  handleRSVP: (selection: string, remove: boolean) => void;
+  rsvpByEvent: Record<string, string> | null;
+  attendedByEvent: Record<string, string> | null;
+  handleAttendance: (eventId: string, slotId?: string) => void;
+  handleRSVP: (eventId: string, slotId: string, action: "rsvp" | "cancel" | "switch") => void;
   setTagFilters: (tags: string[]) => void;
   setSearch: (search: string) => void;
   orgFilters: string[];
@@ -236,8 +251,8 @@ export const BulletinContext = createContext<BulletinContextProps>({
   isLoading: false,
   tagFilters: [],
   gradYears: [],
-  RSVP: [],
-  attendance: [],
+  rsvpByEvent: {},
+  attendedByEvent: {},
   handleAttendance: () => {},
   handleRSVP: () => {},
   setTagFilters: () => {},

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 
 import UserContext from "@lib/UserContext";
 import { formdata, RECURRING_RATES } from "@lib/constants";
-import { getFormDataDefault } from "@lib/utils";
+import { getFormDataDefault, getCurrentTime, toISO } from "@lib/utils";
 import { createEvent, updateEvent } from "@services/event";
 import supabase from "@server/supabase";
 
@@ -12,6 +12,7 @@ import { MultipleSelectChip, Dropdown } from "./Dropdowns";
 import DisplayToast from "@lib/hooks/useToast";
 import { Tooltip, Switch, FormControlLabel } from "@mui/material";
 import { IoCloudUploadOutline, IoInformationCircleOutline } from "react-icons/io5";
+import EventSlotsEditor from "./EventSlotsEditor";
 
 // TODO: refactor label and input components into an individual component
 export default function Form({
@@ -77,6 +78,43 @@ export default function Form({
   useEffect(() => {
     document.title = "New Event | TESC Portal";
   }, []);
+
+  useEffect(() => {
+    if (isForum) return;
+    if (formData.slots && formData.slots.length > 0) return;
+    const currTime = getCurrentTime();
+    setFormData((prev) => ({
+      ...prev,
+      slots: [{ starts_at: currTime, ends_at: currTime, capacity: null }],
+    }));
+  }, [isForum, formData.slots]);
+
+  useEffect(() => {
+    if (!editEvent || !id || isForum) return;
+    const loadSlots = async () => {
+      const { data, error } = await supabase
+        .from("event_slot_stats")
+        .select("slot_id, starts_at, ends_at, capacity")
+        .eq("event_id", id)
+        .order("starts_at", { ascending: true });
+      if (error) {
+        console.error(error.message);
+        return;
+      }
+      if (data?.length) {
+        setFormData((prev) => ({
+          ...prev,
+          slots: data.map((slot) => ({
+            id: String(slot.slot_id),
+            starts_at: toISO(String(slot.starts_at)),
+            ends_at: toISO(String(slot.ends_at)),
+            capacity: slot.capacity,
+          })),
+        }));
+      }
+    };
+    loadSlots();
+  }, [editEvent, id, isForum]);
   // handle change to form
   const handleChange = <T,>(value: T, cols: string[]): void => {
     let currform = formData;
@@ -89,6 +127,7 @@ export default function Form({
   // update event or create new event
   const handleSubmit = async () => {
     const recurringRate = formData.recurring_rate ?? "none";
+    const firstSlotStart = formData.slots?.[0]?.starts_at ?? "";
     if (!editEvent && !isForum && recurringRate !== "none") {
       const recurrenceEnd = formData.recurrence_end_date ?? "";
       if (!recurrenceEnd.trim()) {
@@ -96,13 +135,24 @@ export default function Form({
         DisplayToast("Recurrence end date is required", "error");
         return;
       }
-      const startDate = new Date(formData.start_date);
+      if (!firstSlotStart) {
+        setError("Add at least one time slot before setting recurrence.");
+        DisplayToast("Add a time slot first", "error");
+        return;
+      }
+      const startDate = new Date(firstSlotStart);
       const endDate = new Date(recurrenceEnd);
       if (endDate < startDate) {
-        setError("Recurrence end date must be on or after the event start date.");
+        setError("Recurrence end date must be on or after the first time slot.");
         DisplayToast("Invalid recurrence end date", "error");
         return;
       }
+    }
+
+    if (!isForum && (!formData.slots || formData.slots.length === 0)) {
+      setError("Add at least one time slot.");
+      DisplayToast("Add at least one time slot", "error");
+      return;
     }
 
     if (editEvent && formdata && User?.id) {
@@ -133,6 +183,8 @@ export default function Form({
       }
     }
   };
+
+  const firstSlotStart = formData.slots?.[0]?.starts_at ?? "";
 
   return (
     <div className={`w-1/2 flex flex-col m-auto bg-white z-101 ${editEvent ? "mt-5" : "mt-20"}`}>
@@ -222,58 +274,11 @@ export default function Form({
           </>
         )}
         {!isForum && (
-          <>
-            <label htmlFor="StartTime">
-              Start Time (date and time) <span className="text-red-500">*</span>
-            </label>
-            <div className="border-black border rounded-lg px-3 h-12 flex items-center">
-              <input
-                type="datetime-local"
-                name="StartTime"
-                value={formData.start_date}
-                required
-                onChange={(e) => handleChange(e.target.value, ["start_date", "end_date"])}
-              ></input>
-            </div>
-            <div className="flex items-center gap-1">
-              <label htmlFor="EndTime">
-                End Time (date and time) <span className="text-red-500">*</span>
-              </label>
-              <Tooltip
-                title={"Event end must be after event start"}
-                placement="bottom"
-                slotProps={{
-                  popper: {
-                    modifiers: [
-                      {
-                        name: "offset",
-                        options: {
-                          offset: [0, -14],
-                        },
-                      },
-                    ],
-                  },
-                }}
-              >
-                <IoInformationCircleOutline className="text-sm" />
-              </Tooltip>
-            </div>
-            <div className="border-black border rounded-lg px-3 h-12 flex items-center scroll-smooth">
-              <input
-                type="datetime-local"
-                name="EndTime"
-                required
-                min={formData.start_date}
-                value={formData.end_date}
-                onChange={(e) => {
-                  if (new Date(e.target.value).getTime() <= new Date(formData.start_date).getTime()) {
-                    return;
-                  }
-                  handleChange(e.target.value, ["end_date"]);
-                }}
-              ></input>
-            </div>
-          </>
+          <EventSlotsEditor
+            slots={formData.slots ?? []}
+            onChange={(slots) => setFormData((prev) => ({ ...prev, slots }))}
+            showCapacity={formData.track_attendance ?? false}
+          />
         )}
 
         {!editEvent && !isForum && (
@@ -304,7 +309,7 @@ export default function Form({
                   type="date"
                   className="border-black border rounded-lg px-3 h-12"
                   value={formData.recurrence_end_date ?? ""}
-                  min={formData.start_date?.slice(0, 10)}
+                  min={firstSlotStart?.slice(0, 10)}
                   onChange={(e) => handleChange(e.target.value, ["recurrence_end_date"])}
                 />
               </>
@@ -369,12 +374,6 @@ export default function Form({
           <>
             {!isForum && (
               <>
-                <label htmlFor="StartTime">Attendance cap</label>
-                <input
-                  value={formData.attendance_cap}
-                  className="border-black border rounded-lg px-3 h-12 flex items-center"
-                  onChange={(e) => handleChange(e.target.value, ["attendance_cap"])}
-                />
                 <label>Tags</label>
                 <MultipleSelectChip formData={formData} handleChange={handleChange} />
               </>

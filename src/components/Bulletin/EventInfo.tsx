@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { BulletinContext } from "@lib/hooks/useBulletin";
-import { RsvpOrAttendanceButton } from "./RsvpOrAttendanceButton";
+import EventSlotPicker from "./EventSlotPicker";
 import Editor from "./Editor";
 import { DateParser, formatGoogleCalendarEvent, formatGoogleMapsLocation } from "@lib/utils";
 import googleCalendar from "/Google_Calendar_icon_(2020).svg";
@@ -11,7 +11,7 @@ import { container, item } from "@lib/constants";
 import { EditOutlined } from "@ant-design/icons";
 
 export default function EventInfo({ selection }: { selection: string }) {
-  const { data, openEditModal } = useContext(BulletinContext);
+  const { data, openEditModal, rsvpByEvent } = useContext(BulletinContext);
   const { User } = useContext(UserContext);
   const [imageUrl, setImageUrl] = useState("");
   useEffect(() => {
@@ -80,33 +80,23 @@ export default function EventInfo({ selection }: { selection: string }) {
                       </button>
                     )}
                   </div>
-                  {daton.track_attendance &&
-                    (daton.attendance_cap != null ? (
-                      daton.attendance < daton.attendance_cap &&
-                      daton.rsvp < daton.attendance_cap ? (
-                        <RsvpOrAttendanceButton
-                          {...{
-                            start_date: daton.start_date,
-                            end_date: daton.end_date,
-                            selection,
-                          }}
-                          className="absolute bottom-0 right-[5%] bg-lightBlue hover:opacity-80"
+                  {daton.track_attendance && daton.slots && daton.slots.length > 0 && (
+                    <>
+                      {daton.slots.some(
+                        (slot) => slot.capacity == null || slot.rsvp_count < slot.capacity,
+                      ) || Boolean(rsvpByEvent?.[selection]) ? (
+                        <EventSlotPicker
+                          eventId={selection}
+                          slots={daton.slots}
+                          className="bg-lightBlue hover:opacity-80"
                         />
                       ) : (
                         <div className="text-red-600 underline bold px-4 py-2 rounded-lg cursor-pointer w-fit h-fit absolute bottom-0 right-0 ">
-                          Event attendance cap reached
+                          All time slots are full
                         </div>
-                      )
-                    ) : (
-                      <RsvpOrAttendanceButton
-                        {...{
-                          start_date: daton.start_date,
-                          end_date: daton.end_date,
-                          selection,
-                        }}
-                        className="absolute bottom-0 right-[5%] bg-lightBlue hover:opacity-80"
-                      />
-                    ))}
+                      )}
+                    </>
+                  )}
                   <motion.p className="text-lg text-[#898989]" variants={item}>
                     {daton.orgs?.name ? daton.orgs.name : "Unknown"}
                   </motion.p>
@@ -123,11 +113,20 @@ export default function EventInfo({ selection }: { selection: string }) {
                       {daton.type !== "forum" && (
                         <h1 className="font-semibold">
                           <span className="block">
-                            Start: {DateParser(daton.start_date)}
+                            Overall: {DateParser(daton.start_date)} – {DateParser(daton.end_date)}
                           </span>
-                          <span className="block">
-                            End: {DateParser(daton.end_date)}
-                          </span>
+                          {daton.slots && daton.slots.length > 0 && (
+                            <span className="mt-2 block space-y-1 text-base font-normal">
+                              {daton.slots.map((slot) => (
+                                <span key={slot.id} className="block">
+                                  {DateParser(slot.starts_at)} – {DateParser(slot.ends_at)}
+                                  {slot.capacity != null
+                                    ? ` · ${slot.rsvp_count}/${slot.capacity} spots`
+                                    : ""}
+                                </span>
+                              ))}
+                            </span>
+                          )}
                           <span className="block mt-1">{daton.location_str}</span>
                         </h1>
                       )}
