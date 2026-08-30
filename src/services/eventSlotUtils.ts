@@ -1,5 +1,12 @@
 import { EventSlotForm } from "@lib/constants";
 
+/** datetime-local input → UTC ISO for timestamptz columns. */
+export function localDatetimeToStorage(local: string): string {
+  const ms = new Date(local).getTime();
+  if (Number.isNaN(ms)) return local;
+  return new Date(ms).toISOString();
+}
+
 export function deriveAttendanceCap(slots: EventSlotForm[]) {
   if (!slots.length) return null;
   if (slots.some((slot) => slot.capacity == null || slot.capacity === undefined)) return null;

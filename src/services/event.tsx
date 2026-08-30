@@ -4,6 +4,7 @@ import { logAttendance } from "./user";
 import {
   deriveAttendanceCap,
   deriveEventRange,
+  localDatetimeToStorage,
   shiftSlots,
   validateEventSlots,
 } from "./eventSlotUtils";
@@ -16,7 +17,16 @@ export {
 } from "./eventSlotUtils";
 
 const EVENT_SELECT =
-  "id,content,created_at,end_date,location_str,start_date,tags,title,attendance,poster,rsvp,org_id, orgs!inner(name, pfp_str), attendance_cap, track_attendance, type, password, manual_attendance";
+  "id,content,created_at,end_date,location_str,start_date,tags,title,attendance,poster,rsvp,org_id, orgs!inner(name, pfp_str), attendance_cap, track_attendance, type, password, manual_attendance, attendance_token";
+
+export type CreateEventSuccess = {
+  eventId: string;
+  attendanceToken: string | null;
+};
+
+function generateAttendanceToken(): string {
+  return crypto.randomUUID();
+}
 
 type SlotStatsRow = {
   slot_id: number;
@@ -73,8 +83,8 @@ async function replaceEventSlots(eventId: string, slots: EventSlotForm[]) {
   const { error: insertError } = await supabase.from("event_slots").insert(
     validSlots.map((slot) => ({
       event_id: Number(eventId),
-      starts_at: slot.starts_at,
-      ends_at: slot.ends_at,
+      starts_at: localDatetimeToStorage(slot.starts_at),
+      ends_at: localDatetimeToStorage(slot.ends_at),
       capacity:
         slot.capacity != null && slot.capacity !== ("" as unknown as number)
           ? Number(slot.capacity)
@@ -121,8 +131,8 @@ async function upsertEventSlots(eventId: string, slots: EventSlotForm[]) {
 
   for (const slot of validSlots) {
     const payload = {
-      starts_at: slot.starts_at,
-      ends_at: slot.ends_at,
+      starts_at: localDatetimeToStorage(slot.starts_at),
+      ends_at: localDatetimeToStorage(slot.ends_at),
       capacity:
         slot.capacity != null && slot.capacity !== ("" as unknown as number)
           ? Number(slot.capacity)
@@ -213,6 +223,31 @@ export const fetchEventByOrg = async (uid: string, includeAllEvents: boolean = f
   return { data: enriched, error: null };
 };
 
+export const fetchEventById = async (eventId: string) => {
+  const { data, error } = await supabase
+    .from("events")
+    .select(EVENT_SELECT)
+    .eq("id", eventId)
+    .eq("deleted", false)
+    .maybeSingle();
+  if (error || !data) return { event: null, error: error ?? { message: "Event not found" } };
+  const [enriched] = await enrichEventsWithSlotStats([data]);
+  return { event: enriched, error: null };
+};
+
+export const fetchEventAttendanceToken = async (eventId: string) => {
+  const { data, error } = await supabase
+    .from("events")
+    .select("attendance_token, track_attendance")
+    .eq("id", eventId)
+    .eq("deleted", false)
+    .maybeSingle();
+  if (error || !data?.attendance_token || !data.track_attendance) {
+    return { token: null, error: error ?? { message: "No attendance token for this event" } };
+  }
+  return { token: String(data.attendance_token), error: null };
+};
+
 export const createEvent = async (formData: formdata, activeOrgName: string) => {
   const { data: org_name } = await supabase
     .from("orgs")
@@ -234,10 +269,12 @@ export const createEvent = async (formData: formdata, activeOrgName: string) => 
   const buildEventPayload = (slots: EventSlotForm[]) => {
     const slotRange = deriveEventRange(slots);
     const attendanceCap = deriveAttendanceCap(slots);
+    const tracksAttendance = !isInternal && !isForum && (formData.track_attendance ?? false);
 
     return {
       title: formData.title,
       password: formData.password,
+      attendance_token: tracksAttendance ? generateAttendanceToken() : null,
       start_date: isForum ? (null as unknown as string) : (slotRange?.start_date ?? null),
       end_date: isForum ? (null as unknown as string) : (slotRange?.end_date ?? null),
       location: isForum ? [] : formData.location,
@@ -280,35 +317,52 @@ export const createEvent = async (formData: formdata, activeOrgName: string) => 
     }
 
     console.log("----------INSERT RECURRING EVENTS-----------", startDates.length);
+    let firstResult: CreateEventSuccess | null = null;
     for (const occurrenceStart of startDates) {
       const offsetMs = new Date(occurrenceStart).getTime() - templateStartMs;
       const occurrenceSlots = shiftSlots(templateSlots, offsetMs);
+      const payload = buildEventPayload(occurrenceSlots);
       const { data: insertedEvent, error } = await supabase
         .from("events")
-        .insert([buildEventPayload(occurrenceSlots)])
-        .select("id")
+        .insert([payload])
+        .select("id, attendance_token")
         .single();
       if (error) return error;
       if (insertedEvent?.id) {
         const slotError = await syncSlotsForEvent(String(insertedEvent.id), occurrenceSlots);
         if (slotError) return slotError;
+        if (!firstResult) {
+          firstResult = {
+            eventId: String(insertedEvent.id),
+            attendanceToken: insertedEvent.attendance_token
+              ? String(insertedEvent.attendance_token)
+              : null,
+          };
+        }
       }
     }
-    return null;
+    return firstResult ?? { message: "No events created" };
   }
 
   console.log("----------INSERT NEW EVENT-----------");
+  const payload = buildEventPayload(templateSlots);
   const { data: insertedEvent, error } = await supabase
     .from("events")
-    .insert([buildEventPayload(templateSlots)])
-    .select("id")
+    .insert([payload])
+    .select("id, attendance_token")
     .single();
   if (error) return error;
   if (insertedEvent?.id) {
     const slotError = await syncSlotsForEvent(String(insertedEvent.id), templateSlots);
     if (slotError) return slotError;
+    return {
+      eventId: String(insertedEvent.id),
+      attendanceToken: insertedEvent.attendance_token
+        ? String(insertedEvent.attendance_token)
+        : null,
+    } satisfies CreateEventSuccess;
   }
-  return null;
+  return { message: "Event was not created" };
 };
 
 export const deleteEvent = async (id: string) => {

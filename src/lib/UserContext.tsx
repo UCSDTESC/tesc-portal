@@ -16,8 +16,14 @@ export type AuthSuccessResult = {
   needsProfileSetup?: boolean;
 };
 
+export type PendingQrFlow = {
+  eventId: string;
+  token: string;
+};
+
 interface UserContext {
   User: User | null;
+  authReady: boolean;
   Error: string;
   showLoginModal: boolean;
   setShowLoginModal: (bool: boolean) => void;
@@ -25,6 +31,10 @@ interface UserContext {
   setPendingProfileSetup: (bool: boolean) => void;
   loginRecruiterMode: boolean;
   setLoginRecruiterMode: (bool: boolean) => void;
+  pendingQrFlow: PendingQrFlow | null;
+  setPendingQrFlow: (flow: PendingQrFlow | null) => void;
+  loginModalContext: string;
+  setLoginModalContext: (message: string) => void;
   setError: (error: string) => void;
   handleSignOut: () => void;
   handleSignIn: (user: UserCredentials, OnSuccess: () => void) => void;
@@ -48,16 +58,21 @@ interface UserContext {
 }
 const UserContext = createContext<UserContext>({
   User: null,
+  authReady: false,
   Error: "",
   showLoginModal: false,
   pendingProfileSetup: false,
   loginRecruiterMode: false,
+  pendingQrFlow: null,
+  loginModalContext: "",
   myOrgs: [{ id: "0", name: "" }],
   activeOrgName: "",
   activeOrgRole: "",
   setShowLoginModal: () => {},
   setPendingProfileSetup: () => {},
   setLoginRecruiterMode: () => {},
+  setPendingQrFlow: () => {},
+  setLoginModalContext: () => {},
   setError: (error: string) => {
     console.log(error);
   },

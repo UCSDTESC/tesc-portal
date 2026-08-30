@@ -1,7 +1,7 @@
 import { eventFormDataDefault, formdata } from "@lib/constants";
 import { useState } from "react";
 import { Event } from "@lib/constants";
-import { toISO } from "@lib/utils";
+import { toISO, toLocalDatetimeInput } from "@lib/utils";
 
 // custom hook managing the edit modal in the DataTable component
 export function useEditModal() {
@@ -27,6 +27,13 @@ export function useEditModal() {
       track_attendance: daton.track_attendance ?? false,
       type: daton.type ?? "external",
       manual_attendance: daton.manual_attendance != null ? String(daton.manual_attendance) : "",
+      slots:
+        daton.slots?.map((slot) => ({
+          id: slot.id,
+          starts_at: toLocalDatetimeInput(slot.starts_at),
+          ends_at: toLocalDatetimeInput(slot.ends_at),
+          capacity: slot.capacity,
+        })) ?? [],
     });
   };
 

@@ -1,6 +1,13 @@
 import { EventSlotForm } from "@lib/constants";
+import { addHoursToLocalDatetime } from "@lib/utils";
 import { Tooltip } from "@mui/material";
 import { IoInformationCircleOutline } from "react-icons/io5";
+
+function isEndAfterStart(startsAt: string, endsAt: string): boolean {
+  const start = new Date(startsAt).getTime();
+  const end = new Date(endsAt).getTime();
+  return !Number.isNaN(start) && !Number.isNaN(end) && end > start;
+}
 
 export default function EventSlotsEditor({
   slots,
@@ -72,7 +79,14 @@ export default function EventSlotsEditor({
               type="datetime-local"
               className="border-black border rounded-lg px-3 h-12"
               value={slot.starts_at}
-              onChange={(e) => updateSlot(index, { starts_at: e.target.value })}
+              onChange={(e) => {
+                const starts_at = e.target.value;
+                const patch: Partial<EventSlotForm> = { starts_at };
+                if (!isEndAfterStart(starts_at, slot.ends_at)) {
+                  patch.ends_at = addHoursToLocalDatetime(starts_at, 1);
+                }
+                updateSlot(index, patch);
+              }}
               required
             />
             <div className="flex items-center gap-1">
@@ -85,13 +99,8 @@ export default function EventSlotsEditor({
               type="datetime-local"
               className="border-black border rounded-lg px-3 h-12"
               min={slot.starts_at}
-              value={slot.ends_at}
-              onChange={(e) => {
-                if (new Date(e.target.value).getTime() <= new Date(slot.starts_at).getTime()) {
-                  return;
-                }
-                updateSlot(index, { ends_at: e.target.value });
-              }}
+              value={isEndAfterStart(slot.starts_at, slot.ends_at) ? slot.ends_at : ""}
+              onChange={(e) => updateSlot(index, { ends_at: e.target.value })}
               required
             />
             {showCapacity && (

@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import { BulletinContext } from "@lib/hooks/useBulletin";
 import EventSlotPicker from "./EventSlotPicker";
 import Editor from "./Editor";
-import { DateParser, formatGoogleCalendarEvent, formatGoogleMapsLocation } from "@lib/utils";
+import { formatGoogleCalendarEvent, formatGoogleMapsLocation } from "@lib/utils";
 import googleCalendar from "/Google_Calendar_icon_(2020).svg";
 import UserContext from "@lib/UserContext";
 import { WelcomePage } from "./WelcomePage";
@@ -11,7 +11,7 @@ import { container, item } from "@lib/constants";
 import { EditOutlined } from "@ant-design/icons";
 
 export default function EventInfo({ selection }: { selection: string }) {
-  const { data, openEditModal, rsvpByEvent } = useContext(BulletinContext);
+  const { data, openEditModal, qrBanner } = useContext(BulletinContext);
   const { User } = useContext(UserContext);
   const [imageUrl, setImageUrl] = useState("");
   useEffect(() => {
@@ -62,9 +62,23 @@ export default function EventInfo({ selection }: { selection: string }) {
                   />
                 )}
                 <motion.div
-                  className="flex flex-col h-full justify-center relative"
+                  className="flex flex-col h-full justify-center"
                   variants={container}
                 >
+                  {qrBanner && (
+                    <motion.div
+                      variants={item}
+                      className={`mb-3 rounded-lg px-3 py-2 text-sm font-medium ${
+                        qrBanner.type === "success"
+                          ? "bg-green-100 text-green-800"
+                          : qrBanner.type === "error"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-blue/10 text-navy"
+                      }`}
+                    >
+                      {qrBanner.message}
+                    </motion.div>
+                  )}
                   <div className="flex items-center gap-3">
                     <motion.h1 variants={item} className="font-bold text-4xl">
                       {daton.title}
@@ -80,23 +94,6 @@ export default function EventInfo({ selection }: { selection: string }) {
                       </button>
                     )}
                   </div>
-                  {daton.track_attendance && daton.slots && daton.slots.length > 0 && (
-                    <>
-                      {daton.slots.some(
-                        (slot) => slot.capacity == null || slot.rsvp_count < slot.capacity,
-                      ) || Boolean(rsvpByEvent?.[selection]) ? (
-                        <EventSlotPicker
-                          eventId={selection}
-                          slots={daton.slots}
-                          className="bg-lightBlue hover:opacity-80"
-                        />
-                      ) : (
-                        <div className="text-red-600 underline bold px-4 py-2 rounded-lg cursor-pointer w-fit h-fit absolute bottom-0 right-0 ">
-                          All time slots are full
-                        </div>
-                      )}
-                    </>
-                  )}
                   <motion.p className="text-lg text-[#898989]" variants={item}>
                     {daton.orgs?.name ? daton.orgs.name : "Unknown"}
                   </motion.p>
@@ -108,26 +105,20 @@ export default function EventInfo({ selection }: { selection: string }) {
                     ) : (
                       <div className="w-full bg-blue/15 animate-pulse aspect-video rounded-lg"></div>
                     ))}
+                  {daton.track_attendance && daton.slots && daton.slots.length > 0 && (
+                    <div className="mt-6">
+                      <EventSlotPicker
+                        eventId={selection}
+                        slots={daton.slots}
+                        className="bg-lightBlue hover:opacity-80"
+                      />
+                    </div>
+                  )}
                   <div className="flex w-full flex-row mt-10 justify-between flex-wrap-reverse gap-8">
                     <span className="w-fit">
-                      {daton.type !== "forum" && (
-                        <h1 className="font-semibold">
-                          <span className="block">
-                            Overall: {DateParser(daton.start_date)} – {DateParser(daton.end_date)}
-                          </span>
-                          {daton.slots && daton.slots.length > 0 && (
-                            <span className="mt-2 block space-y-1 text-base font-normal">
-                              {daton.slots.map((slot) => (
-                                <span key={slot.id} className="block">
-                                  {DateParser(slot.starts_at)} – {DateParser(slot.ends_at)}
-                                  {slot.capacity != null
-                                    ? ` · ${slot.rsvp_count}/${slot.capacity} spots`
-                                    : ""}
-                                </span>
-                              ))}
-                            </span>
-                          )}
-                          <span className="block mt-1">{daton.location_str}</span>
+                      {daton.type !== "forum" && daton.location_str && (
+                        <h1 className="font-semibold mb-4">
+                          <span className="block">{daton.location_str}</span>
                         </h1>
                       )}
                       <Editor content={daton.content} />

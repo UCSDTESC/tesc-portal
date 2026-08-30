@@ -3,8 +3,13 @@ import { useNavigate } from "react-router";
 
 import UserContext from "@lib/UserContext";
 import { formdata, RECURRING_RATES } from "@lib/constants";
-import { getFormDataDefault, getCurrentTime, toISO } from "@lib/utils";
-import { createEvent, updateEvent } from "@services/event";
+import { getFormDataDefault, initializeFormData, toLocalDatetimeInput } from "@lib/utils";
+import {
+  createEvent,
+  updateEvent,
+  fetchEventAttendanceToken,
+  type CreateEventSuccess,
+} from "@services/event";
 import supabase from "@server/supabase";
 
 import Editor from "./Editor";
@@ -13,6 +18,7 @@ import DisplayToast from "@lib/hooks/useToast";
 import { Tooltip, Switch, FormControlLabel } from "@mui/material";
 import { IoCloudUploadOutline, IoInformationCircleOutline } from "react-icons/io5";
 import EventSlotsEditor from "./EventSlotsEditor";
+import EventQrModal from "./EventQrModal";
 
 // TODO: refactor label and input components into an individual component
 export default function Form({
@@ -30,9 +36,21 @@ export default function Form({
   const { User, activeOrgName } = useContext(UserContext);
   const navigate = useNavigate();
   const [error, setError] = useState("");
-  const [formData, setFormData] = useState<formdata>(formdata ? formdata : getFormDataDefault());
+  const [formData, setFormData] = useState<formdata>(() => initializeFormData(formdata));
   const isForum = (formData.type ?? "external") === "forum";
   const [uploadingPoster, setUploadingPoster] = useState(false);
+  const [qrModal, setQrModal] = useState<{
+    eventId: string;
+    eventTitle: string;
+    attendanceToken: string;
+  } | null>(null);
+  const [loadingQr, setLoadingQr] = useState(false);
+
+  const isCreateEventSuccess = (result: unknown): result is CreateEventSuccess =>
+    typeof result === "object" &&
+    result !== null &&
+    "eventId" in result &&
+    typeof (result as CreateEventSuccess).eventId === "string";
 
   const handlePosterUpload = async (file: File | null | undefined) => {
     if (!file) return;
@@ -80,17 +98,9 @@ export default function Form({
   }, []);
 
   useEffect(() => {
-    if (isForum) return;
-    if (formData.slots && formData.slots.length > 0) return;
-    const currTime = getCurrentTime();
-    setFormData((prev) => ({
-      ...prev,
-      slots: [{ starts_at: currTime, ends_at: currTime, capacity: null }],
-    }));
-  }, [isForum, formData.slots]);
-
-  useEffect(() => {
     if (!editEvent || !id || isForum) return;
+    if (formdata?.slots && formdata.slots.length > 0) return;
+
     const loadSlots = async () => {
       const { data, error } = await supabase
         .from("event_slot_stats")
@@ -106,22 +116,24 @@ export default function Form({
           ...prev,
           slots: data.map((slot) => ({
             id: String(slot.slot_id),
-            starts_at: toISO(String(slot.starts_at)),
-            ends_at: toISO(String(slot.ends_at)),
+            starts_at: toLocalDatetimeInput(String(slot.starts_at)),
+            ends_at: toLocalDatetimeInput(String(slot.ends_at)),
             capacity: slot.capacity,
           })),
         }));
       }
     };
     loadSlots();
-  }, [editEvent, id, isForum]);
+  }, [editEvent, id, isForum, formdata?.slots]);
   // handle change to form
   const handleChange = <T,>(value: T, cols: string[]): void => {
-    let currform = formData;
-    cols.map((col) => {
-      currform = { ...currform, [col]: value };
+    setFormData((prev) => {
+      let next = prev;
+      for (const col of cols) {
+        next = { ...next, [col]: value };
+      }
+      return next;
     });
-    setFormData(currform);
   };
 
   // update event or create new event
@@ -165,26 +177,56 @@ export default function Form({
         DisplayToast("Succesfully updated event", "success");
       }
     } else if (User?.id) {
-      const error = await createEvent(formData, activeOrgName);
-      if (error) {
-        console.log(error);
-        setError(error.message);
-        DisplayToast("Unable to create event", "error");
-      } else {
+      const result = await createEvent(formData, activeOrgName);
+      if (isCreateEventSuccess(result)) {
         if (isForum) {
           onSuccess();
           DisplayToast("Succesfully created forum post", "success");
         } else {
+          const createdTitle = formData.title;
           form.current?.reset();
           setFormData(getFormDataDefault());
-          navigate("/");
           DisplayToast("Succesfully created event", "success");
+          if (result.attendanceToken && (formData.track_attendance ?? false)) {
+            setQrModal({
+              eventId: result.eventId,
+              eventTitle: createdTitle,
+              attendanceToken: result.attendanceToken,
+            });
+          } else {
+            navigate("/");
+          }
         }
+      } else {
+        const message =
+          (result as { message?: string } | null)?.message ?? "Unable to create event";
+        console.log(result);
+        setError(message);
+        DisplayToast("Unable to create event", "error");
       }
     }
   };
 
   const firstSlotStart = formData.slots?.[0]?.starts_at ?? "";
+
+  const openQrModal = async () => {
+    if (!editEvent || !id) return;
+    setLoadingQr(true);
+    try {
+      const { token, error } = await fetchEventAttendanceToken(id);
+      if (error || !token) {
+        DisplayToast("QR code is not available for this event", "error");
+        return;
+      }
+      setQrModal({
+        eventId: id,
+        eventTitle: formData.title,
+        attendanceToken: token,
+      });
+    } finally {
+      setLoadingQr(false);
+    }
+  };
 
   return (
     <div className={`w-1/2 flex flex-col m-auto bg-white z-101 ${editEvent ? "mt-5" : "mt-20"}`}>
@@ -400,19 +442,44 @@ export default function Form({
           </>
         )}
         <Editor content={formData.content} setEditorContent={(e) => handleChange(e, ["content"])} />
-        <button
-          type="submit"
-          className="bg-[#6A97BD] border border-[#6A97BD] text-white w-fit rounded-lg px-5 cursor-pointer"
-        >
-          {isForum
-            ? editEvent
-              ? "Edit Forum Post"
-              : "Post to the Forum"
-            : editEvent
-              ? "Edit Event"
-              : "Submit New Event"}
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="submit"
+            className="bg-[#6A97BD] border border-[#6A97BD] text-white w-fit rounded-lg px-5 py-2 cursor-pointer"
+          >
+            {isForum
+              ? editEvent
+                ? "Edit Forum Post"
+                : "Post to the Forum"
+              : editEvent
+                ? "Edit Event"
+                : "Submit New Event"}
+          </button>
+          {editEvent && !isForum && (formData.track_attendance ?? false) && (
+            <button
+              type="button"
+              onClick={openQrModal}
+              disabled={loadingQr}
+              className="border border-navy text-navy w-fit rounded-lg px-5 py-2 cursor-pointer disabled:opacity-50"
+            >
+              {loadingQr ? "Loading QR…" : "Show QR Code"}
+            </button>
+          )}
+        </div>
       </form>
+      {qrModal && (
+        <EventQrModal
+          eventId={qrModal.eventId}
+          eventTitle={qrModal.eventTitle}
+          attendanceToken={qrModal.attendanceToken}
+          onClose={() => {
+            setQrModal(null);
+            if (!editEvent) {
+              navigate(`/bulletin/${qrModal.eventId}`);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

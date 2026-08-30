@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   deriveAttendanceCap,
   deriveEventRange,
+  localDatetimeToStorage,
   shiftSlots,
   validateEventSlots,
 } from "./eventSlotUtils";
@@ -47,6 +48,12 @@ describe("event slot helpers", () => {
         { starts_at: "2026-03-01T10:00", ends_at: "2026-03-01T11:00", capacity: 1 },
       ]),
     ).toBeNull();
+  });
+
+  it("converts local datetime-local input to UTC ISO for storage", () => {
+    const stored = localDatetimeToStorage("2030-06-01T18:00");
+    expect(stored).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/);
+    expect(new Date(stored).getTime()).toBe(new Date("2030-06-01T18:00").getTime());
   });
 
   it("shifts all slots by the same offset for recurring events", () => {
