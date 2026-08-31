@@ -62,7 +62,7 @@ export default function CheckBoxes() {
                 }`}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="lg:grid lg:grid-cols-[max-content_max-content] flex flex-col gap-2 h-[40vh] max-w-[200px] md:max-w-none">
+                <div className="lg:grid lg:grid-cols-[max-content_max-content] flex flex-col gap-2 lg:h-[40vh] h-[70vh] max-w-[200px] md:max-w-none">
                   <div className=" border-b lg:border-0">
                     {hasRecruiterAccess ? (
                       <GradCheckboxes />
@@ -225,22 +225,25 @@ function OrgsCheckboxes() {
     <>
       {orgs.map((org: string) => {
         return (
-          <div key={org} className="flex items-center">
-            <input
-              type="checkbox"
-              id={org}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  setOrgFilters([...orgFilters, org]);
-                } else {
-                  setOrgFilters(orgFilters.filter((t) => t !== org));
-                }
-              }}
-            />
-            <label htmlFor={org} className="ml-2">
-              {org}
-            </label>
-          </div>
+          <>
+            <div key={org} className="flex items-center">
+              <input
+                type="checkbox"
+                id={org}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setOrgFilters([...orgFilters, org]);
+                  } else {
+                    setOrgFilters(orgFilters.filter((t) => t !== org));
+                  }
+                }}
+              />
+              <label htmlFor={org} className="ml-2">
+                {org}
+              </label>
+            </div>
+            <div className="h-[1px] w-full my-1 bg-blue/20"></div>
+          </>
         );
       })}
     </>
