@@ -9,8 +9,9 @@ import supabase from "@server/supabase";
 import { majors } from "@lib/constants";
 import { CSVLink } from "react-csv";
 export default function CheckBoxes() {
-  const { setSearch, People, typeFilters, setTypeFilters, portalMode } = useContext(BulletinContext);
-  const { User } = useContext(UserContext);
+  const { setSearch, People, typeFilters, setTypeFilters, portalMode } =
+    useContext(BulletinContext);
+  const { User, activeOrgRole } = useContext(UserContext);
   const isRecruiterPortal = portalMode === "recruiter";
   const hasRecruiterAccess = isRecruiterPortal && canAccessRecruiterData(User?.role);
   const filterRef = useRef(null);
@@ -67,7 +68,12 @@ export default function CheckBoxes() {
                       <GradCheckboxes />
                     ) : (
                       <>
-                        <TypesCheckboxes typeFilters={typeFilters} setTypeFilters={setTypeFilters} />
+                        {activeOrgRole != "" && (
+                          <TypesCheckboxes
+                            typeFilters={typeFilters}
+                            setTypeFilters={setTypeFilters}
+                          />
+                        )}
                         <TagsCheckboxes />
                       </>
                     )}
@@ -130,7 +136,8 @@ function TypesCheckboxes({
   typeFilters: string[];
   setTypeFilters: (types: string[]) => void;
 }) {
-  const types = ["internal", "external", "forum"];
+  const types = ["internal", "external"];
+
   return (
     <>
       {types.map((type) => (
