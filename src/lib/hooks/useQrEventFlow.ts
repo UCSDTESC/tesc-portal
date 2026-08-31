@@ -20,7 +20,7 @@ export function useQrEventFlow(options: {
   event: Event | null | undefined;
   rsvpSlotId?: string;
   attendedSlotId?: string;
-  onRefresh: () => Promise<void>;
+  onRefresh: (eventId?: string) => Promise<void>;
   onRsvp?: (eventId: string, slotId: string) => void;
   onAttended?: (eventId: string, slotId: string) => void;
 }) {
@@ -142,7 +142,7 @@ export function useQrEventFlow(options: {
           onRsvp?.(eventId, slotId);
           setShowPicker(false);
           clearQrParams();
-          await onRefresh();
+          await onRefresh(eventId);
           return;
         }
 
@@ -173,7 +173,7 @@ export function useQrEventFlow(options: {
         onAttended?.(eventId, slotId);
         setShowPicker(false);
         clearQrParams();
-        await onRefresh();
+        await onRefresh(eventId);
       } catch (err) {
         console.error(err);
         DisplayToast("Something went wrong", "error");

@@ -9,11 +9,14 @@ import { WelcomePage } from "./WelcomePage";
 import { motion } from "motion/react";
 import { container, item } from "@lib/constants";
 import { EditOutlined } from "@ant-design/icons";
+import { fetchEventContent } from "@services/event";
 
 export default function EventInfo({ selection }: { selection: string }) {
   const { data, openEditModal, qrBanner } = useContext(BulletinContext);
   const { User } = useContext(UserContext);
   const [imageUrl, setImageUrl] = useState("");
+  const [eventContent, setEventContent] = useState("");
+  const [loadingContent, setLoadingContent] = useState(false);
   useEffect(() => {
     const name = data?.filter((daton) => daton.id.toString() === selection);
     document.title = `${
@@ -32,6 +35,35 @@ export default function EventInfo({ selection }: { selection: string }) {
       `https://mxbwjmjpevvyejnugisy.supabase.co/storage/v1/object/public/profile.images/${filtered[0].orgs?.name}/${filtered[0].orgs?.pfp_str}`,
     );
   }, [data, selection, User?.role]);
+
+  useEffect(() => {
+    if (selection === "-1") {
+      setEventContent("");
+      return;
+    }
+
+    const selected = data?.find((daton) => daton.id.toString() === selection);
+    if (selected?.content != null) {
+      setEventContent(selected.content);
+      return;
+    }
+
+    let cancelled = false;
+    const loadContent = async () => {
+      setLoadingContent(true);
+      const { content, error } = await fetchEventContent(selection);
+      if (!cancelled) {
+        if (error) console.error(error.message);
+        setEventContent(content);
+        setLoadingContent(false);
+      }
+    };
+    loadContent();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selection, data]);
 
   return (
     <>
@@ -121,7 +153,7 @@ export default function EventInfo({ selection }: { selection: string }) {
                           <span className="block">{daton.location_str}</span>
                         </h1>
                       )}
-                      <Editor content={daton.content} />
+                      <Editor content={loadingContent ? "Loading..." : eventContent} />
                     </span>
                     {daton.type !== "forum" && (
                       <div className="w-max flex flex-col gap-2 ">

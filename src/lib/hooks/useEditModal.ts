@@ -1,3 +1,4 @@
+import { fetchEventById } from "@services/event";
 import { eventFormDataDefault, formdata } from "@lib/constants";
 import { useState } from "react";
 import { Event } from "@lib/constants";
@@ -10,25 +11,31 @@ export function useEditModal() {
   const [currEdit, setCurrEdit] = useState<formdata>(eventFormDataDefault);
 
   // Open the Edit Modal with the corresponding data inserted in
-  const openEditModal = (daton: Event) => {
+  const openEditModal = async (daton: Event) => {
+    let source = daton;
+    if (source.content == null || source.password == null) {
+      const { event } = await fetchEventById(daton.id);
+      if (event) source = event as unknown as Event;
+    }
+
     setShowEditModal(true);
-    setCurrID(daton.id);
+    setCurrID(source.id);
     setCurrEdit({
-      title: daton.title,
-      password: daton.password,
-      start_date: daton.start_date ? toISO(daton.start_date) : "",
-      end_date: daton.end_date ? toISO(daton.end_date) : "",
+      title: source.title,
+      password: source.password ?? "",
+      start_date: source.start_date ? toISO(source.start_date) : "",
+      end_date: source.end_date ? toISO(source.end_date) : "",
       location: [],
-      location_str: daton.location_str,
-      content: daton.content,
-      tags: daton.tags,
-      poster: daton.poster,
-      attendance_cap: daton.attendance_cap,
-      track_attendance: daton.track_attendance ?? false,
-      type: daton.type ?? "external",
-      manual_attendance: daton.manual_attendance != null ? String(daton.manual_attendance) : "",
+      location_str: source.location_str,
+      content: source.content ?? "",
+      tags: source.tags,
+      poster: source.poster,
+      attendance_cap: source.attendance_cap,
+      track_attendance: source.track_attendance ?? false,
+      type: source.type ?? "external",
+      manual_attendance: source.manual_attendance != null ? String(source.manual_attendance) : "",
       slots:
-        daton.slots?.map((slot) => ({
+        source.slots?.map((slot) => ({
           id: slot.id,
           starts_at: toLocalDatetimeInput(slot.starts_at),
           ends_at: toLocalDatetimeInput(slot.ends_at),
