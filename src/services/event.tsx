@@ -16,8 +16,13 @@ export {
   validateEventSlots,
 } from "./eventSlotUtils";
 
-const EVENT_SELECT =
-  "id,content,created_at,end_date,location_str,start_date,tags,title,attendance,poster,rsvp,org_id, orgs!inner(name, pfp_str), attendance_cap, track_attendance, type, password, manual_attendance, attendance_token";
+/** Lean columns for bulletin list / search — excludes heavy or sensitive fields. */
+const EVENT_LIST_SELECT =
+  "id,created_at,end_date,location_str,start_date,tags,title,attendance,poster,rsvp,org_id,orgs!inner(name,pfp_str),attendance_cap,track_attendance,type";
+
+/** Full columns for admin tables, edit forms, and single-event detail fetches. */
+const EVENT_FULL_SELECT =
+  "id,content,created_at,end_date,location_str,start_date,tags,title,attendance,poster,rsvp,org_id,orgs!inner(name,pfp_str),attendance_cap,track_attendance,type,password,manual_attendance,attendance_token";
 
 export type CreateEventSuccess = {
   eventId: string;
@@ -71,6 +76,39 @@ async function enrichEventsWithSlotStats<T extends { id: number | string }>(even
     ...event,
     slots: slotsByEvent.get(Number(event.id)) ?? [],
   }));
+}
+
+export async function fetchEventSlotStatsForEvent(eventId: string) {
+  const { data: stats, error } = await supabase
+    .from("event_slot_stats")
+    .select("slot_id, event_id, starts_at, ends_at, capacity, rsvp_count, attended_count")
+    .eq("event_id", Number(eventId))
+    .order("starts_at", { ascending: true });
+
+  if (error) return { slots: null as EventSlot[] | null, error };
+
+  const slots = ((stats ?? []) as SlotStatsRow[]).map((row) => ({
+    id: String(row.slot_id),
+    event_id: String(row.event_id),
+    starts_at: row.starts_at,
+    ends_at: row.ends_at,
+    capacity: row.capacity,
+    rsvp_count: Number(row.rsvp_count ?? 0),
+    attended_count: Number(row.attended_count ?? 0),
+  }));
+
+  return { slots, error: null };
+}
+
+export async function fetchEventContent(eventId: string) {
+  const { data, error } = await supabase
+    .from("events")
+    .select("content")
+    .eq("id", eventId)
+    .eq("deleted", false)
+    .maybeSingle();
+
+  return { content: data?.content ?? "", error };
 }
 
 async function replaceEventSlots(eventId: string, slots: EventSlotForm[]) {
@@ -199,7 +237,7 @@ function getEventImageStoragePath(posterUrl: string): string | null {
 
 export const fetchEventByOrg = async (uid: string, includeAllEvents: boolean = false) => {
   if (includeAllEvents) {
-    const { data, error } = await supabase.from("events").select(EVENT_SELECT).eq("deleted", false);
+    const { data, error } = await supabase.from("events").select(EVENT_FULL_SELECT).eq("deleted", false);
     if (error) return { data, error };
     const enriched = await enrichEventsWithSlotStats(data ?? []);
     return { data: enriched, error: null };
@@ -212,7 +250,7 @@ export const fetchEventByOrg = async (uid: string, includeAllEvents: boolean = f
   if (error) return { data: null, error };
   const { data, error: eventsError } = await supabase
     .from("events")
-    .select(EVENT_SELECT)
+    .select(EVENT_FULL_SELECT)
     .in(
       "org_id",
       orgs.map((org) => org.org_uuid),
@@ -226,7 +264,7 @@ export const fetchEventByOrg = async (uid: string, includeAllEvents: boolean = f
 export const fetchEventById = async (eventId: string) => {
   const { data, error } = await supabase
     .from("events")
-    .select(EVENT_SELECT)
+    .select(EVENT_FULL_SELECT)
     .eq("id", eventId)
     .eq("deleted", false)
     .maybeSingle();
@@ -432,10 +470,14 @@ export const queryEventsBySearchAndFilters = async (
   typeFilters: string[],
   sortMethod: string,
   userId: string | undefined,
-  options?: { internalFilter?: boolean; isSuperOrg?: boolean },
+  options?: { internalFilter?: boolean; isSuperOrg?: boolean; userOrgIds?: string[] },
 ) => {
-  const { internalFilter = false, isSuperOrg = false } = options ?? {};
-  let query = supabase.from("events").select(EVENT_SELECT).ilike("title", `%${keyword}%`).eq("deleted", false);
+  const { internalFilter = false, isSuperOrg = false, userOrgIds } = options ?? {};
+  let query = supabase
+    .from("events")
+    .select(EVENT_LIST_SELECT)
+    .ilike("title", `%${keyword}%`)
+    .eq("deleted", false);
 
   if (internalFilter) query = query.eq("type", "internal");
 
@@ -465,13 +507,20 @@ export const queryEventsBySearchAndFilters = async (
   if (filteredEvents.length > 0) {
     const internalEvents = filteredEvents.filter((e: { type?: string }) => e.type === "internal");
     if (internalEvents.length > 0 && userId) {
-      const { data: userOrgs } = await supabase
-        .from("user_org_roles")
-        .select("org_uuid")
-        .eq("user_uuid", userId);
-      const userOrgIds = new Set((userOrgs ?? []).map((r: { org_uuid: string }) => r.org_uuid));
+      const orgIdSet = userOrgIds
+        ? new Set(userOrgIds)
+        : new Set(
+            (
+              (
+                await supabase
+                  .from("user_org_roles")
+                  .select("org_uuid")
+                  .eq("user_uuid", userId)
+              ).data ?? []
+            ).map((r: { org_uuid: string }) => r.org_uuid),
+          );
       filteredEvents = filteredEvents.filter((e: { type?: string; org_id?: string }) =>
-        e.type !== "internal" || (e.org_id && userOrgIds.has(e.org_id))
+        e.type !== "internal" || (e.org_id && orgIdSet.has(e.org_id)),
       );
     } else if (internalEvents.length > 0 && !userId) {
       filteredEvents = filteredEvents.filter((e: { type?: string }) => e.type !== "internal");
@@ -493,7 +542,8 @@ export const queryPeopleBySearchAndFilters = async (
     .select(
       "uuid,email,created_at,points,resume_link,resume_storage_path,expected_grad,major,first_name,last_name",
     )
-    .eq("resume_visible", true);
+    .eq("resume_visible", true)
+    .or("resume_link.neq.,resume_storage_path.neq.");
 
   if (keyword.trim()) {
     query = query.or(
@@ -513,12 +563,7 @@ export const queryPeopleBySearchAndFilters = async (
   else query = query.order("created_at", { ascending: false });
 
   const { data, error } = await query;
-  const People = (data ?? []).filter(
-    (person) =>
-      (person.resume_link && String(person.resume_link).trim()) ||
-      (person.resume_storage_path && String(person.resume_storage_path).trim()),
-  );
-  return { People, error };
+  return { People: data ?? [], error };
 };
 
 // for attended events list

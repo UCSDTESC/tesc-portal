@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import supabase from "@server/supabase";
 
@@ -36,63 +36,66 @@ export default function Page() {
     // call for the clubs that user is in, sort in alphabetical order
   const [myOrgs, setMyOrgs] = useState<{ id: string; name: string }[]>([]);
   const [activeOrgName, setActiveOrgName] = useState<string>("");
-  const [activeOrgRole, setActiveOrgRole] = useState<string>("");
-  // navigate btwn org accounts
+  const [orgMemberships, setOrgMemberships] = useState<{ id: string; name: string; role: string }[]>(
+    [],
+  );
   const navigate = useNavigate();
 
+  const activeOrgRole = useMemo(
+    () => orgMemberships.find((org) => org.name === activeOrgName)?.role ?? "",
+    [orgMemberships, activeOrgName],
+  );
+
+  const userOrgIds = useMemo(() => orgMemberships.map((org) => org.id), [orgMemberships]);
+
   useEffect(() => {
-    const getMyClubs = async () => {
-      if (!User?.id) return;
+    const loadUserOrgs = async () => {
+      if (!User?.id) {
+        setOrgMemberships([]);
+        setMyOrgs([]);
+        setActiveOrgName("");
+        return;
+      }
 
       const { data: roles, error } = await supabase
         .from("user_org_roles")
-        .select("org_uuid, orgs(name)") 
+        .select("org_uuid, roles(name), orgs(name)")
         .eq("user_uuid", User.id);
 
-      if (roles && !error) {
-        const formattedOrgs = roles.map((role: any) => ({
-          id: String(role.org_uuid),
-          name: role.orgs.name
-        })).sort((a, b) => a.name.localeCompare(b.name));
-        
-        setMyOrgs(formattedOrgs);
-        if (activeOrgName) { // keep at current org selected
-          setActiveOrgName(activeOrgName);
-        } else if (formattedOrgs.length > 0 && !activeOrgName) {
-          setActiveOrgName(formattedOrgs[0].name); // fall back to first org
-        }
+      if (error || !roles) {
+        console.error(error?.message);
+        return;
       }
+
+      const memberships = roles
+        .map((role) => {
+          const row = role as {
+            org_uuid: string;
+            roles: { name: string } | { name: string }[];
+            orgs: { name: string } | { name: string }[];
+          };
+          const roleName = Array.isArray(row.roles) ? row.roles[0]?.name : row.roles?.name;
+          const orgName = Array.isArray(row.orgs) ? row.orgs[0]?.name : row.orgs?.name;
+          return {
+            id: String(row.org_uuid),
+            name: orgName ?? "",
+            role: roleName?.trim() ?? "",
+          };
+        })
+        .filter((org) => org.name)
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      setOrgMemberships(memberships);
+      setMyOrgs(memberships.map(({ id, name }) => ({ id, name })));
+
+      setActiveOrgName((current) => {
+        if (current && memberships.some((org) => org.name === current)) return current;
+        return memberships[0]?.name ?? "";
+      });
     };
 
-    getMyClubs();
+    loadUserOrgs();
   }, [User?.id]);
-
-  useEffect(() => {
-    const loadActiveOrgRole = async () => {
-      if (!User?.id || !activeOrgName) {
-        setActiveOrgRole("");
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("user_org_roles")
-        .select("roles(name), orgs!inner(name)")
-        .eq("user_uuid", User.id)
-        .eq("orgs.name", activeOrgName)
-        .maybeSingle();
-
-      if (error) {
-        console.error(error.message);
-        setActiveOrgRole("");
-        return;
-      }
-
-      const role = data as { roles: { name: string } } | null;
-      setActiveOrgRole(role?.roles?.name?.trim() ?? "");
-    };
-
-    loadActiveOrgRole();
-  }, [User?.id, activeOrgName]);
 
   // navigate btwn org accounts
   const handleOrgSwitch = (selectedName: string) => {
@@ -272,6 +275,7 @@ export default function Page() {
           myOrgs,
           activeOrgName,
           activeOrgRole,
+          userOrgIds,
         }}
       >
         <Navbar />

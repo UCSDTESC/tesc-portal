@@ -193,13 +193,13 @@ export default function Bulletin() {
       }}
     >
       <div className="grid w-full  h-[calc(100vh-3.5rem)] grid-rows-[3.5rem_1fr] font-DM">
-        <div className="relative z-100 bg-linear-to-r from-0% from-blue via-70% via-[#3B7DB6] to-blue flex min-h-[2.25rem] items-center gap-3 px-2 [&>*]:min-h-[2.25rem]">
+        <div className="relative z-3 bg-linear-to-r from-0% from-blue via-70% via-[#3B7DB6] to-blue flex min-h-[2.25rem] items-center gap-3 px-2 [&>*]:min-h-[2.25rem]">
           <CheckBoxes />
           <PortalToggle portalMode={portalMode} onChange={handlePortalChange} />
         </div>
         <div className="flex w-full h-full flex-row relative">
           <div
-            className={`flex w-[300px] flex-col h-[calc(100vh-7rem)] bg-gray-200 absolute z-99 opacity-95 md:relative ${
+            className={`flex w-[300px] flex-col h-[calc(100vh-7rem)] bg-gray-200 absolute z-2 opacity-95 md:relative ${
               displaysideBar == true ? "block" : "hidden"
             }`}
           >

@@ -221,18 +221,6 @@ export const logAttendance = async (
     p_password: userInput,
     p_event_slot_id: eventSlotId ? Number(eventSlotId) : null,
   });
-  if (!error) {
-    console.log("Get User attendance from Users");
-    const { data, error: userError } = await supabase.from("users").select("attended").eq("uuid", id);
-    if (!userError && data?.[0]) {
-      const currAttended = data[0].attended;
-      const { error: updateError } = await supabase
-        .from("users")
-        .update({ attended: [...currAttended, selection] })
-        .eq("uuid", id);
-      if (updateError) return updateError;
-    }
-  }
   return error;
 };
 
@@ -249,19 +237,6 @@ export const logAttendanceWithToken = async (
     p_token: token,
     p_event_slot_id: Number(eventSlotId),
   });
-  if (!error) {
-    const { data, error: userError } = await supabase.from("users").select("attended").eq("uuid", userId);
-    if (!userError && data?.[0]) {
-      const currAttended = data[0].attended ?? [];
-      if (!currAttended.includes(eventId)) {
-        const { error: updateError } = await supabase
-          .from("users")
-          .update({ attended: [...currAttended, eventId] })
-          .eq("uuid", userId);
-        if (updateError) return updateError;
-      }
-    }
-  }
   return error;
 };
 

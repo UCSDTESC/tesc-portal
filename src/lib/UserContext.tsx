@@ -55,6 +55,7 @@ interface UserContext {
   myOrgs: { id: string; name: string }[];
   activeOrgName: string;
   activeOrgRole: string;
+  userOrgIds: string[];
 }
 const UserContext = createContext<UserContext>({
   User: null,
@@ -68,6 +69,7 @@ const UserContext = createContext<UserContext>({
   myOrgs: [{ id: "0", name: "" }],
   activeOrgName: "",
   activeOrgRole: "",
+  userOrgIds: [],
   setShowLoginModal: () => {},
   setPendingProfileSetup: () => {},
   setLoginRecruiterMode: () => {},
