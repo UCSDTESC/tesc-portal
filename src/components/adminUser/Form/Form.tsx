@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useContext } from "react";
+import { useEffect, useRef, useState, useContext, useMemo } from "react";
 import { useNavigate } from "react-router";
 
 import UserContext from "@lib/UserContext";
@@ -19,6 +19,7 @@ import { Tooltip, Switch, FormControlLabel } from "@mui/material";
 import { IoCloudUploadOutline, IoInformationCircleOutline } from "react-icons/io5";
 import EventSlotsEditor from "./EventSlotsEditor";
 import EventQrModal from "./EventQrModal";
+import ProfileAdminTables from "../Profile/ProfileAdminTables";
 
 // TODO: refactor label and input components into an individual component
 export default function Form({
@@ -33,7 +34,8 @@ export default function Form({
   onSuccess: () => void;
 }) {
   const form = useRef<HTMLFormElement>(null);
-  const { User, activeOrgName } = useContext(UserContext);
+  // const { User, activeOrgName } = useContext(UserContext);
+  const { User, activeOrgName, myOrgs } = useContext(UserContext);
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [formData, setFormData] = useState<formdata>(() => initializeFormData(formdata));
@@ -45,6 +47,10 @@ export default function Form({
     attendanceToken: string;
   } | null>(null);
   const [loadingQr, setLoadingQr] = useState(false);
+  const activeOrgId = useMemo(
+    () => myOrgs.find((org) => org.name === activeOrgName)?.id,
+    [myOrgs, activeOrgName],
+  );
 
   const isCreateEventSuccess = (result: unknown): result is CreateEventSuccess =>
     typeof result === "object" &&
@@ -125,6 +131,7 @@ export default function Form({
     };
     loadSlots();
   }, [editEvent, id, isForum, formdata?.slots]);
+
   // handle change to form
   const handleChange = <T,>(value: T, cols: string[]): void => {
     setFormData((prev) => {
@@ -392,6 +399,36 @@ export default function Form({
 
         {!isForum && !(formData.track_attendance ?? false) && (
           <>
+            <div className="flex flex-wrap items-center gap-6">
+              {!isForum && (
+                <>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={formData.track_attendance ?? false}
+                        onChange={(_, checked) => handleChange(checked, ["track_attendance"])}
+                        color="primary"
+                      />
+                    }
+                    label="Track attendance on the portal"
+                  />
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="event-type">Event type</label>
+                    <select
+                      id="event-type"
+                      className="border-black border rounded-lg px-3 h-10"
+                      value={formData.type ?? "external"}
+                      onChange={(e) =>
+                        handleChange(e.target.value as "internal" | "external", ["type"])
+                      }
+                    >
+                      <option value="internal">internal</option>
+                      <option value="external">external</option>
+                    </select>
+                  </div>
+                </>
+              )}
+            </div>
             <label htmlFor="manual_attendance">Manual attendance</label>
             <input
               id="manual_attendance"
@@ -408,6 +445,46 @@ export default function Form({
 
         {!isForum && (
           <>
+            <div className="gap-6">
+              {!isForum && (
+                <>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={formData.has_parent}
+                        onChange={(_, checked) => {
+                          handleChange(checked, ["has_parent"]);
+                          if (!checked) handleChange(null, ["dependent_on"]);
+                        }}
+                        color="primary"
+                      />
+                    }
+                    label="Dependent on another event?"
+                  />
+                  {formData.has_parent && (
+                    <>
+                      <div
+                        className="flex flex-wrap items-center gap-3 min-w-0"
+                        onClick={(e) => e.preventDefault()}
+                      >
+                        <h2 className="text-xl font-semibold">Select parent event</h2>
+                        <ProfileAdminTables
+                          orgName={activeOrgName === "super_org" ? undefined : activeOrgName}
+                          orgId={activeOrgId}
+                          showUserAdmin={false}
+                          showOrgMembers={false}
+                          cols={["title", "start_date", "end_date"]}
+                          onRowClick={(e) => {
+                            handleChange(e.id, ["dependent_on"]);
+                          }}
+                          focusId={formData.dependent_on}
+                        />
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
             <label>Event Location</label>
             <Dropdown formData={formData} handleChange={handleChange} />
           </>

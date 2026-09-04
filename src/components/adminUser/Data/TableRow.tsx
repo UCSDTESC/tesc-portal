@@ -18,9 +18,17 @@ type Props = {
   getCellValue: (daton: Event, key: string) => string;
   onDelete: (id: string) => Promise<void>;
   onEdit: (daton: Event) => void;
+  focusId?: string | null;
 };
 
-export default function TableRow({ daton, columns, getCellValue, onDelete, onEdit }: Props) {
+export default function TableRow({
+  daton,
+  columns,
+  getCellValue,
+  onDelete,
+  onEdit,
+  focusId,
+}: Props) {
   const [attendees, setAttendees] = useState<
     {
       user_id: string;
@@ -89,122 +97,121 @@ export default function TableRow({ daton, columns, getCellValue, onDelete, onEdi
   };
 
   const truncate = (s: string, max = 40) => (s.length <= max ? s : s.slice(0, max) + "…");
-
   return (
     <>
-    <tr
-      className="border-b border-slate-200 hover:bg-slate-50/80 transition-colors cursor-pointer"
-      onClick={() => onEdit(daton)}
-    >
-      {columns.map((col) => {
-        if (col.key === "actions") {
+      <tr
+        className={`border-b border-slate-200 hover:bg-slate-50/80 transition-colors cursor-pointer ${focusId === daton.id ? "bg-lightBlue/20" : ""}`}
+        onClick={() => onEdit(daton)}
+      >
+        {columns.map((col) => {
+          if (col.key === "actions") {
+            return (
+              <td
+                key={col.key}
+                className="px-3 py-2 border-r border-slate-200 last:border-r-0 whitespace-nowrap"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center gap-1">
+                  <DeleteConfirmationModal
+                    itemName={daton.title}
+                    isDeleting={isDeleting}
+                    onConfirm={handleDelete}
+                    trigger={
+                      <button
+                        type="button"
+                        className="p-1.5 rounded text-red-600 hover:bg-red-50 cursor-pointer"
+                        title="Delete"
+                      >
+                        <DeleteOutlined />
+                      </button>
+                    }
+                  />
+                  {daton.track_attendance && (
+                    <button
+                      type="button"
+                      className="p-1.5 rounded text-slate-600 hover:bg-slate-200 cursor-pointer disabled:opacity-50"
+                      onClick={openQrModal}
+                      disabled={loadingQr}
+                      title="Show QR code"
+                    >
+                      <QrcodeOutlined />
+                    </button>
+                  )}
+                  {daton.track_attendance && (
+                    <div className="relative inline-block">
+                      <button
+                        type="button"
+                        className="p-1.5 rounded text-slate-600 hover:bg-slate-200 cursor-pointer"
+                        onClick={toggleAttendees}
+                        title={showAttendees ? "Hide attendees" : "View attendees"}
+                      >
+                        {showAttendees ? (
+                          <FaRegEye className="inline" />
+                        ) : (
+                          <FaRegEyeSlash className="inline" />
+                        )}
+                      </button>
+                      {showAttendees && (
+                        <div className="absolute right-0 top-full mt-1 z-10 min-w-[200px] max-h-48 overflow-auto bg-white border border-slate-200 rounded-lg shadow-lg py-2">
+                          <div className="px-2 py-1 text-xs font-semibold text-slate-500 border-b border-slate-100 flex items-center justify-between">
+                            Attendees
+                            <CSVLink
+                              data={attendees.map((a) => ({
+                                user_id: a.user_id,
+                                email: a.users.email,
+                                first_name: a.users.first_name,
+                                last_name: a.users.last_name,
+                                major: a.users.major,
+                              }))}
+                              className="text-blue-600 hover:underline"
+                              filename={`attendees-${daton.title?.replace(/\s+/g, "-") || daton.id}.csv`}
+                            >
+                              <IoMdDownload className="inline" />
+                            </CSVLink>
+                          </div>
+                          <ul className="text-xs text-slate-700 divide-y divide-slate-100">
+                            {attendees.length === 0 ? (
+                              <li className="px-2 py-2 text-slate-500">Loading…</li>
+                            ) : (
+                              attendees.map((a) => (
+                                <li key={a.user_id} className="px-2 py-1.5">
+                                  {a.users.email}
+                                </li>
+                              ))
+                            )}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </td>
+            );
+          }
+          const raw = getCellValue(daton, col.key);
+          const display =
+            col.key === "title" || col.key === "location_str" || col.key === "tags"
+              ? truncate(raw)
+              : raw;
           return (
             <td
               key={col.key}
-              className="px-3 py-2 border-r border-slate-200 last:border-r-0 whitespace-nowrap"
-              onClick={(e) => e.stopPropagation()}
+              className="px-3 py-2 border-r border-slate-200 last:border-r-0 text-slate-700 overflow-hidden text-ellipsis min-w-0"
+              title={raw !== display ? raw : undefined}
             >
-              <div className="flex items-center gap-1">
-                <DeleteConfirmationModal
-                  itemName={daton.title}
-                  isDeleting={isDeleting}
-                  onConfirm={handleDelete}
-                  trigger={
-                    <button
-                      type="button"
-                      className="p-1.5 rounded text-red-600 hover:bg-red-50 cursor-pointer"
-                      title="Delete"
-                    >
-                      <DeleteOutlined />
-                    </button>
-                  }
-                />
-                {daton.track_attendance && (
-                  <button
-                    type="button"
-                    className="p-1.5 rounded text-slate-600 hover:bg-slate-200 cursor-pointer disabled:opacity-50"
-                    onClick={openQrModal}
-                    disabled={loadingQr}
-                    title="Show QR code"
-                  >
-                    <QrcodeOutlined />
-                  </button>
-                )}
-                {daton.track_attendance && (
-                  <div className="relative inline-block">
-                    <button
-                      type="button"
-                      className="p-1.5 rounded text-slate-600 hover:bg-slate-200 cursor-pointer"
-                      onClick={toggleAttendees}
-                      title={showAttendees ? "Hide attendees" : "View attendees"}
-                    >
-                      {showAttendees ? (
-                        <FaRegEye className="inline" />
-                      ) : (
-                        <FaRegEyeSlash className="inline" />
-                      )}
-                    </button>
-                    {showAttendees && (
-                      <div className="absolute right-0 top-full mt-1 z-10 min-w-[200px] max-h-48 overflow-auto bg-white border border-slate-200 rounded-lg shadow-lg py-2">
-                        <div className="px-2 py-1 text-xs font-semibold text-slate-500 border-b border-slate-100 flex items-center justify-between">
-                          Attendees
-                          <CSVLink
-                            data={attendees.map((a) => ({
-                              user_id: a.user_id,
-                              email: a.users.email,
-                              first_name: a.users.first_name,
-                              last_name: a.users.last_name,
-                              major: a.users.major,
-                            }))}
-                            className="text-blue-600 hover:underline"
-                            filename={`attendees-${daton.title?.replace(/\s+/g, "-") || daton.id}.csv`}
-                          >
-                            <IoMdDownload className="inline" />
-                          </CSVLink>
-                        </div>
-                        <ul className="text-xs text-slate-700 divide-y divide-slate-100">
-                          {attendees.length === 0 ? (
-                            <li className="px-2 py-2 text-slate-500">Loading…</li>
-                          ) : (
-                            attendees.map((a) => (
-                              <li key={a.user_id} className="px-2 py-1.5">
-                                {a.users.email}
-                              </li>
-                            ))
-                          )}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+              <span className="block truncate">{display || "—"}</span>
             </td>
           );
-        }
-        const raw = getCellValue(daton, col.key);
-        const display =
-          col.key === "title" || col.key === "location_str" || col.key === "tags"
-            ? truncate(raw)
-            : raw;
-        return (
-          <td
-            key={col.key}
-            className="px-3 py-2 border-r border-slate-200 last:border-r-0 text-slate-700 overflow-hidden text-ellipsis min-w-0"
-            title={raw !== display ? raw : undefined}
-          >
-            <span className="block truncate">{display || "—"}</span>
-          </td>
-        );
-      })}
-    </tr>
-    {qrModal && (
-      <EventQrModal
-        eventId={qrModal.eventId}
-        eventTitle={qrModal.eventTitle}
-        attendanceToken={qrModal.attendanceToken}
-        onClose={() => setQrModal(null)}
-      />
-    )}
+        })}
+      </tr>
+      {qrModal && (
+        <EventQrModal
+          eventId={qrModal.eventId}
+          eventTitle={qrModal.eventTitle}
+          attendanceToken={qrModal.attendanceToken}
+          onClose={() => setQrModal(null)}
+        />
+      )}
     </>
   );
 }

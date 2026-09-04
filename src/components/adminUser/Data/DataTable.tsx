@@ -1,6 +1,14 @@
-import { forwardRef, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  forwardRef,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
-
+import { Event } from "@lib/constants";
 import UserContext from "@lib/UserContext";
 import { useEditModal } from "@lib/hooks/useEditModal";
 import { useData } from "@lib/hooks/useData";
@@ -40,16 +48,20 @@ import {
 import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, Columns2, FilterIcon } from "lucide-react";
 import { useOutsideClicks } from "@lib/hooks/useOutsideClick";
 
-// TODO: Loading and Error state for the data
-// TODO: styling of the component
 export default function DataTable({
   orgName,
   pagination,
   embedded = false,
+  cols,
+  onRowClick,
+  focusId,
 }: {
   orgName?: string;
   pagination?: TablePaginationProps;
   embedded?: boolean;
+  cols?: string[];
+  onRowClick?: (daton: Event) => void;
+  focusId?: string | null;
 }) {
   const { User } = useContext(UserContext);
   const { data, handleDelete, fetchData } = useData(User, orgName);
@@ -86,9 +98,9 @@ export default function DataTable({
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-    window.localStorage.setItem(
-      DATA_TABLE_COLUMNS_STORAGE_KEY,
-        JSON.stringify(Array.from(hiddenColumnKeys))
+      window.localStorage.setItem(
+        DATA_TABLE_COLUMNS_STORAGE_KEY,
+        JSON.stringify(Array.from(hiddenColumnKeys)),
       );
     } catch {
       // ignore quota / disabled storage
@@ -96,19 +108,24 @@ export default function DataTable({
   }, [hiddenColumnKeys]);
 
   const visibleColumns = useMemo(
-    () => DATA_TABLE_COLUMNS.filter((col) => {
-      // Hide org_name column when viewing a specific org (not super_org)
-      if (col.key === "org_name" && orgName !== undefined) {
-        return false;
-      }
-      return !hiddenColumnKeys.has(col.key);
-    }),
-    [hiddenColumnKeys, orgName]
+    () =>
+      DATA_TABLE_COLUMNS.filter((col) => {
+        // Hide org_name column when viewing a specific org (not super_org)
+        if (cols) {
+          return cols.includes(col.key);
+        }
+        if (col.key === "org_name" && orgName !== undefined) {
+          return false;
+        }
+        return !hiddenColumnKeys.has(col.key);
+      }),
+    [cols, hiddenColumnKeys, orgName],
   );
 
   const filteredData = useMemo(() => {
     if (!data) return [];
     return data.filter((daton) => {
+      if (onRowClick && daton.type !== "external") return false;
       for (const col of DATA_TABLE_COLUMNS) {
         if (col.key === "actions" || !("filterType" in col)) continue;
         // Skip org_name filtering when viewing a specific org (not super_org)
@@ -117,13 +134,19 @@ export default function DataTable({
         const filterType = "filterType" in col ? col.filterType : undefined;
         if (
           filterVal != null &&
-          !matchesDataTableColumnFilter(daton, col.key, filterType, filterVal, getDataTableCellValue)
+          !matchesDataTableColumnFilter(
+            daton,
+            col.key,
+            filterType,
+            filterVal,
+            getDataTableCellValue,
+          )
         )
           return false;
       }
       return true;
     });
-  }, [data, columnFilters, orgName]);
+  }, [data, onRowClick, orgName, columnFilters]);
 
   const sortedData = useMemo(() => {
     if (!sortColumn) return filteredData;
@@ -220,55 +243,57 @@ export default function DataTable({
   return (
     <Wrapper embedded={embedded}>
       {/* Toolbar: columns */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative" ref={columnsPopupRef}>
-          <button
-            type="button"
-            onClick={() => setShowColumnsPopup((p) => !p)}
-            className={`inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium border transition-colors ${
-              hiddenColumnKeys.size > 0
-                ? "border-blue-400 bg-blue-50 text-blue-700"
-                : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-            }`}
-            title="Toggle columns"
-          >
-            <Columns2 className="size-4" />
-            Columns
-          </button>
-          {showColumnsPopup && (
-            <div
-              className="absolute left-0 top-full mt-1 z-20 min-w-[180px] max-h-64 overflow-auto bg-white border border-slate-200 rounded-lg shadow-lg py-2"
-              role="menu"
+      {!cols && (
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative" ref={columnsPopupRef}>
+            <button
+              type="button"
+              onClick={() => setShowColumnsPopup((p) => !p)}
+              className={`inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium border transition-colors ${
+                hiddenColumnKeys.size > 0
+                  ? "border-blue-400 bg-blue-50 text-blue-700"
+                  : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+              }`}
+              title="Toggle columns"
             >
-              <div className="px-3 py-1.5 text-xs font-semibold text-slate-500 border-b border-slate-100">
-                Show columns
+              <Columns2 className="size-4" />
+              Columns
+            </button>
+            {showColumnsPopup && (
+              <div
+                className="absolute left-0 top-full mt-1 z-20 min-w-[180px] max-h-64 overflow-auto bg-white border border-slate-200 rounded-lg shadow-lg py-2"
+                role="menu"
+              >
+                <div className="px-3 py-1.5 text-xs font-semibold text-slate-500 border-b border-slate-100">
+                  Show columns
+                </div>
+                {(DATA_TABLE_COLUMNS as readonly { key: string; label: string }[])
+                  .filter((col) => {
+                    // Hide org_name checkbox for non-super_org accounts
+                    if (col.key === "org_name" && orgName !== undefined) {
+                      return false;
+                    }
+                    return true;
+                  })
+                  .map((col) => (
+                    <label
+                      key={col.key}
+                      className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={!hiddenColumnKeys.has(col.key)}
+                        onChange={() => toggleColumnVisibility(col.key)}
+                        className="rounded cursor-pointer"
+                      />
+                      <span>{col.label || col.key}</span>
+                    </label>
+                  ))}
               </div>
-              {(DATA_TABLE_COLUMNS as readonly { key: string; label: string }[])
-                .filter((col) => {
-                  // Hide org_name checkbox for non-super_org accounts
-                  if (col.key === "org_name" && orgName !== undefined) {
-                    return false;
-                  }
-                  return true;
-                })
-                .map((col) => (
-                <label
-                  key={col.key}
-                  className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm"
-                >
-                  <input
-                    type="checkbox"
-                    checked={!hiddenColumnKeys.has(col.key)}
-                    onChange={() => toggleColumnVisibility(col.key)}
-                    className="rounded cursor-pointer"
-                  />
-                  <span>{col.label || col.key}</span>
-                </label>
-              ))}
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Database-style table */}
       <div className="border border-slate-300 rounded-lg overflow-hidden bg-white shadow-sm">
@@ -276,7 +301,7 @@ export default function DataTable({
           <table
             className={
               isLgOrSmaller
-                ? "w-[100%] min-w-max border-collapse text-sm"
+                ? "w-full min-w-max border-collapse text-sm"
                 : "w-full table-fixed border-collapse text-sm"
             }
           >
@@ -369,16 +394,30 @@ export default function DataTable({
                   </td>
                 </tr>
               ) : (
-                paginatedData.map((daton) => (
-                  <TableRow
-                    key={daton.id}
-                    daton={daton}
-                    columns={visibleColumns}
-                    getCellValue={getDataTableCellValue}
-                    onDelete={handleDelete}
-                    onEdit={openEditModal}
-                  />
-                ))
+                paginatedData.map((daton) =>
+                  onRowClick ? (
+                    <>
+                      <TableRow
+                        key={daton.id}
+                        daton={daton}
+                        columns={visibleColumns}
+                        getCellValue={getDataTableCellValue}
+                        onDelete={handleDelete}
+                        onEdit={onRowClick}
+                        focusId={focusId}
+                      />
+                    </>
+                  ) : (
+                    <TableRow
+                      key={daton.id}
+                      daton={daton}
+                      columns={visibleColumns}
+                      getCellValue={getDataTableCellValue}
+                      onDelete={handleDelete}
+                      onEdit={openEditModal}
+                    />
+                  ),
+                )
               )}
             </tbody>
           </table>
@@ -462,13 +501,7 @@ export default function DataTable({
   );
 }
 
-function Wrapper({
-  embedded,
-  children,
-}: {
-  embedded: boolean;
-  children: ReactNode;
-}) {
+function Wrapper({ embedded, children }: { embedded: boolean; children: ReactNode }) {
   if (embedded) {
     return <div className="grid w-full gap-4">{children}</div>;
   }

@@ -56,6 +56,8 @@ export const getFormDataDefault = (): formdata => {
     poster: "https://placehold.co/600x400",
     track_attendance: true,
     manual_attendance: "",
+    has_parent: false,
+    dependent_on: null,
     type: "external",
     recurring_rate: "none",
     recurrence_end_date: "",
@@ -65,18 +67,30 @@ export const getFormDataDefault = (): formdata => {
 
 /** Form init: use defaults for create, or ensure non-forum edits have at least one slot row. */
 export const initializeFormData = (formdata?: formdata): formdata => {
+  console.log(formdata);
   if (!formdata) return getFormDataDefault();
   const isForum = (formdata.type ?? "external") === "forum";
   if (isForum || (formdata.slots?.length ?? 0) > 0) return formdata;
   const currTime = getCurrentTime();
+  if (formdata.dependent_on) formdata.has_parent = true;
   return { ...formdata, slots: [defaultEventSlot(currTime)] };
 };
 
 /** Parses and displays date/time as stored (no timezone conversion). Expects YYYY-MM-DDTHH:mm or similar. */
 /** Short month names for DateParser. */
 const MONTH_NAMES = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
 ];
 
 /** Parses and displays date/time as stored (no timezone conversion). Expects YYYY-MM-DDTHH:mm or similar. Used in: DataTable getCellValue, event display. */
@@ -94,9 +108,7 @@ export const DateParser = (date: string) => {
   const hourNum = parseInt(hour, 10);
   const ampm = hourNum >= 12 ? "PM" : "AM";
   const hour12 = hourNum % 12 || 12;
-  const timeStr = sec
-    ? `${hour12}:${min}:${sec} ${ampm}`
-    : `${hour12}:${min} ${ampm}`;
+  const timeStr = sec ? `${hour12}:${min}:${sec} ${ampm}` : `${hour12}:${min} ${ampm}`;
   return `${MONTH_NAMES[monthNum]} ${parseInt(day, 10)}, ${year}, ${timeStr}`;
 };
 
@@ -258,7 +270,7 @@ export function matchesDataTableColumnFilter(
   key: string,
   filterType: DataTableFilterType | undefined,
   filterValue: DataTableColumnFilter | undefined,
-  getCellValue: (d: Event, k: string) => string
+  getCellValue: (d: Event, k: string) => string,
 ): boolean {
   if (filterValue == null || filterValue === "") return true;
   if (Array.isArray(filterValue) && filterValue.length === 0) return true;

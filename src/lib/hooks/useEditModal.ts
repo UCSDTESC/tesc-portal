@@ -31,6 +31,8 @@ export function useEditModal() {
       tags: source.tags,
       poster: source.poster,
       attendance_cap: source.attendance_cap,
+      has_parent: source.dependent_on !== null,
+      dependent_on: source.dependent_on,
       track_attendance: source.track_attendance ?? false,
       type: source.type ?? "external",
       manual_attendance: source.manual_attendance != null ? String(source.manual_attendance) : "",
@@ -68,5 +70,12 @@ export function useEditModal() {
     });
   };
 
-  return { showEditModal, setShowEditModal, curID, currEdit, openEditModal, openCreateForumPostModal };
+  return {
+    showEditModal,
+    setShowEditModal,
+    curID,
+    currEdit,
+    openEditModal,
+    openCreateForumPostModal,
+  };
 }
