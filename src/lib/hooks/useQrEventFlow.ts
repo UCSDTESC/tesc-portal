@@ -138,7 +138,7 @@ export function useQrEventFlow(options: {
             }
           }
           setBanner({ type: "success", message: "You are registered for this event." });
-          DisplayToast("Successfully registered", "success");
+          DisplayToast("Successfully registered. A confirmation email is on the way.", "success");
           onRsvp?.(eventId, slotId);
           setShowPicker(false);
           clearQrParams();
