@@ -58,16 +58,18 @@ export default function EventSlotPicker({
   eventId,
   slots,
   className = "",
+  preview = false,
 }: {
   eventId: string;
   slots: EventSlot[];
   className?: string;
+  preview?: boolean;
 }) {
   const { rsvpByEvent, attendedByEvent, handleRSVP, handleAttendance } = useContext(BulletinContext);
   const [selectedSlotId, setSelectedSlotId] = useState("");
 
-  const userRsvpSlotId = rsvpByEvent?.[eventId] ?? "";
-  const userAttendedSlotId = attendedByEvent?.[eventId] ?? "";
+  const userRsvpSlotId = preview ? "" : (rsvpByEvent?.[eventId] ?? "");
+  const userAttendedSlotId = preview ? "" : (attendedByEvent?.[eventId] ?? "");
   const activeSlotId = selectedSlotId || userRsvpSlotId || slots[0]?.id || "";
 
   const activeSlot = useMemo(
@@ -85,7 +87,7 @@ export default function EventSlotPicker({
     [slots, userRsvpSlotId],
   );
 
-  if (!rsvpByEvent || !attendedByEvent || !slots.length || !activeSlot) return null;
+  if ((!preview && (!rsvpByEvent || !attendedByEvent)) || !slots.length || !activeSlot) return null;
 
   const now = new Date();
   const buttonClassName = `border border-blue px-4 py-2 rounded-lg cursor-pointer w-fit h-fit ${className}`;
@@ -139,7 +141,7 @@ export default function EventSlotPicker({
                 isSelected && !allEnded ? "border-blue bg-blue/10" : "border-gray-200"
               } ${disabled ? "opacity-60" : ""}`}
             >
-              {!allEnded && (
+              {!allEnded && !preview && (
                 <input
                   type="radio"
                   name={`slot-${eventId}`}
@@ -167,7 +169,7 @@ export default function EventSlotPicker({
           );
         })}
       </div>
-      {!allEnded && (
+      {!preview && !allEnded && (
         <div className="mt-3 flex gap-2">
           {slotAction === "checkin" ? (
             <button

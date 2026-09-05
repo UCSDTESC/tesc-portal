@@ -2,8 +2,9 @@ import { useEffect, useRef, useState, useContext, useMemo } from "react";
 import { useNavigate } from "react-router";
 
 import UserContext from "@lib/UserContext";
-import { formdata, RECURRING_RATES } from "@lib/constants";
+import { Event, EventSlot, formdata, RECURRING_RATES } from "@lib/constants";
 import { getFormDataDefault, initializeFormData, toLocalDatetimeInput } from "@lib/utils";
+import EventInfo from "@components/Bulletin/EventInfo";
 import {
   createEvent,
   updateEvent,
@@ -47,6 +48,7 @@ export default function Form({
     attendanceToken: string;
   } | null>(null);
   const [loadingQr, setLoadingQr] = useState(false);
+  const [orgPfpStr, setOrgPfpStr] = useState("");
   const activeOrgId = useMemo(
     () => myOrgs.find((org) => org.name === activeOrgName)?.id,
     [myOrgs, activeOrgName],
@@ -102,6 +104,33 @@ export default function Form({
   useEffect(() => {
     document.title = "New Event | TESC Portal";
   }, []);
+
+  useEffect(() => {
+    if (!activeOrgName) {
+      setOrgPfpStr("");
+      return;
+    }
+
+    let cancelled = false;
+    const loadOrgPfp = async () => {
+      const { data, error } = await supabase
+        .from("orgs")
+        .select("pfp_str")
+        .eq("name", activeOrgName)
+        .maybeSingle();
+      if (cancelled) return;
+      if (error || !data?.pfp_str) {
+        setOrgPfpStr("");
+        return;
+      }
+      setOrgPfpStr(data.pfp_str);
+    };
+    loadOrgPfp();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeOrgName]);
 
   useEffect(() => {
     if (!editEvent || !id || isForum) return;
@@ -216,6 +245,45 @@ export default function Form({
 
   const firstSlotStart = formData.slots?.[0]?.starts_at ?? "";
 
+  const previewEvent = useMemo((): Event => {
+    const slots: EventSlot[] = (formData.slots ?? [])
+      .filter((slot) => slot.starts_at && slot.ends_at)
+      .map((slot, index) => ({
+        id: slot.id ?? `preview-slot-${index}`,
+        event_id: id || "preview",
+        starts_at: slot.starts_at,
+        ends_at: slot.ends_at,
+        capacity: slot.capacity ?? null,
+        rsvp_count: 0,
+        attended_count: 0,
+      }));
+    return {
+      id: id || "preview",
+      UID: User?.id ?? "",
+      created_at: "",
+      title: formData.title || (isForum ? "Untitled post" : "Untitled event"),
+      content: formData.content || "",
+      location_str: formData.location_str,
+      location: formData.location,
+      start_date: slots[0]?.starts_at ?? formData.start_date ?? "",
+      end_date: slots[slots.length - 1]?.ends_at ?? formData.end_date ?? "",
+      attendance: 0,
+      dependent_on: formData.dependent_on ?? "",
+      rsvp: 0,
+      orgs: {
+        name: activeOrgName || "Your organization",
+        pfp_str: orgPfpStr,
+      },
+      poster: formData.poster,
+      attendance_cap: formData.attendance_cap,
+      org_id: activeOrgId ?? "",
+      track_attendance: formData.track_attendance,
+      type: formData.type,
+      tags: (formData.tags ?? []).filter(Boolean),
+      slots,
+    };
+  }, [formData, id, User?.id, activeOrgName, activeOrgId, isForum, orgPfpStr]);
+
   const openQrModal = async () => {
     if (!editEvent || !id) return;
     setLoadingQr(true);
@@ -236,7 +304,12 @@ export default function Form({
   };
 
   return (
-    <div className={`w-1/2 flex flex-col m-auto bg-white z-101 ${editEvent ? "mt-5" : "mt-20"}`}>
+    <div
+      className={`w-[95%] flex flex-col lg:flex-row gap-8 m-auto bg-white z-101 ${
+        editEvent ? "mt-5" : "mt-20"
+      }`}
+    >
+      <div className="flex flex-col min-w-0 lg:w-1/2">
       {!editEvent && (
         <>
           {isForum ? (
@@ -544,6 +617,12 @@ export default function Form({
           )}
         </div>
       </form>
+      </div>
+      <aside className="min-w-0 lg:w-1/2 lg:sticky lg:top-24 lg:self-start">
+        <div className="border border-gray-200 rounded-lg p-4 overflow-y-auto max-h-[calc(100vh-8rem)] bg-white">
+          <EventInfo event={previewEvent} preview />
+        </div>
+      </aside>
       {qrModal && (
         <EventQrModal
           eventId={qrModal.eventId}
