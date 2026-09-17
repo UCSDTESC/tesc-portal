@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router";
+import { Outlet, useNavigate } from "react-router";
 import supabase from "@server/supabase";
 
 import UserContext, { PENDING_PROFILE_SETUP_KEY } from "@lib/UserContext";
 import type { User, UserCredentials, AuthSuccessResult, PendingQrFlow } from "@lib/UserContext";
+import { consumeAuthReturnTo } from "@lib/eventLinks";
 import {
   signIn,
   fetchUser,
@@ -28,7 +29,6 @@ export default function Page() {
   const [loginRecruiterMode, setLoginRecruiterMode] = useState(false);
   const [pendingQrFlow, setPendingQrFlow] = useState<PendingQrFlow | null>(null);
   const [loginModalContext, setLoginModalContext] = useState("");
-  const location = useLocation();
 
   // -- USER ORGS --
   // org id for drop down, switching btwn orgs on single user
@@ -111,7 +111,6 @@ export default function Page() {
     if (user && user?.email) {
       setError("");
       setUser({ id: user.id, email: user.email, role: user.role });
-      setPendingQrFlow(null);
       OnSuccess();
       DisplayToast("Succesfully logged in", "success");
     }
@@ -165,7 +164,6 @@ export default function Page() {
         email: user?.email ? user?.email : "",
         role: user?.role ? user.role : "unknown"
       });
-      setPendingQrFlow(null);
       onSuccess({
         needsProfileSetup: type === "email" && user?.role !== "company",
       });
@@ -210,31 +208,54 @@ export default function Page() {
     }
   };
 
-  // get current user
+  // Restore session, backfill public.users if needed, then return to the QR URL.
   useEffect(() => {
-    // if (location.pathname.includes("bulletin")) return;
-    if (User) {
-      setAuthReady(true);
-      return;
-    }
-    const getUser = async () => {
+    let cancelled = false;
+
+    const syncUser = async (hasSession: boolean) => {
       try {
-        const user = await fetchUser();
-        if (user && user.email) {
-          setUser({ id: user.id, email: user.email, role: user.role });
-        } else {
-          setUser({ id: "", email: "", role: "" });
-          if (location.pathname !== "" && !location.pathname.includes("bulletin"))
-            navigate("bulletin");
+        if (!hasSession) {
+          if (!cancelled) setUser({ id: "", email: "", role: "" });
+          return null;
         }
+        const { user, error } = await fetchUser();
+        if (cancelled) return null;
+        if (user?.email) {
+          setUser({ id: user.id, email: user.email, role: user.role });
+          return user;
+        }
+        setUser({ id: "", email: "", role: "" });
+        if (error) DisplayToast(error.message || "Couldn't finish signing in", "error");
+        return null;
       } catch (err) {
         console.error(err);
+        return null;
       } finally {
-        setAuthReady(true);
+        if (!cancelled) setAuthReady(true);
       }
     };
-    getUser();
-  }, [location.pathname, navigate]);
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      // Defer so we don't deadlock with other auth calls inside the callback.
+      setTimeout(async () => {
+        if (cancelled) return;
+        const user = await syncUser(Boolean(session?.user));
+        const shouldRestore = event === "SIGNED_IN" || event === "INITIAL_SESSION";
+        if (!shouldRestore || !user?.email) return;
+        const returnTo = consumeAuthReturnTo();
+        if (!returnTo) return;
+        const current = `${globalThis.location.pathname}${globalThis.location.search}`;
+        if (returnTo !== current) navigate(returnTo, { replace: true });
+      }, 0);
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   useEffect(() => {
     if (!User?.id) return;

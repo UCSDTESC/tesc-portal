@@ -1,4 +1,5 @@
 import supabase from "@server/supabase";
+import { googleOAuthRedirectTo, rememberAuthReturnTo } from "@lib/eventLinks";
 import { resolveUserRoleFromNames } from "@lib/roles";
 
 type RoleRow = { roles: { name: string } };
@@ -24,16 +25,26 @@ async function finalizeUserSignup(resumeVisible = true) {
   return error;
 }
 
-async function ensureUserProfile(userId: string) {
+async function ensureUserProfile(userId: string, resumeVisible = true) {
   const { data: profile } = await supabase
     .from("users")
     .select("uuid")
     .eq("uuid", userId)
     .maybeSingle();
 
-  if (!profile) {
-    const finalizeError = await finalizeUserSignup();
-    if (finalizeError) return finalizeError;
+  if (profile) return null;
+
+  const finalizeError = await finalizeUserSignup(resumeVisible);
+  if (finalizeError) return finalizeError;
+
+  const { data: created } = await supabase
+    .from("users")
+    .select("uuid")
+    .eq("uuid", userId)
+    .maybeSingle();
+
+  if (!created) {
+    return { message: "Unable to create user profile" };
   }
 
   return null;
@@ -63,14 +74,20 @@ export const fetchUser = async () => {
   const {
     data: { user }
   } = await supabase.auth.getUser();
-  if (!user?.email) return null;
+  if (!user?.email) return { user: null, error: null };
   const profileError = await ensureUserProfile(user.id);
-  if (profileError) return null;
+  if (profileError) {
+    console.error(profileError.message);
+    return { user: null, error: profileError };
+  }
   const role = await fetchUserRole(user.id);
   return {
-    id: user.id,
-    email: user.email,
-    role
+    user: {
+      id: user.id,
+      email: user.email,
+      role
+    },
+    error: null
   };
 };
 
@@ -81,41 +98,34 @@ export const signOut = async () => {
 };
 
 export const signUp = async (email: string, password: string) => {
-  // add user to auth table
   const { data, error } = await supabase.auth.signUp({
     email: email,
     password: password
   });
   if (error) return { user: null, error };
 
-  // // add user to user table
-  // if (data.user) {
-  //   const { error } = await supabase
-  //     .from("Users")
-  //     .insert({ uuid: data.user?.id, email: data.user?.email });
-  //   const { data: role } = await supabase
-  //     .from("Users")
-  //     .select("role")
-  //     .eq("email", data.user.email);
-  //   const user = {
-  //     id: data.user.id,
-  //     email: data.user.email,
-  //     role: role ? role[0].role : "unknown",
-  //   };
-  //   return { user, error };
-  // } else return { user: null, error };
+  // Confirmed accounts (typically Google) return a fake user with no identities
+  // and no email. Treat that as already registered instead of showing OTP.
+  const alreadyRegistered =
+    Boolean(data.user) && !data.session && (data.user?.identities?.length ?? 0) === 0;
+  if (alreadyRegistered) {
+    return {
+      user: null,
+      error: {
+        message: "This email already has an account. Continue with Google, or use Forgot Password.",
+      },
+    };
+  }
+
   return { user: data.user, error };
 };
 
 export const signInWithGoogle = async () => {
-  const redirectTo =
-    typeof globalThis !== "undefined" && "location" in globalThis
-      ? `${globalThis.location.origin}${globalThis.location.pathname}${globalThis.location.search}`
-      : undefined;
+  rememberAuthReturnTo();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo,
+      redirectTo: googleOAuthRedirectTo(),
     },
   });
   return { data, error };
@@ -130,31 +140,20 @@ export const verifyOTP = async (
   console.log("-----------verify User otp-------------");
   const { data, error } = await supabase.auth.verifyOtp({ email: email, token: token, type: type });
   if (error) return { user: null, error };
-  // For email verification (signup), add user to Users table.
-  // For recovery, verification will sign the user in (session) and we don't need to insert into Users.
-  if (data.user) {
-    if (type === "email") {
-      console.log("finalize user signup");
-      const finalizeError = await finalizeUserSignup(resumeVisible);
-      if (finalizeError) return { user: null, error: finalizeError };
+  if (!data.user) return { user: null, error };
 
-      const role = await fetchUserRole(data.user.id);
-      const user = {
-        id: data.user.id,
-        email: data.user.email,
-        role,
-      };
-      return { user, error: null };
-    }
-    // recovery or other types: return user info without inserting
-    const user = {
+  const profileError = await ensureUserProfile(data.user.id, resumeVisible);
+  if (profileError) return { user: null, error: profileError };
+
+  const role = await fetchUserRole(data.user.id);
+  return {
+    user: {
       id: data.user.id,
       email: data.user.email,
-      role: "unknown"
-    };
-    return { user, error: null };
-  }
-  return { user: null, error };
+      role,
+    },
+    error: null,
+  };
 };
 
 export const sendPasswordRecovery = async (email: string) => {

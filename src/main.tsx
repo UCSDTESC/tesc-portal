@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router";
 
 import Form from "@components/adminUser/Form/Form.tsx";
 import Bulletin from "@components/Bulletin/Bulletin.tsx";
@@ -11,18 +11,23 @@ import { Toaster } from "react-hot-toast";
 import Page from "./pageRoot/Page.tsx";
 import "./index.css";
 
+function RedirectWithSearch({ to }: { to: string }) {
+  const location = useLocation();
+  return <Navigate to={{ pathname: to, search: location.search }} replace />;
+}
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Toaster toastOptions={{ className: "mt-[calc(10vh+3.5rem)] " }} gutter={1} />
     <BrowserRouter>
       <Routes>
         <Route element={<Page />}>
-          <Route path="" element={<Navigate to="bulletin/-1" />} />
+          <Route path="" element={<RedirectWithSearch to="bulletin/-1" />} />
           <Route path="organization/:id" element={<Profile />} />
           <Route path="form" element={<Form id={""} onSuccess={function (): void {}} />} />
           <Route path="bulletin">
             <Route path=":postId" element={<Bulletin />} />
-            <Route path="" element={<Navigate to="-1" />} />
+            <Route path="" element={<RedirectWithSearch to="-1" />} />
           </Route>
           <Route path="profile">
             <Route path="" element={<Profile />} />
