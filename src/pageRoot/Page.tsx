@@ -5,6 +5,7 @@ import supabase from "@server/supabase";
 import UserContext, { PENDING_PROFILE_SETUP_KEY } from "@lib/UserContext";
 import type { User, UserCredentials, AuthSuccessResult, PendingQrFlow } from "@lib/UserContext";
 import { consumeAuthReturnTo } from "@lib/eventLinks";
+import { consumeAuthCallbackError, formatAuthError, isAllowedMemberEmail } from "@lib/authErrors";
 import {
   signIn,
   fetchUser,
@@ -116,16 +117,20 @@ export default function Page() {
     }
     if (error) {
       console.error(error.message);
-      DisplayToast("Error signing in", "error");
+      DisplayToast(formatAuthError(error.message, loginRecruiterMode), "error");
     }
   };
 
   // sign up user
   const handleSignUp = async ({ email, password }: UserCredentials, OnSuccess: () => void) => {
+    if (!loginRecruiterMode && !isAllowedMemberEmail(email)) {
+      DisplayToast("Please use a UCSD email (@ucsd.edu) to create an account.", "error");
+      return;
+    }
     const { error } = await signUp(email, password);
     if (error) {
       console.error(error.message);
-      DisplayToast(error.message || "Error signing up", "error");
+      DisplayToast(formatAuthError(error.message, loginRecruiterMode), "error");
     } else {
       // setUser({
       //   id: user?.id,
@@ -141,7 +146,7 @@ export default function Page() {
     const { error } = await signInWithGoogle();
     if (error) {
       console.error(error.message);
-      DisplayToast("Error connecting Google account", "error");
+      DisplayToast(formatAuthError(error.message, loginRecruiterMode), "error");
     }
   };
 
@@ -157,7 +162,7 @@ export default function Page() {
     const { user, error } = await verifyOTP(email, Token, type, resumeVisible);
     if (error) {
       console.error(error.message);
-      DisplayToast(error.message || "Error verifying OTP", "error");
+      DisplayToast(formatAuthError(error.message) || "Error verifying OTP", "error");
     } else {
       setUser({
         id: user?.id ? user?.id : "",
@@ -225,7 +230,7 @@ export default function Page() {
           return user;
         }
         setUser({ id: "", email: "", role: "" });
-        if (error) DisplayToast(error.message || "Couldn't finish signing in", "error");
+        if (error) DisplayToast(formatAuthError(error.message), "error");
         return null;
       } catch (err) {
         console.error(err);
@@ -256,6 +261,11 @@ export default function Page() {
       subscription.unsubscribe();
     };
   }, [navigate]);
+
+  useEffect(() => {
+    const callbackError = consumeAuthCallbackError();
+    if (callbackError) DisplayToast(formatAuthError(callbackError), "error");
+  }, []);
 
   useEffect(() => {
     if (!User?.id) return;
