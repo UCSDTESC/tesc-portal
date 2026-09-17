@@ -37,6 +37,7 @@ export type Event = {
   start_date: string;
   end_date: string;
   attendance: number;
+  dependent_on: string;
   rsvp: number;
   orgs: {
     name: string;
@@ -98,6 +99,8 @@ export type formdata = {
   poster: string;
   attendance_cap?: number;
   track_attendance?: boolean;
+  has_parent: boolean;
+  dependent_on: string | null;
   manual_attendance?: string | number;
   type?: "internal" | "external" | "forum";
   recurring_rate?: "none" | "daily" | "weekly" | "biweekly" | "monthly";
@@ -119,6 +122,8 @@ export const eventFormDataDefault: formdata = {
   content: "",
   tags: [""],
   poster: "",
+  has_parent: false,
+  dependent_on: null,
   track_attendance: false,
   manual_attendance: "",
   type: "external",

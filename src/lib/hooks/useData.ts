@@ -20,7 +20,6 @@ export function useData(User: User | null, orgName?: string) {
     const { data, error } = await fetchEventByOrg(User.id, shouldFetchAllEvents);
     if (data) {
       const typedEvents = data as unknown as Event[];
-      console.log(data)
       const filteredData = orgName
         ? typedEvents.filter((event: Event) => String(event.orgs?.name) === String(orgName))
         : typedEvents;
@@ -33,7 +32,7 @@ export function useData(User: User | null, orgName?: string) {
       setLoading(false);
       DisplayToast("Unable to fetch your posted events", "error");
     }
-  }, [User,orgName]);
+  }, [User, orgName]);
 
   // fetch events posted by user on component render
   useEffect(() => {

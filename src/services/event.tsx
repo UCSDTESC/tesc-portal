@@ -18,11 +18,11 @@ export {
 
 /** Lean columns for bulletin list / search — excludes heavy or sensitive fields. */
 const EVENT_LIST_SELECT =
-  "id,created_at,end_date,location_str,start_date,tags,title,attendance,poster,rsvp,org_id,orgs!inner(name,pfp_str),attendance_cap,track_attendance,type";
+  "id,created_at,end_date,location_str,start_date,tags,title,attendance,dependent_on,poster,rsvp,org_id,orgs!inner(name,pfp_str),attendance_cap,track_attendance,type";
 
 /** Full columns for admin tables, edit forms, and single-event detail fetches. */
 const EVENT_FULL_SELECT =
-  "id,content,created_at,end_date,location_str,start_date,tags,title,attendance,poster,rsvp,org_id,orgs!inner(name,pfp_str),attendance_cap,track_attendance,type,password,manual_attendance,attendance_token";
+  "id,content,created_at,end_date,location_str,start_date,tags,title,dependent_on,attendance,poster,rsvp,org_id,orgs!inner(name,pfp_str),attendance_cap,track_attendance,type,password,manual_attendance,attendance_token";
 
 export type CreateEventSuccess = {
   eventId: string;
@@ -115,7 +115,10 @@ async function replaceEventSlots(eventId: string, slots: EventSlotForm[]) {
   const validSlots = slots.filter((slot) => slot.starts_at && slot.ends_at);
   if (!validSlots.length) return null;
 
-  const { error: deleteError } = await supabase.from("event_slots").delete().eq("event_id", eventId);
+  const { error: deleteError } = await supabase
+    .from("event_slots")
+    .delete()
+    .eq("event_id", eventId);
   if (deleteError) return deleteError;
 
   const { error: insertError } = await supabase.from("event_slots").insert(
@@ -194,7 +197,7 @@ async function upsertEventSlots(eventId: string, slots: EventSlotForm[]) {
 function generateRecurringDates(
   startDateStr: string,
   recurrenceEndStr: string,
-  rate: "daily" | "weekly" | "biweekly" | "monthly"
+  rate: "daily" | "weekly" | "biweekly" | "monthly",
 ): string[] {
   const dates: string[] = [];
   const start = new Date(startDateStr);
@@ -237,7 +240,10 @@ function getEventImageStoragePath(posterUrl: string): string | null {
 
 export const fetchEventByOrg = async (uid: string, includeAllEvents: boolean = false) => {
   if (includeAllEvents) {
-    const { data, error } = await supabase.from("events").select(EVENT_FULL_SELECT).eq("deleted", false);
+    const { data, error } = await supabase
+      .from("events")
+      .select(EVENT_FULL_SELECT)
+      .eq("deleted", false);
     if (error) return { data, error };
     const enriched = await enrichEventsWithSlotStats(data ?? []);
     return { data: enriched, error: null };
@@ -287,16 +293,13 @@ export const fetchEventAttendanceToken = async (eventId: string) => {
 };
 
 export const createEvent = async (formData: formdata, activeOrgName: string) => {
-  const { data: org_name } = await supabase
-    .from("orgs")
-    .select("uuid")
-    .eq("name", activeOrgName);
+  const { data: org_name } = await supabase.from("orgs").select("uuid").eq("name", activeOrgName);
   if (!org_name || org_name.length === 0) return { message: "No org found" };
 
   const eventType = formData.type ?? "external";
   const isInternal = eventType === "internal";
   const isForum = eventType === "forum";
-  const recurringRate = isForum ? "none" : formData.recurring_rate ?? "none";
+  const recurringRate = isForum ? "none" : (formData.recurring_rate ?? "none");
   const recurrenceEnd = formData.recurrence_end_date ?? "";
 
   if (!isForum) {
@@ -321,8 +324,9 @@ export const createEvent = async (formData: formdata, activeOrgName: string) => 
       tags: isInternal || isForum ? [] : formData.tags,
       org_id: org_name[0].uuid,
       poster: isInternal ? "" : formData.poster,
+      dependent_on: formData.dependent_on,
       attendance_cap: isInternal || isForum ? null : attendanceCap,
-      track_attendance: isInternal || isForum ? false : formData.track_attendance ?? false,
+      track_attendance: isInternal || isForum ? false : (formData.track_attendance ?? false),
       type: eventType,
       manual_attendance: isForum
         ? null
@@ -443,8 +447,9 @@ export const updateEvent = async (eventId: string, formData: formdata) => {
       content: formData.content,
       tags: isInternal || isForum ? [] : formData.tags,
       poster: isInternal ? "" : formData.poster,
+      dependent_on: formData.dependent_on,
       attendance_cap: isInternal || isForum ? null : attendanceCap,
-      track_attendance: isInternal || isForum ? false : formData.track_attendance ?? false,
+      track_attendance: isInternal || isForum ? false : (formData.track_attendance ?? false),
       type: eventType,
       manual_attendance: isForum
         ? null
@@ -511,16 +516,13 @@ export const queryEventsBySearchAndFilters = async (
         ? new Set(userOrgIds)
         : new Set(
             (
-              (
-                await supabase
-                  .from("user_org_roles")
-                  .select("org_uuid")
-                  .eq("user_uuid", userId)
-              ).data ?? []
+              (await supabase.from("user_org_roles").select("org_uuid").eq("user_uuid", userId))
+                .data ?? []
             ).map((r: { org_uuid: string }) => r.org_uuid),
           );
-      filteredEvents = filteredEvents.filter((e: { type?: string; org_id?: string }) =>
-        e.type !== "internal" || (e.org_id && orgIdSet.has(e.org_id)),
+      filteredEvents = filteredEvents.filter(
+        (e: { type?: string; org_id?: string }) =>
+          e.type !== "internal" || (e.org_id && orgIdSet.has(e.org_id)),
       );
     } else if (internalEvents.length > 0 && !userId) {
       filteredEvents = filteredEvents.filter((e: { type?: string }) => e.type !== "internal");
@@ -535,7 +537,7 @@ export const queryPeopleBySearchAndFilters = async (
   keyword: string,
   tagFilters: string[],
   orgFilters: string[],
-  sortMethod: string
+  sortMethod: string,
 ) => {
   let query = supabase
     .from("users")
