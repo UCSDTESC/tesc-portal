@@ -86,43 +86,44 @@ export default function EventInfo({
   if (!daton) return null;
 
   return (
-    <motion.span
-      className="w-full grid grid-cols-[70px_1fr] grid-rows-[70px_1fr] gap-4"
+    <motion.div
+      className="flex w-full flex-col gap-4"
       variants={container}
       initial="hidden"
       animate="show"
       key={preview ? "preview" : daton.id}
     >
-      {imageUrl ? (
-        <motion.img
+      {qrBanner && !preview && (
+        <motion.div
           variants={item}
-          src={imageUrl}
-          alt=""
-          className="h-full rounded-full object-cover aspect-square"
-        />
-      ) : (
-        <motion.img
-          variants={item}
-          src="https://placehold.co/600x600"
-          alt=""
-          className="h-full rounded-full object-cover aspect-square"
-        />
+          className={`shrink-0 rounded-lg px-3 py-2 text-sm font-medium ${
+            qrBanner.type === "success"
+              ? "bg-green-100 text-green-800"
+              : qrBanner.type === "error"
+                ? "bg-red-100 text-red-800"
+                : "bg-blue/10 text-navy"
+          }`}
+        >
+          {qrBanner.message}
+        </motion.div>
       )}
-      <motion.div className="flex flex-col h-full justify-center" variants={container}>
-        {qrBanner && !preview && (
-          <motion.div
+      <motion.span className="grid w-full grid-cols-[70px_1fr] grid-rows-[70px_1fr] gap-4" variants={container}>
+        {imageUrl ? (
+          <motion.img
             variants={item}
-            className={`mb-3 rounded-lg px-3 py-2 text-sm font-medium ${
-              qrBanner.type === "success"
-                ? "bg-green-100 text-green-800"
-                : qrBanner.type === "error"
-                  ? "bg-red-100 text-red-800"
-                  : "bg-blue/10 text-navy"
-            }`}
-          >
-            {qrBanner.message}
-          </motion.div>
+            src={imageUrl}
+            alt=""
+            className="h-full rounded-full object-cover aspect-square"
+          />
+        ) : (
+          <motion.img
+            variants={item}
+            src="https://placehold.co/600x600"
+            alt=""
+            className="h-full rounded-full object-cover aspect-square"
+          />
         )}
+        <motion.div className="flex h-full flex-col justify-center" variants={container}>
         <div className="flex items-center gap-3">
           <motion.h1 variants={item} className="font-bold text-4xl">
             {daton.title}
@@ -202,5 +203,6 @@ export default function EventInfo({
         </div>
       </motion.div>
     </motion.span>
+    </motion.div>
   );
 }
