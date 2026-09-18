@@ -12,8 +12,11 @@ export default function CheckBoxes() {
   const { setSearch, People, typeFilters, setTypeFilters, portalMode } =
     useContext(BulletinContext);
   const { User, activeOrgRole } = useContext(UserContext);
+  const userId = User?.id;
+  const userEmail = User?.email;
+  const userRole = User?.role;
   const isRecruiterPortal = portalMode === "recruiter";
-  const hasRecruiterAccess = isRecruiterPortal && canAccessRecruiterData(User?.role);
+  const hasRecruiterAccess = isRecruiterPortal && canAccessRecruiterData(userRole);
   const filterRef = useRef(null);
   const sortRef = useRef(null);
   const [filterMenu, setFilterMenu] = useState("");
@@ -21,10 +24,10 @@ export default function CheckBoxes() {
   useOutsideClicks([filterRef, sortRef], () => setFilterMenu(""));
   useEffect(() => {
     const getUserPoints = async () => {
-      if (!User) return;
-      if (User.role === "company" || User.role === "" || isRecruiterPortal) return;
+      if (!userId || !userEmail) return;
+      if (userRole === "company" || userRole === "" || isRecruiterPortal) return;
       console.log("------PULLING USER POINTS---------------");
-      const { data, error } = await supabase.from("users").select("points").eq("email", User.email);
+      const { data, error } = await supabase.from("users").select("points").eq("email", userEmail);
       if (data && data[0]) {
         setUserPoints(data[0].points ?? 0);
       }
@@ -33,7 +36,7 @@ export default function CheckBoxes() {
       }
     };
     getUserPoints();
-  }, [User, isRecruiterPortal]);
+  }, [userId, userEmail, userRole, isRecruiterPortal]);
   return (
     <form className="p-3 w-full flex gap-2 min-h-[2.25rem] flex-1 min-w-0">
       {!isRecruiterPortal || hasRecruiterAccess ? (

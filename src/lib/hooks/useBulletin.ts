@@ -14,7 +14,7 @@ import DisplayToast from "@lib/hooks/useToast";
 
 // custom hook for bulletin component
 export function useBulletin(User: User | null, portalMode: PortalMode) {
-  const { setShowLoginModal, activeOrgName, userOrgIds } = useContext(UserContext);
+  const { setShowLoginModal, setLoginModalContext, activeOrgName, userOrgIds } = useContext(UserContext);
   const [data, setData] = useState<Event[]>();
   const [People, setPeople] = useState<Member[]>();
   const [isLoading, setIsLoading] = useState(true);
@@ -119,7 +119,8 @@ export function useBulletin(User: User | null, portalMode: PortalMode) {
     orgFilters,
     typeFilters,
     sortMethod,
-    User,
+    User?.id,
+    User?.role,
     internalFilter,
     activeOrgName,
     portalMode,
@@ -176,6 +177,7 @@ export function useBulletin(User: User | null, portalMode: PortalMode) {
     action: "rsvp" | "cancel" | "switch",
   ) => {
     if (!User?.id) {
+      setLoginModalContext("Sign in to RSVP for this event");
       setShowLoginModal(true);
       return;
     }
@@ -212,6 +214,7 @@ export function useBulletin(User: User | null, portalMode: PortalMode) {
 
   const handleAttendance = async (eventId: string, slotId?: string) => {
     if (!User?.id) {
+      setLoginModalContext("Sign in to check in for this event");
       setShowLoginModal(true);
       return;
     }

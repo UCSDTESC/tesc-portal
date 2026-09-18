@@ -87,11 +87,11 @@ export default function EventInfo({
 
   return (
     <motion.div
+      key={preview ? "preview" : daton.id}
       className="flex w-full flex-col gap-4"
       variants={container}
       initial="hidden"
       animate="show"
-      key={preview ? "preview" : daton.id}
     >
       {qrBanner && !preview && (
         <motion.div

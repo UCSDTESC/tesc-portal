@@ -1,5 +1,6 @@
 import { useContext, useMemo, useState } from "react";
 import { BulletinContext } from "@lib/hooks/useBulletin";
+import UserContext from "@lib/UserContext";
 import { EventSlot } from "@lib/constants";
 import { DateParser } from "@lib/utils";
 import { getSlotQrAction, isEventEnded, isSlotFull } from "@lib/slotTime";
@@ -66,10 +67,12 @@ export default function EventSlotPicker({
   preview?: boolean;
 }) {
   const { rsvpByEvent, attendedByEvent, handleRSVP, handleAttendance } = useContext(BulletinContext);
+  const { User, authReady } = useContext(UserContext);
   const [selectedSlotId, setSelectedSlotId] = useState("");
 
-  const userRsvpSlotId = preview ? "" : (rsvpByEvent?.[eventId] ?? "");
-  const userAttendedSlotId = preview ? "" : (attendedByEvent?.[eventId] ?? "");
+  const loggedOut = authReady && !User?.id;
+  const userRsvpSlotId = preview || loggedOut ? "" : (rsvpByEvent?.[eventId] ?? "");
+  const userAttendedSlotId = preview || loggedOut ? "" : (attendedByEvent?.[eventId] ?? "");
   const activeSlotId = selectedSlotId || userRsvpSlotId || slots[0]?.id || "";
 
   const activeSlot = useMemo(
@@ -87,7 +90,8 @@ export default function EventSlotPicker({
     [slots, userRsvpSlotId],
   );
 
-  if ((!preview && (!rsvpByEvent || !attendedByEvent)) || !slots.length || !activeSlot) return null;
+  const rsvpStatusReady = preview || loggedOut || Boolean(rsvpByEvent && attendedByEvent);
+  if (!rsvpStatusReady || !slots.length || !activeSlot) return null;
 
   const now = new Date();
   const buttonClassName = `border border-blue px-4 py-2 rounded-lg cursor-pointer w-fit h-fit ${className}`;

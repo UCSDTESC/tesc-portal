@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Outlet, useNavigate } from "react-router";
 import supabase from "@server/supabase";
 
@@ -41,6 +41,8 @@ export default function Page() {
     [],
   );
   const navigate = useNavigate();
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
 
   const activeOrgRole = useMemo(
     () => orgMemberships.find((org) => org.name === activeOrgName)?.role ?? "",
@@ -226,7 +228,12 @@ export default function Page() {
         const { user, error } = await fetchUser();
         if (cancelled) return null;
         if (user?.email) {
-          setUser({ id: user.id, email: user.email, role: user.role });
+          setUser((prev) => {
+            if (prev?.id === user.id && prev.email === user.email && prev.role === user.role) {
+              return prev;
+            }
+            return { id: user.id, email: user.email, role: user.role };
+          });
           return user;
         }
         setUser({ id: "", email: "", role: "" });
@@ -243,6 +250,7 @@ export default function Page() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "TOKEN_REFRESHED") return;
       // Defer so we don't deadlock with other auth calls inside the callback.
       setTimeout(async () => {
         if (cancelled) return;
@@ -252,7 +260,7 @@ export default function Page() {
         const returnTo = consumeAuthReturnTo();
         if (!returnTo) return;
         const current = `${globalThis.location.pathname}${globalThis.location.search}`;
-        if (returnTo !== current) navigate(returnTo, { replace: true });
+        if (returnTo !== current) navigateRef.current(returnTo, { replace: true });
       }, 0);
     });
 
@@ -260,7 +268,7 @@ export default function Page() {
       cancelled = true;
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, []);
 
   useEffect(() => {
     const callbackError = consumeAuthCallbackError();
