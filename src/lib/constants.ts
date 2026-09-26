@@ -47,6 +47,8 @@ export type Event = {
   attendance_cap?: number;
   org_id: string;
   track_attendance?: boolean;
+  food_provided?: string | null;
+  as_funding?: boolean;
   manual_attendance?: number | null;
   type?: "internal" | "external" | "forum";
   attendance_token?: string | null;
@@ -99,6 +101,8 @@ export type formdata = {
   poster: string;
   attendance_cap?: number;
   track_attendance?: boolean;
+  food_provided?: string;
+  as_funding?: boolean;
   has_parent: boolean;
   dependent_on: string | null;
   manual_attendance?: string | number;
@@ -125,6 +129,8 @@ export const eventFormDataDefault: formdata = {
   has_parent: false,
   dependent_on: null,
   track_attendance: false,
+  food_provided: "",
+  as_funding: false,
   manual_attendance: "",
   type: "external",
   recurring_rate: "none",
@@ -467,6 +473,7 @@ export const DATA_TABLE_DEFAULT_HIDDEN_COLUMNS = [
   "created_at",
   "attendance_cap",
   "track_attendance",
+  "as_funding",
   "actions",
 ] as const;
 
@@ -570,6 +577,20 @@ export const DATA_TABLE_COLUMNS = [
     key: "track_attendance",
     label: "Track attendance?",
     width: "16%",
+    widthPx: 95,
+    filterType: "yesno" as DataTableFilterType,
+  },
+  {
+    key: "food_provided",
+    label: "Food provided",
+    width: "14%",
+    widthPx: 140,
+    filterType: "text" as DataTableFilterType,
+  },
+  {
+    key: "as_funding",
+    label: "AS funding?",
+    width: "12%",
     widthPx: 95,
     filterType: "yesno" as DataTableFilterType,
   },

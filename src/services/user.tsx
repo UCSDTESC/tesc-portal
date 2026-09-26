@@ -91,6 +91,18 @@ export const fetchUser = async () => {
   };
 };
 
+export const fetchUserExpectedGrad = async (userId: string) => {
+  const { data, error } = await supabase
+    .from("users")
+    .select("expected_grad")
+    .eq("uuid", userId)
+    .maybeSingle();
+  if (error || data?.expected_grad == null || String(data.expected_grad).trim() === "") {
+    return null;
+  }
+  return String(data.expected_grad);
+};
+
 export const signOut = async () => {
   console.log("---Sign User out---");
   const { error } = await supabase.auth.signOut();

@@ -55,6 +55,8 @@ export const getFormDataDefault = (): formdata => {
     tags: [],
     poster: "https://placehold.co/600x400",
     track_attendance: true,
+    food_provided: "",
+    as_funding: false,
     manual_attendance: "",
     has_parent: false,
     dependent_on: null,
@@ -243,6 +245,10 @@ export function getDataTableCellValue(daton: Event, key: string): string {
       return String(daton.attendance ?? "");
     case "track_attendance":
       return daton.track_attendance ? "Yes" : "No";
+    case "food_provided":
+      return daton.food_provided?.trim() ? daton.food_provided : "";
+    case "as_funding":
+      return daton.as_funding ? "Yes" : "No";
     case "tags":
       return Array.isArray(daton.tags) ? daton.tags.join(", ") : "";
     case "org_name":
@@ -340,8 +346,7 @@ export function matchesDataTableColumnFilter(
   if (filterType === "yesno" && typeof filterValue === "string") {
     const val = filterValue.trim();
     if (val === "") return true;
-    const eventVal = daton.track_attendance ? "Yes" : "No";
-    return eventVal === val;
+    return getCellValue(daton, key) === val;
   }
 
   return true;
@@ -358,6 +363,8 @@ export function getDataTableSortValue(daton: Event, key: string): string | numbe
       return daton.attendance_cap ?? 0;
     case "track_attendance":
       return daton.track_attendance ? 1 : 0;
+    case "as_funding":
+      return daton.as_funding ? 1 : 0;
     case "created_at":
     case "start_date":
     case "end_date":

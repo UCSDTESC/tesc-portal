@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 import { fetchGradYears, fetchOrgs } from "@services/organization";
-import { editRSVP, fetchRSVPAndAttended, logAttendance } from "@services/user";
+import { editRSVP, fetchRSVPAndAttended, fetchUserExpectedGrad, logAttendance } from "@services/user";
 import {
   fetchEventSlotStatsForEvent,
   queryEventsBySearchAndFilters,
@@ -11,9 +11,14 @@ import UserContext, { User } from "@lib/UserContext";
 import { Event, Member, PortalMode, canAccessRecruiterData } from "@lib/constants";
 import { useDebouncedValue } from "@lib/hooks/useDebouncedValue";
 import DisplayToast from "@lib/hooks/useToast";
+import { buildAsAttendanceFormUrl } from "@lib/asAttendanceForm";
 
 // custom hook for bulletin component
-export function useBulletin(User: User | null, portalMode: PortalMode) {
+export function useBulletin(
+  User: User | null,
+  portalMode: PortalMode,
+  onAsAttendanceForm?: (url: string) => void,
+) {
   const { setShowLoginModal, setLoginModalContext, activeOrgName, userOrgIds } = useContext(UserContext);
   const [data, setData] = useState<Event[]>();
   const [People, setPeople] = useState<Member[]>();
@@ -235,6 +240,18 @@ export function useBulletin(User: User | null, portalMode: PortalMode) {
     }));
     await refreshEventView(eventId);
     DisplayToast("Succesfully logged attendance", "success");
+
+    const event = data?.find((row) => String(row.id) === String(eventId));
+    if (event?.as_funding && onAsAttendanceForm) {
+      const expectedGrad = await fetchUserExpectedGrad(User.id);
+      onAsAttendanceForm(
+        buildAsAttendanceFormUrl({
+          title: event.title,
+          foodProvided: event.food_provided,
+          expectedGrad,
+        }),
+      );
+    }
   };
 
   return {

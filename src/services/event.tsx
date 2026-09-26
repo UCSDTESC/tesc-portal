@@ -1,6 +1,7 @@
 import supabase from "@server/supabase";
 import { EventSlot, EventSlotForm, formdata } from "@lib/constants";
 import { logAttendance } from "./user";
+import { filterEventsForInternalVisibility } from "@lib/internalEventVisibility";
 import {
   deriveAttendanceCap,
   deriveEventRange,
@@ -18,11 +19,11 @@ export {
 
 /** Lean columns for bulletin list / search — excludes heavy or sensitive fields. */
 const EVENT_LIST_SELECT =
-  "id,created_at,end_date,location_str,start_date,tags,title,attendance,dependent_on,poster,rsvp,org_id,orgs!inner(name,pfp_str),attendance_cap,track_attendance,type";
+  "id,created_at,end_date,location_str,start_date,tags,title,attendance,dependent_on,poster,rsvp,org_id,orgs!inner(name,pfp_str),attendance_cap,track_attendance,type,food_provided,as_funding";
 
 /** Full columns for admin tables, edit forms, and single-event detail fetches. */
 const EVENT_FULL_SELECT =
-  "id,content,created_at,end_date,location_str,start_date,tags,title,dependent_on,attendance,poster,rsvp,org_id,orgs!inner(name,pfp_str),attendance_cap,track_attendance,type,password,manual_attendance,attendance_token";
+  "id,content,created_at,end_date,location_str,start_date,tags,title,dependent_on,attendance,poster,rsvp,org_id,orgs!inner(name,pfp_str),attendance_cap,track_attendance,type,password,manual_attendance,attendance_token,food_provided,as_funding";
 
 export type CreateEventSuccess = {
   eventId: string;
@@ -310,7 +311,7 @@ export const createEvent = async (formData: formdata, activeOrgName: string) => 
   const buildEventPayload = (slots: EventSlotForm[]) => {
     const slotRange = deriveEventRange(slots);
     const attendanceCap = deriveAttendanceCap(slots);
-    const tracksAttendance = !isInternal && !isForum && (formData.track_attendance ?? false);
+    const tracksAttendance = !isForum && (formData.track_attendance ?? false);
 
     return {
       title: formData.title,
@@ -325,8 +326,10 @@ export const createEvent = async (formData: formdata, activeOrgName: string) => 
       org_id: org_name[0].uuid,
       poster: isInternal ? "" : formData.poster,
       dependent_on: formData.dependent_on,
-      attendance_cap: isInternal || isForum ? null : attendanceCap,
-      track_attendance: isInternal || isForum ? false : (formData.track_attendance ?? false),
+      attendance_cap: isForum ? null : attendanceCap,
+      track_attendance: tracksAttendance,
+      food_provided: isForum ? null : (formData.food_provided?.trim() || null),
+      as_funding: isForum ? false : (formData.as_funding ?? false),
       type: eventType,
       manual_attendance: isForum
         ? null
@@ -434,6 +437,19 @@ export const updateEvent = async (eventId: string, formData: formdata) => {
   const slots = formData.slots ?? [];
   const slotRange = deriveEventRange(slots);
   const attendanceCap = deriveAttendanceCap(slots);
+  const tracksAttendance = !isForum && (formData.track_attendance ?? false);
+
+  let attendanceToken: string | undefined;
+  if (tracksAttendance) {
+    const { data: existing } = await supabase
+      .from("events")
+      .select("attendance_token")
+      .eq("id", eventId)
+      .maybeSingle();
+    if (!existing?.attendance_token) {
+      attendanceToken = generateAttendanceToken();
+    }
+  }
 
   const { error } = await supabase
     .from("events")
@@ -448,8 +464,11 @@ export const updateEvent = async (eventId: string, formData: formdata) => {
       tags: isInternal || isForum ? [] : formData.tags,
       poster: isInternal ? "" : formData.poster,
       dependent_on: formData.dependent_on,
-      attendance_cap: isInternal || isForum ? null : attendanceCap,
-      track_attendance: isInternal || isForum ? false : (formData.track_attendance ?? false),
+      attendance_cap: isForum ? null : attendanceCap,
+      track_attendance: tracksAttendance,
+      ...(attendanceToken ? { attendance_token: attendanceToken } : {}),
+      food_provided: isForum ? null : (formData.food_provided?.trim() || null),
+      as_funding: isForum ? false : (formData.as_funding ?? false),
       type: eventType,
       manual_attendance: isForum
         ? null
@@ -501,33 +520,20 @@ export const queryEventsBySearchAndFilters = async (
 
   const { data, error } = await query;
 
-  // Filter internal events: only show to users with org membership matching event's org_id
-  let filteredEvents = data ?? [];
-
-  if (isSuperOrg) {
-    const enriched = await enrichEventsWithSlotStats(filteredEvents);
-    return { events: enriched, error };
+  // Filter internal events: only show to users with org membership matching event's org_id.
+  // org_id is bigint from Postgres; membership ids are strings in app state — compare as strings.
+  let membershipOrgIds = userOrgIds ?? [];
+  if (!isSuperOrg && userId && membershipOrgIds.length === 0) {
+    membershipOrgIds = (
+      (await supabase.from("user_org_roles").select("org_uuid").eq("user_uuid", userId)).data ?? []
+    ).map((row: { org_uuid: string | number }) => String(row.org_uuid));
   }
 
-  if (filteredEvents.length > 0) {
-    const internalEvents = filteredEvents.filter((e: { type?: string }) => e.type === "internal");
-    if (internalEvents.length > 0 && userId) {
-      const orgIdSet = userOrgIds
-        ? new Set(userOrgIds)
-        : new Set(
-            (
-              (await supabase.from("user_org_roles").select("org_uuid").eq("user_uuid", userId))
-                .data ?? []
-            ).map((r: { org_uuid: string }) => r.org_uuid),
-          );
-      filteredEvents = filteredEvents.filter(
-        (e: { type?: string; org_id?: string }) =>
-          e.type !== "internal" || (e.org_id && orgIdSet.has(e.org_id)),
-      );
-    } else if (internalEvents.length > 0 && !userId) {
-      filteredEvents = filteredEvents.filter((e: { type?: string }) => e.type !== "internal");
-    }
-  }
+  const filteredEvents = filterEventsForInternalVisibility(data ?? [], {
+    isSuperOrg,
+    userOrgIds: membershipOrgIds,
+    userId,
+  });
 
   const enriched = await enrichEventsWithSlotStats(filteredEvents);
   return { events: enriched, error };

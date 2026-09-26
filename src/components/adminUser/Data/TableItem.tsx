@@ -141,6 +141,12 @@ export default function TableItem({
         <DataPair data={daton.location_str ?? "N/A"}>
           <p className="font-bold text-blue">Location</p>
         </DataPair>
+        <DataPair data={daton.food_provided?.trim() ? daton.food_provided : "N/A"}>
+          <p className="font-bold text-blue">Food provided</p>
+        </DataPair>
+        <DataPair data={daton.as_funding ? "Yes" : "No"}>
+          <p className="font-bold text-blue">AS funding</p>
+        </DataPair>
         <DataPair data={daton.rsvp}>
           <p className="font-bold text-blue">RSVP Count</p>
         </DataPair>

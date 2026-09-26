@@ -150,7 +150,9 @@ export default function EventInfo({
           ) : (
             <div className="w-full bg-blue/15 animate-pulse aspect-video rounded-lg"></div>
           ))}
-        {daton.track_attendance && daton.slots && daton.slots.length > 0 && (
+        {daton.slots &&
+          daton.slots.length > 0 &&
+          (daton.track_attendance || daton.type === "internal") && (
           <div className="mt-6">
             <EventSlotPicker
               eventId={String(daton.id)}
@@ -166,6 +168,12 @@ export default function EventInfo({
               <h1 className="font-semibold mb-4">
                 <span className="block">{daton.location_str}</span>
               </h1>
+            )}
+            {daton.type !== "forum" && daton.food_provided?.trim() && (
+              <p className="mb-4 text-gray-700">
+                <span className="font-semibold">Food provided: </span>
+                {daton.food_provided}
+              </p>
             )}
             <Editor content={loadingContent ? "Loading..." : eventContent} />
           </span>

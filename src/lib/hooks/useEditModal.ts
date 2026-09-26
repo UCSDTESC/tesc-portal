@@ -34,6 +34,8 @@ export function useEditModal() {
       has_parent: source.dependent_on !== null,
       dependent_on: source.dependent_on,
       track_attendance: source.track_attendance ?? false,
+      food_provided: source.food_provided ?? "",
+      as_funding: source.as_funding ?? false,
       type: source.type ?? "external",
       manual_attendance: source.manual_attendance != null ? String(source.manual_attendance) : "",
       slots:
@@ -61,6 +63,8 @@ export function useEditModal() {
       tags: [],
       poster: "",
       track_attendance: false,
+      food_provided: "",
+      as_funding: false,
       attendance_cap: undefined,
       manual_attendance: "",
       recurring_rate: "none",

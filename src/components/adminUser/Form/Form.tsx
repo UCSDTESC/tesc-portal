@@ -278,6 +278,8 @@ export default function Form({
       attendance_cap: formData.attendance_cap,
       org_id: activeOrgId ?? "",
       track_attendance: formData.track_attendance,
+      food_provided: formData.food_provided ?? "",
+      as_funding: formData.as_funding ?? false,
       type: formData.type,
       tags: (formData.tags ?? []).filter(Boolean),
       slots,
@@ -560,6 +562,28 @@ export default function Form({
             </div>
             <label>Event Location</label>
             <Dropdown formData={formData} handleChange={handleChange} />
+            <label htmlFor="food_provided">
+              What food is provided <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="food_provided"
+              name="food_provided"
+              placeholder="e.g. Pizza, snacks, or None"
+              className="border-black border rounded-lg px-3 h-12"
+              value={formData.food_provided ?? ""}
+              onChange={(e) => handleChange(e.target.value, ["food_provided"])}
+              required
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.as_funding ?? false}
+                  onChange={(_, checked) => handleChange(checked, ["as_funding"])}
+                  color="primary"
+                />
+              }
+              label="AS funding will be used"
+            />
           </>
         )}
         {(formData.type ?? "external") !== "internal" && (

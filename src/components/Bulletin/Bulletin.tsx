@@ -16,6 +16,7 @@ import PortalToggle from "./PortalToggle";
 import { EventsList } from "./EventsList";
 import BulletinDisplay from "./BulletinDisplay";
 import QrSlotPickerModal from "./QrSlotPickerModal";
+import AsAttendanceFormModal from "./AsAttendanceFormModal";
 import Form from "../adminUser/Form/Form";
 
 type EventTimeFilter = "current" | "past";
@@ -29,6 +30,7 @@ export default function Bulletin() {
   const [eventTimeFilter, setEventTimeFilter] = useState<EventTimeFilter>("current");
   const [forumMode, setForumMode] = useState(false);
   const [portalMode, setPortalMode] = useState<PortalMode>("events");
+  const [asAttendanceFormUrl, setAsAttendanceFormUrl] = useState<string | null>(null);
   const isRecruiterPortal = portalMode === "recruiter";
   const {
     data,
@@ -55,7 +57,7 @@ export default function Bulletin() {
     refreshEventView,
     applyUserRsvp,
     applyUserAttendance,
-  } = useBulletin(User, portalMode);
+  } = useBulletin(User, portalMode, setAsAttendanceFormUrl);
   const {
     showEditModal,
     setShowEditModal,
@@ -150,6 +152,7 @@ export default function Bulletin() {
     onRefresh: refreshEventView,
     onRsvp: applyUserRsvp,
     onAttended: applyUserAttendance,
+    onAsAttendanceForm: setAsAttendanceFormUrl,
   });
 
   const displayData = useMemo(() => {
@@ -376,6 +379,12 @@ export default function Bulletin() {
         onConfirm={qrFlow.handleSlotConfirm}
         onClose={qrFlow.closePicker}
       />
+      {asAttendanceFormUrl && (
+        <AsAttendanceFormModal
+          src={asAttendanceFormUrl}
+          onClose={() => setAsAttendanceFormUrl(null)}
+        />
+      )}
       {showEditModal &&
         createPortal(
           <BulletinEditModal

@@ -7,7 +7,8 @@ import { parseQrSearchParams, qrFlowSessionKey } from "@lib/eventLinks";
 import { resolveQrFlowState, type QrFlowState } from "@lib/resolveQrEventAction";
 import { getSlotQrAction, isSlotFull } from "@lib/slotTime";
 import { fetchEventById } from "@services/event";
-import { editRSVP, logAttendanceWithToken } from "@services/user";
+import { editRSVP, fetchUserExpectedGrad, logAttendanceWithToken } from "@services/user";
+import { buildAsAttendanceFormUrl } from "@lib/asAttendanceForm";
 import DisplayToast from "@lib/hooks/useToast";
 
 type QrBanner = {
@@ -23,8 +24,9 @@ export function useQrEventFlow(options: {
   onRefresh: (eventId?: string) => Promise<void>;
   onRsvp?: (eventId: string, slotId: string) => void;
   onAttended?: (eventId: string, slotId: string) => void;
+  onAsAttendanceForm?: (url: string) => void;
 }) {
-  const { eventId, event, rsvpSlotId, attendedSlotId, onRefresh, onRsvp, onAttended } = options;
+  const { eventId, event, rsvpSlotId, attendedSlotId, onRefresh, onRsvp, onAttended, onAsAttendanceForm } = options;
   const { User, authReady, setShowLoginModal, setPendingQrFlow, setLoginModalContext } = useContext(UserContext);
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -174,6 +176,16 @@ export function useQrEventFlow(options: {
         setShowPicker(false);
         clearQrParams();
         await onRefresh(eventId);
+        if (activeEvent.as_funding && onAsAttendanceForm) {
+          const expectedGrad = await fetchUserExpectedGrad(User.id);
+          onAsAttendanceForm(
+            buildAsAttendanceFormUrl({
+              title: activeEvent.title,
+              foodProvided: activeEvent.food_provided,
+              expectedGrad,
+            }),
+          );
+        }
       } catch (err) {
         console.error(err);
         DisplayToast("Something went wrong", "error");
@@ -190,6 +202,7 @@ export function useQrEventFlow(options: {
       onRefresh,
       onRsvp,
       onAttended,
+      onAsAttendanceForm,
     ],
   );
 
