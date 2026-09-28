@@ -244,7 +244,8 @@ export const fetchEventByOrg = async (uid: string, includeAllEvents: boolean = f
     const { data, error } = await supabase
       .from("events")
       .select(EVENT_FULL_SELECT)
-      .eq("deleted", false);
+      .eq("deleted", false)
+      .order("created_at", { ascending: false });
     if (error) return { data, error };
     const enriched = await enrichEventsWithSlotStats(data ?? []);
     return { data: enriched, error: null };
@@ -262,7 +263,8 @@ export const fetchEventByOrg = async (uid: string, includeAllEvents: boolean = f
       "org_id",
       orgs.map((org) => org.org_uuid),
     )
-    .eq("deleted", false);
+    .eq("deleted", false)
+    .order("created_at", { ascending: false });
   if (eventsError) return { data: null, error: eventsError };
   const enriched = await enrichEventsWithSlotStats(data ?? []);
   return { data: enriched, error: null };
@@ -515,8 +517,7 @@ export const queryEventsBySearchAndFilters = async (
   }
 
   if (sortMethod === "Event Name (A-Z)") query = query.order("title", { ascending: true });
-  else if (sortMethod == "Most Recent") query = query.order("start_date", { ascending: false });
-  else query = query.order("start_date", { ascending: false });
+  else query = query.order("start_date", { ascending: true, nullsFirst: false });
 
   const { data, error } = await query;
 
