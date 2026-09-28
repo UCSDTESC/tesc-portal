@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { EventSlot } from "@lib/constants";
 import { DateParser } from "@lib/utils";
-import { getSlotQrAction, isSlotFull } from "@lib/slotTime";
+import { getSlotQrAction, isSlotFull, seatsTaken } from "@lib/slotTime";
 import type { QrFlowState } from "@lib/resolveQrEventAction";
 
 function slotStatusLabel(slot: EventSlot, now: Date): string {
@@ -95,8 +95,8 @@ export default function QrSlotPickerModal({
                   <span className="text-xs text-gray-600">
                     {slotStatusLabel(slot, now)}
                     {slot.capacity != null
-                      ? ` · ${slot.rsvp_count}/${slot.capacity} spots`
-                      : ` · ${slot.rsvp_count} RSVPs`}
+                      ? ` · ${seatsTaken(slot)}/${slot.capacity} spots`
+                      : ` · ${seatsTaken(slot)} RSVPs`}
                     {isCurrentRsvp ? " · Your slot" : ""}
                   </span>
                 </span>

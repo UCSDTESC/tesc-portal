@@ -3,7 +3,7 @@ import { BulletinContext } from "@lib/hooks/useBulletin";
 import UserContext from "@lib/UserContext";
 import { EventSlot } from "@lib/constants";
 import { DateParser } from "@lib/utils";
-import { getSlotQrAction, isEventEnded, isSlotFull } from "@lib/slotTime";
+import { getSlotQrAction, isEventEnded, isSlotFull, seatsTaken } from "@lib/slotTime";
 
 function slotStatusLabel(
   slot: EventSlot,
@@ -165,8 +165,8 @@ export default function EventSlotPicker({
                     isAttended: slot.id === userAttendedSlotId,
                   })}
                   {slot.capacity != null
-                    ? ` · ${slot.rsvp_count}/${slot.capacity} spots`
-                    : ` · ${slot.rsvp_count} RSVPs`}
+                    ? ` · ${seatsTaken(slot)}/${slot.capacity} spots`
+                    : ` · ${seatsTaken(slot)} RSVPs`}
                 </span>
               </span>
             </div>
