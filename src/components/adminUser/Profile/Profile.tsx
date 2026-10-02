@@ -8,6 +8,7 @@ import EditProfileForm from "./EditMemberProfile";
 import EditOrgModal from "./EditOrgModal";
 import PageAllAttendEvents from "@components/User/PageAllAttendEvents";
 import ProfileAdminTables from "./ProfileAdminTables";
+import OrgAttendanceInsights from "./OrgAttendanceInsights";
 
 export default function Profile() {
   const { User, activeOrgName, activeOrgRole, myOrgs } = useContext(UserContext);
@@ -86,12 +87,16 @@ export default function Profile() {
               {activeOrgName}
             </h1>
           </div>
-          <div className="flex flex-[1_1_90%] min-w-0 flex-col gap-4">
+          <div className="flex flex-[1_1_90%] min-w-0 flex-col gap-10">
             <ProfileAdminTables
               orgName={activeOrgName === "super_org" ? undefined : activeOrgName}
               orgId={activeOrgId}
               showUserAdmin={showUserAdmin}
               showOrgMembers={showOrgMembers}
+            />
+            <OrgAttendanceInsights
+              isSuperOrg={activeOrgName === "super_org"}
+              orgId={activeOrgId}
             />
           </div>
           {activeOrgId && (

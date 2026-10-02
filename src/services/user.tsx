@@ -152,12 +152,20 @@ export const signUp = async (email: string, password: string) => {
 
 export const signInWithGoogle = async () => {
   rememberAuthReturnTo();
+  const redirectTo = googleOAuthRedirectTo();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: googleOAuthRedirectTo(),
+      redirectTo,
+      skipBrowserRedirect: true,
     },
   });
+  if (error) return { data, error };
+  if (data?.url && typeof window !== "undefined") {
+    const oauthUrl = new URL(data.url);
+    if (redirectTo) oauthUrl.searchParams.set("redirect_to", redirectTo);
+    window.location.assign(oauthUrl.toString());
+  }
   return { data, error };
 };
 

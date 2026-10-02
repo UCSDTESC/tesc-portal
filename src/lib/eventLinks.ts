@@ -39,9 +39,12 @@ export function qrFlowSessionKey(eventId: string): string {
 
 export function googleOAuthRedirectTo(): string | undefined {
   if (typeof globalThis === "undefined" || !("location" in globalThis)) return undefined;
-  // Query strings such as ?from=qr&token= are not reliably allowlisted.
-  // When they fail, Auth falls back to Site URL (often localhost).
-  return `${globalThis.location.origin}${globalThis.location.pathname}`;
+  const origin = globalThis.location.origin;
+  if (!origin) return undefined;
+  // Path + query are restored after OAuth via rememberAuthReturnTo.
+  // Sending them in redirectTo misses the Auth allowlist; GoTrue then uses
+  // the production Site URL.
+  return origin;
 }
 
 export function rememberAuthReturnTo(pathWithSearch?: string) {
