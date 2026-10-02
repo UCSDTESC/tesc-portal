@@ -1,7 +1,8 @@
 import supabase from "@server/supabase";
-import { EventSlot, EventSlotForm, formdata } from "@lib/constants";
+import { EventQuestion, EventSlot, EventSlotForm, formdata } from "@lib/constants";
 import { logAttendance } from "./user";
 import { filterEventsForInternalVisibility } from "@lib/internalEventVisibility";
+import { normalizeEventQuestions } from "@lib/eventQuestions";
 import {
   deriveAttendanceCap,
   deriveEventRange,
@@ -18,12 +19,14 @@ export {
 } from "./eventSlotUtils";
 
 /** Lean columns for bulletin list / search — excludes heavy or sensitive fields. */
+const EVENT_QUESTIONS_EMBED = "event_questions(id,sort_order,prompt,type,options,required)";
+
 const EVENT_LIST_SELECT =
-  "id,created_at,end_date,location_str,start_date,tags,title,attendance,dependent_on,poster,rsvp,org_id,orgs!inner(name,pfp_str),attendance_cap,track_attendance,type,food_provided,as_funding";
+  `id,created_at,end_date,location_str,start_date,tags,title,attendance,dependent_on,poster,rsvp,org_id,orgs!inner(name,pfp_str),attendance_cap,track_attendance,type,food_provided,as_funding,${EVENT_QUESTIONS_EMBED}`;
 
 /** Full columns for admin tables, edit forms, and single-event detail fetches. */
 const EVENT_FULL_SELECT =
-  "id,content,created_at,end_date,location_str,start_date,tags,title,dependent_on,attendance,poster,rsvp,org_id,orgs!inner(name,pfp_str),attendance_cap,track_attendance,type,password,manual_attendance,attendance_token,food_provided,as_funding";
+  `id,content,created_at,end_date,location_str,start_date,tags,title,dependent_on,attendance,poster,rsvp,org_id,orgs!inner(name,pfp_str),attendance_cap,track_attendance,type,password,manual_attendance,attendance_token,food_provided,as_funding,${EVENT_QUESTIONS_EMBED}`;
 
 export type CreateEventSuccess = {
   eventId: string;
@@ -73,10 +76,14 @@ async function enrichEventsWithSlotStats<T extends { id: number | string }>(even
     slotsByEvent.set(row.event_id, list);
   }
 
-  return events.map((event) => ({
-    ...event,
-    slots: slotsByEvent.get(Number(event.id)) ?? [],
-  }));
+  return events.map((event) => {
+    const nested = event as T & { event_questions?: unknown; questions?: unknown };
+    return {
+      ...event,
+      slots: slotsByEvent.get(Number(event.id)) ?? [],
+      questions: normalizeEventQuestions(nested.event_questions ?? nested.questions),
+    };
+  });
 }
 
 export async function fetchEventSlotStatsForEvent(eventId: string) {
@@ -192,6 +199,62 @@ async function upsertEventSlots(eventId: string, slots: EventSlotForm[]) {
     }
   }
 
+  return null;
+}
+
+async function upsertEventQuestions(eventId: string, questions: EventQuestion[] | undefined) {
+  const valid = (questions ?? []).filter((question) => question.prompt.trim()).slice(0, 8);
+  const { data: current, error: currentError } = await supabase
+    .from("event_questions")
+    .select("id")
+    .eq("event_id", eventId);
+  if (currentError) return currentError;
+
+  const keepIds = new Set(
+    valid
+      .map((question) => (question.id ? Number(question.id) : null))
+      .filter((id): id is number => id != null && Number.isFinite(id)),
+  );
+  const currentIds = (current ?? []).map((row) => Number(row.id));
+  let answeredIds = new Set<number>();
+  if (currentIds.length) {
+    const { data: answered } = await supabase
+      .from("event_question_answers")
+      .select("question_id")
+      .in("question_id", currentIds);
+    answeredIds = new Set((answered ?? []).map((row) => Number(row.question_id)));
+  }
+
+  for (const row of current ?? []) {
+    if (!keepIds.has(row.id) && !answeredIds.has(row.id)) {
+      const { error } = await supabase.from("event_questions").delete().eq("id", row.id);
+      if (error) return error;
+    }
+  }
+
+  for (const [index, question] of valid.entries()) {
+    const payload = {
+      event_id: Number(eventId),
+      sort_order: index,
+      prompt: question.prompt.trim(),
+      type: question.type,
+      options:
+        question.type === "choice"
+          ? (question.options ?? []).map((option) => option.trim()).filter(Boolean)
+          : null,
+      required: question.required !== false,
+    };
+    if (question.id) {
+      const { error } = await supabase
+        .from("event_questions")
+        .update(payload)
+        .eq("id", Number(question.id));
+      if (error) return error;
+    } else {
+      const { error } = await supabase.from("event_questions").insert(payload);
+      if (error) return error;
+    }
+  }
   return null;
 }
 
@@ -378,6 +441,8 @@ export const createEvent = async (formData: formdata, activeOrgName: string) => 
       if (insertedEvent?.id) {
         const slotError = await syncSlotsForEvent(String(insertedEvent.id), occurrenceSlots);
         if (slotError) return slotError;
+        const questionError = await upsertEventQuestions(String(insertedEvent.id), formData.questions);
+        if (questionError) return questionError;
         if (!firstResult) {
           firstResult = {
             eventId: String(insertedEvent.id),
@@ -402,6 +467,8 @@ export const createEvent = async (formData: formdata, activeOrgName: string) => 
   if (insertedEvent?.id) {
     const slotError = await syncSlotsForEvent(String(insertedEvent.id), templateSlots);
     if (slotError) return slotError;
+    const questionError = await upsertEventQuestions(String(insertedEvent.id), formData.questions);
+    if (questionError) return questionError;
     return {
       eventId: String(insertedEvent.id),
       attendanceToken: insertedEvent.attendance_token
@@ -484,7 +551,11 @@ export const updateEvent = async (eventId: string, formData: formdata) => {
   if (error) return error;
 
   if (!isForum && slots.length > 0) {
-    return upsertEventSlots(eventId, slots);
+    const slotError = await upsertEventSlots(eventId, slots);
+    if (slotError) return slotError;
+  }
+  if (!isForum) {
+    return upsertEventQuestions(eventId, formData.questions);
   }
   return null;
 };

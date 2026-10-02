@@ -37,7 +37,7 @@ interface UserContext {
   setLoginModalContext: (message: string) => void;
   setError: (error: string) => void;
   handleSignOut: () => void;
-  handleSignIn: (user: UserCredentials, OnSuccess: () => void) => void;
+  handleSignIn: (user: UserCredentials, OnSuccess: (result?: AuthSuccessResult) => void) => void;
   handleSignUp: (user: UserCredentials, OnSuccess: () => void) => void;
   handleGoogleAuth: () => void;
   handleVerifyOTP: (
@@ -79,8 +79,9 @@ const UserContext = createContext<UserContext>({
     console.log(error);
   },
   handleSignOut: () => {},
-  handleSignIn: (user: UserCredentials) => {
+  handleSignIn: (user: UserCredentials, OnSuccess?: (result?: AuthSuccessResult) => void) => {
     console.log(user);
+    OnSuccess?.();
   },
   handleSignUp: (user: UserCredentials) => {
     console.log(user);

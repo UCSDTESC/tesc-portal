@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 import UserContext from "@lib/UserContext";
 import { Event, EventSlot, formdata, RECURRING_RATES } from "@lib/constants";
 import { getFormDataDefault, initializeFormData, toLocalDatetimeInput } from "@lib/utils";
+import { validateEventQuestions } from "@lib/eventQuestions";
 import EventInfo from "@components/Bulletin/EventInfo";
 import {
   createEvent,
@@ -19,6 +20,7 @@ import DisplayToast from "@lib/hooks/useToast";
 import { Tooltip, Switch, FormControlLabel } from "@mui/material";
 import { IoCloudUploadOutline, IoInformationCircleOutline } from "react-icons/io5";
 import EventSlotsEditor from "./EventSlotsEditor";
+import EventQuestionsEditor from "./EventQuestionsEditor";
 import EventQrModal from "./EventQrModal";
 import ProfileAdminTables from "../Profile/ProfileAdminTables";
 
@@ -203,6 +205,13 @@ export default function Form({
       return;
     }
 
+    const questionsError = validateEventQuestions(formData.questions);
+    if (!isForum && questionsError) {
+      setError(questionsError);
+      DisplayToast(questionsError, "error");
+      return;
+    }
+
     if (editEvent && formdata && User?.id) {
       const error = await updateEvent(id, formData);
       if (error) {
@@ -283,6 +292,7 @@ export default function Form({
       type: formData.type,
       tags: (formData.tags ?? []).filter(Boolean),
       slots,
+      questions: formData.questions ?? [],
     };
   }, [formData, id, User?.id, activeOrgName, activeOrgId, isForum, orgPfpStr]);
 
@@ -402,6 +412,12 @@ export default function Form({
             slots={formData.slots ?? []}
             onChange={(slots) => setFormData((prev) => ({ ...prev, slots }))}
             showCapacity={formData.track_attendance ?? false}
+          />
+        )}
+        {!isForum && (
+          <EventQuestionsEditor
+            questions={formData.questions ?? []}
+            onChange={(questions) => setFormData((prev) => ({ ...prev, questions }))}
           />
         )}
 

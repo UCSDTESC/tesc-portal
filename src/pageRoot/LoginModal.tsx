@@ -2,6 +2,7 @@ import { FormEvent, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
 import UserContext, { PENDING_PROFILE_SETUP_KEY } from "@lib/UserContext";
+import { skipMemberProfileSetupPrompt } from "@lib/userProfile";
 import { MuiOtpInput } from "mui-one-time-password-input";
 import DisplayToast from "@lib/hooks/useToast";
 import { motion } from "motion/react";
@@ -43,6 +44,7 @@ export default function LoginModal({ onclose, initialProfileSetup = false }: Log
     loginRecruiterMode,
     setPendingProfileSetup,
     loginModalContext,
+    User,
   } = useContext(UserContext);
 
   useEffect(() => {
@@ -55,6 +57,11 @@ export default function LoginModal({ onclose, initialProfileSetup = false }: Log
   const finishProfileSetup = () => {
     setShowProfileSetup(false);
     onclose();
+  };
+
+  const skipProfileSetup = () => {
+    if (User?.id) skipMemberProfileSetupPrompt(User.id);
+    finishProfileSetup();
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -90,7 +97,13 @@ export default function LoginModal({ onclose, initialProfileSetup = false }: Log
           email: ObjectFormdata.email.toString(),
           password: ObjectFormdata.password.toString()
         },
-        onclose
+        (result) => {
+          if (result?.needsProfileSetup) {
+            setShowProfileSetup(true);
+          } else {
+            onclose();
+          }
+        }
       );
     }
   };
@@ -155,7 +168,7 @@ export default function LoginModal({ onclose, initialProfileSetup = false }: Log
               <button
                 type="button"
                 className="shrink-0 text-sm text-navy underline hover:opacity-80"
-                onClick={finishProfileSetup}
+                onClick={skipProfileSetup}
               >
                 Complete later
               </button>

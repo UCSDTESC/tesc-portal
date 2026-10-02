@@ -1,6 +1,7 @@
 import supabase from "@server/supabase";
 import { googleOAuthRedirectTo, rememberAuthReturnTo } from "@lib/eventLinks";
 import { resolveUserRoleFromNames } from "@lib/roles";
+import { isMemberProfileIncomplete } from "@lib/userProfile";
 
 type RoleRow = { roles: { name: string } };
 
@@ -101,6 +102,23 @@ export const fetchUserExpectedGrad = async (userId: string) => {
     return null;
   }
   return String(data.expected_grad);
+};
+
+export const memberNeedsProfileSetup = async (
+  userId: string | undefined | null,
+  role?: string | null,
+) => {
+  if (!userId || role === "company") return false;
+  const { data, error } = await supabase
+    .from("users")
+    .select("first_name, last_name, major, expected_grad")
+    .eq("uuid", userId)
+    .maybeSingle();
+  if (error) {
+    console.error(error.message);
+    return false;
+  }
+  return isMemberProfileIncomplete(data);
 };
 
 export const signOut = async () => {

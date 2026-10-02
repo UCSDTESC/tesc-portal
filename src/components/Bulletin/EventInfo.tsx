@@ -152,11 +152,14 @@ export default function EventInfo({
           ))}
         {daton.slots &&
           daton.slots.length > 0 &&
-          (daton.track_attendance || daton.type === "internal") && (
+          (daton.track_attendance ||
+            daton.type === "internal" ||
+            (daton.questions?.length ?? 0) > 0) && (
           <div className="mt-6">
             <EventSlotPicker
               eventId={String(daton.id)}
               slots={daton.slots}
+              questions={daton.questions}
               className="bg-lightBlue hover:opacity-80"
               preview={preview}
             />

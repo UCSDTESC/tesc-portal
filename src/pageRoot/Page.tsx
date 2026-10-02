@@ -14,8 +14,13 @@ import {
   signInWithGoogle,
   verifyOTP,
   sendPasswordRecovery,
-  updatePassword
+  updatePassword,
+  memberNeedsProfileSetup,
 } from "@services/user";
+import {
+  clearMemberProfileSetupSkip,
+  shouldSkipMemberProfileSetupPrompt,
+} from "@lib/userProfile";
 
 import Navbar from "./Navbar";
 import DisplayToast from "@lib/hooks/useToast";
@@ -109,12 +114,16 @@ export default function Page() {
 
 
   // sign in user
-  const handleSignIn = async ({ email, password }: UserCredentials, OnSuccess: () => void) => {
+  const handleSignIn = async (
+    { email, password }: UserCredentials,
+    OnSuccess: (result?: AuthSuccessResult) => void,
+  ) => {
     const { user, error } = await signIn(email, password);
     if (user && user?.email) {
       setError("");
       setUser({ id: user.id, email: user.email, role: user.role });
-      OnSuccess();
+      const needsProfileSetup = await memberNeedsProfileSetup(user.id, user.role);
+      OnSuccess({ needsProfileSetup });
       DisplayToast("Succesfully logged in", "success");
     }
     if (error) {
@@ -171,8 +180,10 @@ export default function Page() {
         email: user?.email ? user?.email : "",
         role: user?.role ? user.role : "unknown"
       });
+      const needsProfileSetup =
+        type === "email" && (await memberNeedsProfileSetup(user?.id, user?.role));
       onSuccess({
-        needsProfileSetup: type === "email" && user?.role !== "company",
+        needsProfileSetup,
       });
       DisplayToast("Succesfully logged in", "success");
     }
@@ -276,14 +287,27 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
-    if (!User?.id) return;
-    const pendingSetup = sessionStorage.getItem(PENDING_PROFILE_SETUP_KEY);
-    if (!pendingSetup) return;
+    if (!User?.id) {
+      clearMemberProfileSetupSkip();
+      return;
+    }
     sessionStorage.removeItem(PENDING_PROFILE_SETUP_KEY);
     if (User.role === "company") return;
-    setPendingProfileSetup(true);
-    setShowLoginModal(true);
-  }, [User?.id, User?.role]);
+    if (showLoginModal) return;
+    if (shouldSkipMemberProfileSetupPrompt(User.id)) return;
+
+    let cancelled = false;
+    const promptIfIncomplete = async () => {
+      const needsSetup = await memberNeedsProfileSetup(User.id, User.role);
+      if (cancelled || !needsSetup) return;
+      setPendingProfileSetup(true);
+      setShowLoginModal(true);
+    };
+    void promptIfIncomplete();
+    return () => {
+      cancelled = true;
+    };
+  }, [User?.id, User?.role, showLoginModal]);
 
   return (
     <main>

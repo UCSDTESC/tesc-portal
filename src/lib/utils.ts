@@ -64,6 +64,7 @@ export const getFormDataDefault = (): formdata => {
     recurring_rate: "none",
     recurrence_end_date: "",
     slots: [defaultEventSlot(currTime)],
+    questions: [],
   };
 };
 

@@ -8,8 +8,9 @@ import UserContext from "@lib/UserContext";
 import { BulletinContext, useBulletin } from "@lib/hooks/useBulletin";
 import { useQrEventFlow } from "@lib/hooks/useQrEventFlow";
 import { useEditModal } from "@lib/hooks/useEditModal";
-import { formdata, PortalMode } from "@lib/constants";
+import { formdata, PortalMode, type EventQuestion } from "@lib/constants";
 import { compareEventsByRecency, parseEventTime } from "@lib/eventListOrder";
+import type { EventQuestionAnswers } from "@lib/eventQuestions";
 import { FaArrowRightToBracket } from "react-icons/fa6";
 import { FaArrowRightFromBracket } from "react-icons/fa6";
 import CheckBoxes from "./CheckBoxes";
@@ -17,6 +18,7 @@ import PortalToggle from "./PortalToggle";
 import { EventsList } from "./EventsList";
 import BulletinDisplay from "./BulletinDisplay";
 import QrSlotPickerModal from "./QrSlotPickerModal";
+import RegistrationQuestionsModal from "./RegistrationQuestionsModal";
 import AsAttendanceFormModal from "./AsAttendanceFormModal";
 import Form from "../adminUser/Form/Form";
 
@@ -32,6 +34,12 @@ export default function Bulletin() {
   const [forumMode, setForumMode] = useState(false);
   const [portalMode, setPortalMode] = useState<PortalMode>("events");
   const [asAttendanceFormUrl, setAsAttendanceFormUrl] = useState<string | null>(null);
+  const [questionsModal, setQuestionsModal] = useState<{
+    questions: EventQuestion[];
+    initialAnswers: EventQuestionAnswers;
+    submitLabel: string;
+    onSubmit: (answers: EventQuestionAnswers) => Promise<void>;
+  } | null>(null);
   const isRecruiterPortal = portalMode === "recruiter";
   const {
     data,
@@ -176,6 +184,17 @@ export default function Bulletin() {
         attendedByEvent,
         handleAttendance,
         handleRSVP,
+        promptRegistrationQuestions: (options) => {
+          setQuestionsModal({
+            questions: options.questions,
+            initialAnswers: options.initialAnswers ?? {},
+            submitLabel: options.submitLabel ?? "Continue",
+            onSubmit: async (answers) => {
+              await options.onSubmit(answers);
+              setQuestionsModal(null);
+            },
+          });
+        },
         setTagFilters,
         setSearch,
         orgFilters,
@@ -374,12 +393,25 @@ export default function Bulletin() {
       </div>
       <QrSlotPickerModal
         open={qrFlow.showPicker}
+        eventId={selection}
         eventTitle={qrFlow.activeEvent?.title ?? "Event"}
         slots={qrFlow.activeEvent?.slots ?? []}
+        questions={qrFlow.activeEvent?.questions ?? []}
+        userId={User?.id}
         flowState={qrFlow.flowState}
         initialSlotId={rsvpByEvent?.[selection]}
         onConfirm={qrFlow.handleSlotConfirm}
         onClose={qrFlow.closePicker}
+      />
+      <RegistrationQuestionsModal
+        open={Boolean(questionsModal)}
+        questions={questionsModal?.questions ?? []}
+        initialAnswers={questionsModal?.initialAnswers}
+        submitLabel={questionsModal?.submitLabel}
+        onSubmit={async (answers) => {
+          if (questionsModal) await questionsModal.onSubmit(answers);
+        }}
+        onClose={() => setQuestionsModal(null)}
       />
       {asAttendanceFormUrl && (
         <AsAttendanceFormModal

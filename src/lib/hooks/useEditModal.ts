@@ -1,8 +1,10 @@
 import { fetchEventById } from "@services/event";
+import { markQuestionAnswerCounts } from "@services/eventQuestions";
 import { eventFormDataDefault, formdata } from "@lib/constants";
 import { useState } from "react";
 import { Event } from "@lib/constants";
 import { toISO, toLocalDatetimeInput } from "@lib/utils";
+import { normalizeEventQuestions } from "@lib/eventQuestions";
 
 // custom hook managing the edit modal in the DataTable component
 export function useEditModal() {
@@ -17,6 +19,10 @@ export function useEditModal() {
       const { event } = await fetchEventById(daton.id);
       if (event) source = event as unknown as Event;
     }
+
+    const questions = await markQuestionAnswerCounts(
+      normalizeEventQuestions(source.questions),
+    );
 
     setShowEditModal(true);
     setCurrID(source.id);
@@ -45,6 +51,7 @@ export function useEditModal() {
           ends_at: toLocalDatetimeInput(slot.ends_at),
           capacity: slot.capacity,
         })) ?? [],
+      questions,
     });
   };
 
@@ -71,6 +78,7 @@ export function useEditModal() {
       recurrence_end_date: "",
       password: "",
       content: "",
+      questions: [],
     });
   };
 

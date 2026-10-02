@@ -8,6 +8,8 @@ import { resolveQrFlowState, type QrFlowState } from "@lib/resolveQrEventAction"
 import { getSlotQrAction, isSlotFull } from "@lib/slotTime";
 import { fetchEventById } from "@services/event";
 import { editRSVP, fetchUserExpectedGrad, logAttendanceWithToken } from "@services/user";
+import { saveEventQuestionAnswers } from "@services/eventQuestions";
+import type { EventQuestionAnswers } from "@lib/eventQuestions";
 import { buildAsAttendanceFormUrl } from "@lib/asAttendanceForm";
 import DisplayToast from "@lib/hooks/useToast";
 
@@ -109,7 +111,7 @@ export function useQrEventFlow(options: {
   ]);
 
   const handleSlotConfirm = useCallback(
-    async (slotId: string) => {
+    async (slotId: string, answers?: EventQuestionAnswers) => {
       if (!User?.id || !token || !activeEvent) return;
 
       const slot = slots.find((s) => s.id === slotId);
@@ -139,6 +141,17 @@ export function useQrEventFlow(options: {
               return;
             }
           }
+          if (answers && User.id && (activeEvent.questions?.length ?? 0) > 0) {
+            const saveError = await saveEventQuestionAnswers(
+              eventId,
+              User.id,
+              activeEvent.questions ?? [],
+              answers,
+            );
+            if (saveError) {
+              DisplayToast(saveError.message ?? "Registered, but answers could not be saved", "error");
+            }
+          }
           setBanner({ type: "success", message: "You are registered for this event." });
           DisplayToast("Successfully registered. A confirmation email is on the way.", "success");
           onRsvp?.(eventId, slotId);
@@ -160,6 +173,18 @@ export function useQrEventFlow(options: {
           if (switchError) {
             DisplayToast(switchError.message ?? "Unable to switch slot", "error");
             return;
+          }
+        }
+
+        if (answers && User.id && (activeEvent.questions?.length ?? 0) > 0) {
+          const saveError = await saveEventQuestionAnswers(
+            eventId,
+            User.id,
+            activeEvent.questions ?? [],
+            answers,
+          );
+          if (saveError) {
+            DisplayToast(saveError.message ?? "Checked in, but answers could not be saved", "error");
           }
         }
 
