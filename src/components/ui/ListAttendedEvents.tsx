@@ -11,13 +11,11 @@ import { useNavigate } from "react-router";
 interface ListAttendedEventsProps {
   userId: string;
   title?: string;
-  showSeeAllLink?: boolean;
 }
 
 const ListAttendedEvents: React.FC<ListAttendedEventsProps> = ({
   userId,
   title = "Recently Attended Events",
-  showSeeAllLink = true,
 }) => {
   const [attendedEvents, setAttendedEvents] = useState<AttendedEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,14 +81,6 @@ const ListAttendedEvents: React.FC<ListAttendedEventsProps> = ({
     <div>
       <h2 style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
         {title}
-        {showSeeAllLink && (
-          <a
-            href="/profile/all-attended-events"
-            style={{ fontSize: "14px", color: "#888", textDecoration: "none" }}
-          >
-            See all events &gt;
-          </a>
-        )}
       </h2>
 
       {attendedEvents.length === 0 ? (

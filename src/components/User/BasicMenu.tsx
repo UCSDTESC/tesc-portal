@@ -16,8 +16,9 @@ import { CgProfile } from "react-icons/cg";
 export default function BasicMenu() {
   const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef<HTMLButtonElement>(null);
-  const { User, handleSignOut, setShowLoginModal, activeOrgRole } = useContext(UserContext);
+  const { User, handleSignOut, setShowLoginModal, activeOrgRole, myOrgs } = useContext(UserContext);
   const isLoggedIn = User && User.id;
+  const inAnOrg = myOrgs.length > 0;
   const handleToggle = () => {
     setOpen((prevOpen) => !prevOpen);
   };
@@ -99,9 +100,11 @@ export default function BasicMenu() {
                             <NavLink to="/profile">
                               <MenuItem onClick={handleClose}>Profile</MenuItem>
                             </NavLink>
-                            <NavLink to="/my-events">
-                              <MenuItem onClick={handleClose}>Event History</MenuItem>
-                            </NavLink>
+                            {inAnOrg && (
+                              <NavLink to="/org-management">
+                                <MenuItem onClick={handleClose}>Org Management</MenuItem>
+                              </NavLink>
+                            )}
                           </>
                         )}
                         {canManageOrgProfile(activeOrgRole) && (

@@ -134,7 +134,6 @@ export default function MemberResume({ selection }: { selection: string }) {
           <ListAttendedEvents
             userId={selectedCandidate.uuid}
             title="Events Attended"
-            showSeeAllLink={false}
           />
         )}
       </motion.div>

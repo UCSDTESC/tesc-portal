@@ -12,7 +12,7 @@ import {
   SelectItem,
   SelectLabel,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@components/components/ui/select";
 import { majors } from "@lib/constants";
 
@@ -238,7 +238,8 @@ export default function EditMemberProfile({
     }
   };
 
-  const linkPreview = resumeUrl && isValidUrl(resumeUrl) ? getPdfPreviewUrl(resumeUrl).previewUrl : null;
+  const linkPreview =
+    resumeUrl && isValidUrl(resumeUrl) ? getPdfPreviewUrl(resumeUrl).previewUrl : null;
   const previewUrl = pendingResumeFile
     ? URL.createObjectURL(pendingResumeFile)
     : storagePreviewUrl || linkPreview;
@@ -441,7 +442,6 @@ export default function EditMemberProfile({
           <ListAttendedEvents userId={User.id} />
         </div>
       )}
-
     </motion.div>
   );
 }
