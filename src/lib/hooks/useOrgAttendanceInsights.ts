@@ -141,14 +141,18 @@ export function useOrgAttendanceInsights({
         value: formatStatNumber(payload.uniqueAttendees),
         hint: `${formatStatNumber(payload.totalCheckins)} check-ins`,
       },
-      RSVPs: {
+      "RSVPs not checked in": {
         value: formatStatNumber(payload.totalRsvps),
-        hint: "Open RSVPs (not yet checked in)",
+        hint: "Registered, but have not attended yet",
       },
-      "Upcoming Events": {
-        value: formatStatNumber(payload.upcomingEvents),
-        hint: formatNextEventHint(payload.nextEventStart),
-      },
+      ...(viewingOneEvent
+        ? {}
+        : {
+            "Upcoming Events": {
+              value: formatStatNumber(payload.upcomingEvents),
+              hint: formatNextEventHint(payload.nextEventStart),
+            },
+          }),
     };
   }, [payload, selectedEventTitle, viewingOneEvent]);
 

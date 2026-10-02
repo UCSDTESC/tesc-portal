@@ -97,6 +97,7 @@ export default function Profile() {
             <OrgAttendanceInsights
               isSuperOrg={activeOrgName === "super_org"}
               orgId={activeOrgId}
+              orgName={activeOrgName === "super_org" ? undefined : activeOrgName}
             />
           </div>
           {activeOrgId && (

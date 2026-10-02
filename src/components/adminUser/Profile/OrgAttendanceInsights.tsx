@@ -5,8 +5,10 @@ import {
   LINE_GROUP_BY_OPTIONS,
   MEMBERS_GROUP_BY,
   PIE_COLORS,
+  PIE_GROUP_BY_LABELS,
   exportLineChartPdf,
   exportPieChartPdf,
+  exportInsightsReportPdf,
   type PieChartGrouping,
 } from "@lib/attendanceChartUtils";
 import { useOrgAttendanceInsights } from "@lib/hooks/useOrgAttendanceInsights";
@@ -100,9 +102,11 @@ function StatCard({
 export default function OrgAttendanceInsights({
   isSuperOrg,
   orgId,
+  orgName,
 }: {
   isSuperOrg: boolean;
   orgId?: string;
+  orgName?: string;
 }) {
   const insights = useOrgAttendanceInsights({
     isSuperOrg,
@@ -154,6 +158,65 @@ export default function OrgAttendanceInsights({
     [pieCategory, pieSlices],
   );
 
+  const pieTitle = `${pieCategory === "members" ? "Attendees" : "Events"} by ${PIE_GROUP_BY_LABELS[effectivePieGroup]}`;
+  const lineTitle = `Attendance by ${LINE_GROUP_BY_LABELS[insights.groupBy]}`;
+  const orgScope = isSuperOrg
+    ? insights.viewingAllOrgs
+      ? "All organizations"
+      : insights.orgOptions.find((org) => org.id === insights.selectedOrg)?.name ?? "Organization"
+    : orgName ?? "Organization";
+  const eventScope = insights.viewingOneEvent
+    ? insights.eventOptions.find((event) => event.id === insights.selectedEvent)?.title ?? "Event"
+    : "All events";
+
+  const extraReportTables = useMemo(() => {
+    const tables: { title: string; key: PieChartGrouping; rows: PieSlice[] }[] = [
+      { title: "Events by Tag", key: "tag", rows: insights.payload.tags },
+      { title: "Events by Venue", key: "venue", rows: insights.payload.venues },
+      { title: "Events by Time of Day", key: "timeOfDay", rows: insights.payload.timeOfDay },
+      { title: "Events by Organization", key: "org", rows: insights.payload.orgs },
+      { title: "Attendees by Year", key: "year", rows: insights.payload.years },
+      { title: "Attendees by Major", key: "major", rows: insights.payload.majors },
+    ];
+    return tables
+      .filter((table) => {
+        if (table.key === effectivePieGroup) return false;
+        if (table.key === "org" && !insights.viewingAllOrgs) return false;
+        return table.rows.length > 0;
+      })
+      .map((table) => ({
+        title: table.title,
+        leftHeader: "Label",
+        rows: table.rows.map((row) => ({
+          label: row.label,
+          value: String(Math.round(row.value)),
+        })),
+      }));
+  }, [effectivePieGroup, insights.payload, insights.viewingAllOrgs]);
+
+  const exportFullReport = () => {
+    const lineRangeLabel =
+      insights.startDate || insights.endDate
+        ? `Range: ${insights.startDate || "…"} – ${insights.endDate || "…"}`
+        : undefined;
+    exportInsightsReportPdf({
+      scopeLabel: `${orgScope} · ${eventScope}`,
+      stats: Object.entries(insights.stats).map(([label, stat]) => ({
+        label,
+        value: stat.value,
+        hint: stat.hint,
+      })),
+      pieTitle,
+      pieCanvas: pieRef.current?.canvas ?? null,
+      pieSlices,
+      lineTitle,
+      lineRangeLabel,
+      lineCanvas: lineRef.current?.canvas ?? null,
+      lineRows: insights.groupedData,
+      extraTables: extraReportTables,
+    });
+  };
+
   return (
     <section className="flex w-full flex-col gap-4 px-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -204,6 +267,16 @@ export default function OrgAttendanceInsights({
               </SelectContent>
             </Select>
           </div>
+          <Button
+            type="button"
+            variant="outline"
+            title="Export full report to PDF"
+            disabled={insights.loading}
+            onClick={exportFullReport}
+          >
+            <IoMdDownload />
+            Export report
+          </Button>
         </div>
       </div>
 
