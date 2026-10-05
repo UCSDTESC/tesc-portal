@@ -11,13 +11,11 @@ import { useNavigate } from "react-router";
 interface ListAttendedEventsProps {
   userId: string;
   title?: string;
-  showSeeAllLink?: boolean;
 }
 
 const ListAttendedEvents: React.FC<ListAttendedEventsProps> = ({
   userId,
   title = "Recently Attended Events",
-  showSeeAllLink = true,
 }) => {
   const [attendedEvents, setAttendedEvents] = useState<AttendedEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,50 +78,20 @@ const ListAttendedEvents: React.FC<ListAttendedEventsProps> = ({
   }
 
   return (
-    <div>
-      <h2 style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-        {title}
-        {showSeeAllLink && (
-          <a
-            href="/profile/all-attended-events"
-            style={{ fontSize: "14px", color: "#888", textDecoration: "none" }}
-          >
-            See all events &gt;
-          </a>
-        )}
-      </h2>
+    <div className="min-w-0 w-full">
+      <h2 className="mb-4 text-xl font-semibold">{title}</h2>
 
       {attendedEvents.length === 0 ? (
         <p>It looks like you haven't attended any events yet!</p>
       ) : (
-        <div
-          style={{
-            display: "flex",
-            gap: "20px",
-            overflowX: "scroll",
-            paddingBottom: "20px",
-            scrollbarWidth: "thin",
-          }}
-        >
-          {/* render list of event cards */}
+        <div className="flex flex-col gap-4 md:flex-row md:overflow-x-auto md:pb-5">
           {attendedEvents.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              onViewDetails={() => navigate(`/bulletin/${event.id}`)}
-            />
+            <div key={event.id} className="w-full min-w-0 md:w-[280px] md:shrink-0">
+              <EventCard event={event} onViewDetails={() => navigate(`/bulletin/${event.id}`)} />
+            </div>
           ))}
         </div>
       )}
-
-      {/* render event details */}
-      {/* {selectedEvent && (
-        <EventDetails
-          event={selectedEvent} 
-          onClose={handleCloseModal} 
-          onAddFeedback={handleAddFeedback}
-        />
-      )} */}
     </div>
   );
 };

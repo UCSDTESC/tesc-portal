@@ -1,7 +1,8 @@
 import { FormEvent, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
-import UserContext, { PENDING_PROFILE_SETUP_KEY } from "@lib/UserContext";
+import UserContext from "@lib/UserContext";
+import { skipMemberProfileSetupPrompt } from "@lib/userProfile";
 import { MuiOtpInput } from "mui-one-time-password-input";
 import DisplayToast from "@lib/hooks/useToast";
 import { motion } from "motion/react";
@@ -12,6 +13,29 @@ type LoginModalProps = {
   onclose: () => void;
   initialProfileSetup?: boolean;
 };
+
+function GoogleLogo({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="#4285F4"
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+      />
+    </svg>
+  );
+}
 
 export default function LoginModal({ onclose, initialProfileSetup = false }: LoginModalProps) {
   const [register, setRegister] = useState(false);
@@ -27,8 +51,6 @@ export default function LoginModal({ onclose, initialProfileSetup = false }: Log
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
-  const [resumeVisible, setResumeVisible] = useState(true);
-
   const navigate = useNavigate();
 
   const {
@@ -43,6 +65,7 @@ export default function LoginModal({ onclose, initialProfileSetup = false }: Log
     loginRecruiterMode,
     setPendingProfileSetup,
     loginModalContext,
+    User,
   } = useContext(UserContext);
 
   useEffect(() => {
@@ -57,6 +80,11 @@ export default function LoginModal({ onclose, initialProfileSetup = false }: Log
     onclose();
   };
 
+  const skipProfileSetup = () => {
+    if (User?.id) skipMemberProfileSetupPrompt(User.id);
+    finishProfileSetup();
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
@@ -65,7 +93,6 @@ export default function LoginModal({ onclose, initialProfileSetup = false }: Log
     const ObjectFormdata = Object.fromEntries(formData.entries());
 
     if (register) {
-      // signup flow
       if (ObjectFormdata.password.toString() !== ObjectFormdata.confirmPassword.toString()) {
         DisplayToast("Paswords Don't Match", "error");
         return;
@@ -74,23 +101,27 @@ export default function LoginModal({ onclose, initialProfileSetup = false }: Log
       handleSignUp(
         {
           email: ObjectFormdata.email.toString(),
-          password: ObjectFormdata.password.toString()
+          password: ObjectFormdata.password.toString(),
         },
-        () => setOTPFlag(true)
+        () => setOTPFlag(true),
       );
     } else if (forgot) {
-      // forgot password flow (send recovery OTP)
       const emailVal = ObjectFormdata.email.toString();
       setEmail(emailVal);
       handleSendRecovery(emailVal, () => setForgotOTPFlag(true));
     } else {
-      // normal login
       handleSignIn(
         {
           email: ObjectFormdata.email.toString(),
-          password: ObjectFormdata.password.toString()
+          password: ObjectFormdata.password.toString(),
         },
-        onclose
+        (result) => {
+          if (result?.needsProfileSetup) {
+            setShowProfileSetup(true);
+          } else {
+            onclose();
+          }
+        },
       );
     }
   };
@@ -98,14 +129,12 @@ export default function LoginModal({ onclose, initialProfileSetup = false }: Log
   const handleOTPSubmit = async () => {
     setError("");
     if (forgotOTPFlag) {
-      // recovery OTP
       handleVerifyOTP({ email: email, password: otp, type: "recovery" }, () => {
         setForgotOTPFlag(false);
         setResetFlag(true);
       });
     } else {
-      // registration OTP
-      handleVerifyOTP({ email: email, password: otp, type: "email", resumeVisible }, (result) => {
+      handleVerifyOTP({ email: email, password: otp, type: "email" }, (result) => {
         if (result?.needsProfileSetup) {
           setShowProfileSetup(true);
         } else {
@@ -155,7 +184,7 @@ export default function LoginModal({ onclose, initialProfileSetup = false }: Log
               <button
                 type="button"
                 className="shrink-0 text-sm text-navy underline hover:opacity-80"
-                onClick={finishProfileSetup}
+                onClick={skipProfileSetup}
               >
                 Complete later
               </button>
@@ -164,9 +193,8 @@ export default function LoginModal({ onclose, initialProfileSetup = false }: Log
               <EditMemberProfile mode="onboarding" onComplete={finishProfileSetup} />
             </div>
           </div>
-        ) : (
+        ) : loginRecruiterMode ? (
           <>
-            {/* ----- OTP ENTRY (signup or recovery) ----- */}
             {OTPFlag || forgotOTPFlag ? (
               <form
                 className="flex items-center justify-center gap-5 flex-col w-full h-full"
@@ -197,7 +225,6 @@ export default function LoginModal({ onclose, initialProfileSetup = false }: Log
                 </button>
               </form>
             ) : resetFlag ? (
-              /* ----- RESET PASSWORD AFTER RECOVERY OTP ----- */
               <motion.form
                 variants={container_login}
                 initial="hidden"
@@ -232,7 +259,6 @@ export default function LoginModal({ onclose, initialProfileSetup = false }: Log
                 </button>
               </motion.form>
             ) : (
-              /* ----- DEFAULT LOGIN / REGISTER / FORGOT ----- */
               <motion.form
                 variants={container_login}
                 initial="hidden"
@@ -244,11 +270,7 @@ export default function LoginModal({ onclose, initialProfileSetup = false }: Log
                   className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A] text-center"
                   variants={item}
                 >
-                  {forgot
-                    ? "Reset your password"
-                    : loginRecruiterMode
-                      ? "Recruiter Portal"
-                      : "Welcome to TESC!"}
+                  {forgot ? "Reset your password" : "Recruiter Portal"}
                 </motion.h1>
 
                 {loginModalContext && !forgot && (
@@ -265,30 +287,20 @@ export default function LoginModal({ onclose, initialProfileSetup = false }: Log
                   variants={item}
                 >
                   {forgot ? (
-                    loginRecruiterMode ? (
-                      "Enter your work email and we'll send you a 6-digit recovery code."
-                    ) : (
-                      "Enter your UCSD email and we'll send you a 6-digit recovery code."
-                    )
-                  ) : loginRecruiterMode ? (
+                    "Enter your work email and we'll send you a 6-digit recovery code."
+                  ) : (
                     <>
                       Sign in with your <strong>approved work email</strong> to browse the TESC member
                       resume bank.
                     </>
-                  ) : (
-                    <>
-                      Whether you are a <strong>returning member</strong> or a{" "}
-                      <strong>new member</strong>, we're glad to have you!
-                    </>
                   )}
                 </motion.p>
 
-                {/* always need email */}
                 <motion.input
                   variants={item}
                   name="email"
                   type="text"
-                  placeholder={loginRecruiterMode ? "✉ Work email" : "✉ UCSD email"}
+                  placeholder="✉ Work email"
                   className="rounded-lg w-3/4 bg-[#EDEDED] px-1"
                   required
                 />
@@ -296,7 +308,6 @@ export default function LoginModal({ onclose, initialProfileSetup = false }: Log
                   variants={item}
                   className={`w-3/4 gap-5 flex flex-col h-fit ${forgot ? "hidden" : "block"}`}
                 >
-                  {/* hide password fields in forgot flow */}
                   {!forgot && (
                     <>
                       <input
@@ -307,7 +318,6 @@ export default function LoginModal({ onclose, initialProfileSetup = false }: Log
                         className="rounded-lg w-full bg-[#EDEDED] grayscale px-1"
                         required
                       />
-
                       {register && (
                         <input
                           name="confirmPassword"
@@ -317,27 +327,13 @@ export default function LoginModal({ onclose, initialProfileSetup = false }: Log
                           required
                         />
                       )}
-
-                      {register && !loginRecruiterMode && (
-                        <label className="flex items-start gap-2 text-left text-sm text-[#262626]">
-                          <input
-                            type="checkbox"
-                            className="mt-0.5"
-                            checked={resumeVisible}
-                            onChange={(e) => setResumeVisible(e.target.checked)}
-                          />
-                          <span>
-                            Share my resume with TESC recruiting partners once I add it to my profile
-                          </span>
-                        </label>
-                      )}
                     </>
                   )}
                 </motion.div>
 
                 {Error && <div className="text-red-600 text-sm">Error: {Error}</div>}
 
-                {loginRecruiterMode && !forgot && (
+                {!forgot && (
                   <motion.p className="text-sm text-[#262626] w-3/4 text-center" variants={item}>
                     Need access? Email{" "}
                     <a href="mailto:contact@tescatucsd.org" className="text-navy underline">
@@ -348,20 +344,16 @@ export default function LoginModal({ onclose, initialProfileSetup = false }: Log
 
                 <motion.div className="w-3/4" variants={item}>
                   <div className="flex items-center justify-between">
-                    {/* left link: register toggle OR back-to-login */}
                     <button
                       type="button"
                       className="text-navy cursor-pointer mr-auto underline hover:opacity-80 text-left"
                       onClick={() => {
                         if (forgot) {
-                          // leave forgot mode -> go back to sign in
                           setForgot(false);
                           setRegister(false);
                           setError("");
                         } else {
-                          // toggle register vs login
                           setRegister(!register);
-                          setResumeVisible(true);
                           setForgot(false);
                           setError("");
                         }
@@ -370,17 +362,15 @@ export default function LoginModal({ onclose, initialProfileSetup = false }: Log
                       {forgot
                         ? "Back to sign in"
                         : register
-                        ? "Already a user? Log in"
-                        : "Register a new account"}
+                          ? "Already a user? Log in"
+                          : "Register a new account"}
                     </button>
 
-                    {/* right link: forgot password (only show on login) */}
                     {!register && !forgot && (
                       <button
                         type="button"
                         className="text-navy cursor-pointer underline hover:opacity-80 text-right"
                         onClick={() => {
-                          // switch to forgot password flow
                           setForgot(true);
                           setRegister(false);
                           setError("");
@@ -396,35 +386,63 @@ export default function LoginModal({ onclose, initialProfileSetup = false }: Log
                   variants={item}
                   type="submit"
                   className={`cursor-pointer rounded-2xl py-1 px-5 w-3/4 text-navy font-bold ${
-                    forgot
-                      ? "bg-white border border-navy"
-                      : register
+                    forgot || register
                       ? "bg-white border border-navy"
                       : "bg-[#6A97BD] border border-[#6A97BD]"
-                  }
-              `}
+                  }`}
                 >
                   {forgot ? "Send Recovery Code" : register ? "Sign up" : "Sign in"}
                 </motion.button>
-
-                {!forgot && !loginRecruiterMode && (
-                  <motion.button
-                    variants={item}
-                    type="button"
-                    className="cursor-pointer rounded-2xl py-1 px-5 w-3/4 bg-white border border-gray-300 text-black font-semibold"
-                    onClick={() => {
-                      if (register) {
-                        sessionStorage.setItem(PENDING_PROFILE_SETUP_KEY, "1");
-                      }
-                      handleGoogleAuth();
-                    }}
-                  >
-                    Continue with Google
-                  </motion.button>
-                )}
               </motion.form>
             )}
           </>
+        ) : (
+          <motion.div
+            variants={container_login}
+            initial="hidden"
+            animate="show"
+            className="flex h-full w-full flex-col items-center justify-center gap-5"
+          >
+            <motion.h1
+              className="font-DM text-center text-2xl font-bold text-navy [text-shadow:0px_2.83px_2.83px#0000001A]"
+              variants={item}
+            >
+              Welcome to TESC!
+            </motion.h1>
+
+            {loginModalContext && (
+              <motion.p
+                className="font-DM w-3/4 rounded-lg bg-blue/10 px-3 py-2 text-center text-sm text-navy"
+                variants={item}
+              >
+                {loginModalContext}
+              </motion.p>
+            )}
+
+            <motion.p
+              className="font-DM hidden w-3/4 text-center text-xl text-balance text-[#262626] md:block"
+              variants={item}
+            >
+              Whether you are a <strong>returning member</strong> or a <strong>new member</strong>,
+              we're glad to have you!
+            </motion.p>
+
+            <motion.p className="w-3/4 text-center text-sm text-[#262626]" variants={item}>
+              Sign in with your UCSD Google account.
+            </motion.p>
+
+            {Error && <div className="text-sm text-red-600">Error: {Error}</div>}
+
+            <motion.button
+              variants={item}
+              type="button"
+              className="flex w-3/4 max-w-[500px] cursor-pointer items-center justify-center gap-3 rounded-2xl border border-gray-300 bg-white px-5 py-2.5 text-base font-semibold text-[#1f1f1f] hover:bg-gray-50"
+              onClick={() => handleGoogleAuth()}
+            >
+              <GoogleLogo className="h-5 w-5 shrink-0" />
+              Continue with Google
+            </motion.button>
+          </motion.div>
         )}
       </div>
     </div>

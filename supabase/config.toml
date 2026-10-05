@@ -4,6 +4,17 @@
 
 project_id = "mxbwjmjpevvyejnugisy"
 
+[auth]
+site_url = "https://portal.tescatucsd.org"
+additional_redirect_urls = [
+  "https://portal.tescatucsd.org",
+  "https://portal.tescatucsd.org/**",
+  "http://localhost:5173",
+  "http://localhost:5173/**",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:5173/**",
+]
+
 [functions.send-rsvp-email]
 verify_jwt = false
 

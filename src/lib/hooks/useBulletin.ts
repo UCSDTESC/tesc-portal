@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 import { fetchGradYears, fetchOrgs } from "@services/organization";
-import { editRSVP, fetchRSVPAndAttended, logAttendance } from "@services/user";
+import { editRSVP, fetchRSVPAndAttended, fetchUserExpectedGrad, logAttendance } from "@services/user";
 import {
   fetchEventSlotStatsForEvent,
   queryEventsBySearchAndFilters,
@@ -11,10 +11,18 @@ import UserContext, { User } from "@lib/UserContext";
 import { Event, Member, PortalMode, canAccessRecruiterData } from "@lib/constants";
 import { useDebouncedValue } from "@lib/hooks/useDebouncedValue";
 import DisplayToast from "@lib/hooks/useToast";
+import { buildAsAttendanceFormUrl } from "@lib/asAttendanceForm";
+import type { EventQuestion } from "@lib/constants";
+import type { EventQuestionAnswers } from "@lib/eventQuestions";
+import { saveEventQuestionAnswers } from "@services/eventQuestions";
 
 // custom hook for bulletin component
-export function useBulletin(User: User | null, portalMode: PortalMode) {
-  const { setShowLoginModal, activeOrgName, userOrgIds } = useContext(UserContext);
+export function useBulletin(
+  User: User | null,
+  portalMode: PortalMode,
+  onAsAttendanceForm?: (url: string) => void,
+) {
+  const { setShowLoginModal, setLoginModalContext, activeOrgName, userOrgIds } = useContext(UserContext);
   const [data, setData] = useState<Event[]>();
   const [People, setPeople] = useState<Member[]>();
   const [isLoading, setIsLoading] = useState(true);
@@ -119,7 +127,8 @@ export function useBulletin(User: User | null, portalMode: PortalMode) {
     orgFilters,
     typeFilters,
     sortMethod,
-    User,
+    User?.id,
+    User?.role,
     internalFilter,
     activeOrgName,
     portalMode,
@@ -174,10 +183,13 @@ export function useBulletin(User: User | null, portalMode: PortalMode) {
     eventId: string,
     slotId: string,
     action: "rsvp" | "cancel" | "switch",
+    answers?: EventQuestionAnswers,
+    questions?: EventQuestion[],
   ) => {
     if (!User?.id) {
+      setLoginModalContext("Sign in to RSVP for this event");
       setShowLoginModal(true);
-      return;
+      return false;
     }
 
     const error = await editRSVP(eventId, slotId, action);
@@ -187,7 +199,14 @@ export function useBulletin(User: User | null, portalMode: PortalMode) {
         action === "cancel" ? "Unable to remove RSVP" : "Unable to RSVP for this slot",
         "error",
       );
-      return;
+      return false;
+    }
+
+    if (action === "rsvp" && answers && questions?.length) {
+      const saveError = await saveEventQuestionAnswers(eventId, User.id, questions, answers);
+      if (saveError) {
+        DisplayToast(saveError.message ?? "Registered, but answers could not be saved", "error");
+      }
     }
 
     setRsvpByEvent((prev) => {
@@ -208,22 +227,36 @@ export function useBulletin(User: User | null, portalMode: PortalMode) {
           : "Succesfully RSVP'd. A confirmation email is on the way.",
       "success",
     );
+    return true;
   };
 
-  const handleAttendance = async (eventId: string, slotId?: string) => {
+  const handleAttendance = async (
+    eventId: string,
+    slotId?: string,
+    answers?: EventQuestionAnswers,
+    questions?: EventQuestion[],
+  ) => {
     if (!User?.id) {
+      setLoginModalContext("Sign in to check in for this event");
       setShowLoginModal(true);
-      return;
+      return false;
     }
 
     const userInput = prompt("Please enter password:", "password");
-    if (!userInput) return;
+    if (!userInput) return false;
 
     const error = await logAttendance(eventId, User.id, userInput, slotId);
     if (error) {
       console.error(error.message);
       DisplayToast("Error logging attendance", "error");
-      return;
+      return false;
+    }
+
+    if (answers && questions?.length) {
+      const saveError = await saveEventQuestionAnswers(eventId, User.id, questions, answers);
+      if (saveError) {
+        DisplayToast(saveError.message ?? "Checked in, but answers could not be saved", "error");
+      }
     }
 
     setAttendedByEvent((prev) => ({
@@ -232,6 +265,19 @@ export function useBulletin(User: User | null, portalMode: PortalMode) {
     }));
     await refreshEventView(eventId);
     DisplayToast("Succesfully logged attendance", "success");
+
+    const event = data?.find((row) => String(row.id) === String(eventId));
+    if (event?.as_funding && onAsAttendanceForm) {
+      const expectedGrad = await fetchUserExpectedGrad(User.id);
+      onAsAttendanceForm(
+        buildAsAttendanceFormUrl({
+          title: event.title,
+          foodProvided: event.food_provided,
+          expectedGrad,
+        }),
+      );
+    }
+    return true;
   };
 
   return {
@@ -271,8 +317,25 @@ export interface BulletinContextProps {
   gradYears: string[];
   rsvpByEvent: Record<string, string> | null;
   attendedByEvent: Record<string, string> | null;
-  handleAttendance: (eventId: string, slotId?: string) => void;
-  handleRSVP: (eventId: string, slotId: string, action: "rsvp" | "cancel" | "switch") => void;
+  handleAttendance: (
+    eventId: string,
+    slotId?: string,
+    answers?: EventQuestionAnswers,
+    questions?: EventQuestion[],
+  ) => Promise<boolean | void> | void;
+  handleRSVP: (
+    eventId: string,
+    slotId: string,
+    action: "rsvp" | "cancel" | "switch",
+    answers?: EventQuestionAnswers,
+    questions?: EventQuestion[],
+  ) => Promise<boolean | void> | void;
+  promptRegistrationQuestions?: (options: {
+    questions: EventQuestion[];
+    initialAnswers?: EventQuestionAnswers;
+    submitLabel?: string;
+    onSubmit: (answers: EventQuestionAnswers) => Promise<void>;
+  }) => void;
   setTagFilters: (tags: string[]) => void;
   setSearch: (search: string) => void;
   orgFilters: string[];
@@ -306,6 +369,7 @@ export const BulletinContext = createContext<BulletinContextProps>({
   attendedByEvent: {},
   handleAttendance: () => {},
   handleRSVP: () => {},
+  promptRegistrationQuestions: () => {},
   setTagFilters: () => {},
   setSearch: () => {},
   orgFilters: [],

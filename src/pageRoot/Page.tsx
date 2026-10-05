@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Outlet, useNavigate } from "react-router";
 import supabase from "@server/supabase";
 
 import UserContext, { PENDING_PROFILE_SETUP_KEY } from "@lib/UserContext";
 import type { User, UserCredentials, AuthSuccessResult, PendingQrFlow } from "@lib/UserContext";
 import { consumeAuthReturnTo } from "@lib/eventLinks";
+import { consumeAuthCallbackError, formatAuthError, isAllowedMemberEmail } from "@lib/authErrors";
 import {
   signIn,
   fetchUser,
@@ -13,8 +14,13 @@ import {
   signInWithGoogle,
   verifyOTP,
   sendPasswordRecovery,
-  updatePassword
+  updatePassword,
+  memberNeedsProfileSetup,
 } from "@services/user";
+import {
+  clearMemberProfileSetupSkip,
+  shouldSkipMemberProfileSetupPrompt,
+} from "@lib/userProfile";
 
 import Navbar from "./Navbar";
 import DisplayToast from "@lib/hooks/useToast";
@@ -40,6 +46,8 @@ export default function Page() {
     [],
   );
   const navigate = useNavigate();
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
 
   const activeOrgRole = useMemo(
     () => orgMemberships.find((org) => org.name === activeOrgName)?.role ?? "",
@@ -106,26 +114,34 @@ export default function Page() {
 
 
   // sign in user
-  const handleSignIn = async ({ email, password }: UserCredentials, OnSuccess: () => void) => {
+  const handleSignIn = async (
+    { email, password }: UserCredentials,
+    OnSuccess: (result?: AuthSuccessResult) => void,
+  ) => {
     const { user, error } = await signIn(email, password);
     if (user && user?.email) {
       setError("");
       setUser({ id: user.id, email: user.email, role: user.role });
-      OnSuccess();
+      const needsProfileSetup = await memberNeedsProfileSetup(user.id, user.role);
+      OnSuccess({ needsProfileSetup });
       DisplayToast("Succesfully logged in", "success");
     }
     if (error) {
       console.error(error.message);
-      DisplayToast("Error signing in", "error");
+      DisplayToast(formatAuthError(error.message, loginRecruiterMode), "error");
     }
   };
 
   // sign up user
   const handleSignUp = async ({ email, password }: UserCredentials, OnSuccess: () => void) => {
+    if (!loginRecruiterMode && !isAllowedMemberEmail(email)) {
+      DisplayToast("Please use a UCSD email (@ucsd.edu) to create an account.", "error");
+      return;
+    }
     const { error } = await signUp(email, password);
     if (error) {
       console.error(error.message);
-      DisplayToast(error.message || "Error signing up", "error");
+      DisplayToast(formatAuthError(error.message, loginRecruiterMode), "error");
     } else {
       // setUser({
       //   id: user?.id,
@@ -141,7 +157,7 @@ export default function Page() {
     const { error } = await signInWithGoogle();
     if (error) {
       console.error(error.message);
-      DisplayToast("Error connecting Google account", "error");
+      DisplayToast(formatAuthError(error.message, loginRecruiterMode), "error");
     }
   };
 
@@ -157,15 +173,17 @@ export default function Page() {
     const { user, error } = await verifyOTP(email, Token, type, resumeVisible);
     if (error) {
       console.error(error.message);
-      DisplayToast(error.message || "Error verifying OTP", "error");
+      DisplayToast(formatAuthError(error.message) || "Error verifying OTP", "error");
     } else {
       setUser({
         id: user?.id ? user?.id : "",
         email: user?.email ? user?.email : "",
         role: user?.role ? user.role : "unknown"
       });
+      const needsProfileSetup =
+        type === "email" && (await memberNeedsProfileSetup(user?.id, user?.role));
       onSuccess({
-        needsProfileSetup: type === "email" && user?.role !== "company",
+        needsProfileSetup,
       });
       DisplayToast("Succesfully logged in", "success");
     }
@@ -221,11 +239,16 @@ export default function Page() {
         const { user, error } = await fetchUser();
         if (cancelled) return null;
         if (user?.email) {
-          setUser({ id: user.id, email: user.email, role: user.role });
+          setUser((prev) => {
+            if (prev?.id === user.id && prev.email === user.email && prev.role === user.role) {
+              return prev;
+            }
+            return { id: user.id, email: user.email, role: user.role };
+          });
           return user;
         }
         setUser({ id: "", email: "", role: "" });
-        if (error) DisplayToast(error.message || "Couldn't finish signing in", "error");
+        if (error) DisplayToast(formatAuthError(error.message), "error");
         return null;
       } catch (err) {
         console.error(err);
@@ -238,6 +261,7 @@ export default function Page() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "TOKEN_REFRESHED") return;
       // Defer so we don't deadlock with other auth calls inside the callback.
       setTimeout(async () => {
         if (cancelled) return;
@@ -247,7 +271,7 @@ export default function Page() {
         const returnTo = consumeAuthReturnTo();
         if (!returnTo) return;
         const current = `${globalThis.location.pathname}${globalThis.location.search}`;
-        if (returnTo !== current) navigate(returnTo, { replace: true });
+        if (returnTo !== current) navigateRef.current(returnTo, { replace: true });
       }, 0);
     });
 
@@ -255,17 +279,35 @@ export default function Page() {
       cancelled = true;
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, []);
 
   useEffect(() => {
-    if (!User?.id) return;
-    const pendingSetup = sessionStorage.getItem(PENDING_PROFILE_SETUP_KEY);
-    if (!pendingSetup) return;
+    const callbackError = consumeAuthCallbackError();
+    if (callbackError) DisplayToast(formatAuthError(callbackError), "error");
+  }, []);
+
+  useEffect(() => {
+    if (!User?.id) {
+      clearMemberProfileSetupSkip();
+      return;
+    }
     sessionStorage.removeItem(PENDING_PROFILE_SETUP_KEY);
     if (User.role === "company") return;
-    setPendingProfileSetup(true);
-    setShowLoginModal(true);
-  }, [User?.id, User?.role]);
+    if (showLoginModal) return;
+    if (shouldSkipMemberProfileSetupPrompt(User.id)) return;
+
+    let cancelled = false;
+    const promptIfIncomplete = async () => {
+      const needsSetup = await memberNeedsProfileSetup(User.id, User.role);
+      if (cancelled || !needsSetup) return;
+      setPendingProfileSetup(true);
+      setShowLoginModal(true);
+    };
+    void promptIfIncomplete();
+    return () => {
+      cancelled = true;
+    };
+  }, [User?.id, User?.role, showLoginModal]);
 
   return (
     <main>

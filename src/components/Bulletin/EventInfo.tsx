@@ -87,11 +87,11 @@ export default function EventInfo({
 
   return (
     <motion.div
+      key={preview ? "preview" : daton.id}
       className="flex w-full flex-col gap-4"
       variants={container}
       initial="hidden"
       animate="show"
-      key={preview ? "preview" : daton.id}
     >
       {qrBanner && !preview && (
         <motion.div
@@ -150,11 +150,16 @@ export default function EventInfo({
           ) : (
             <div className="w-full bg-blue/15 animate-pulse aspect-video rounded-lg"></div>
           ))}
-        {daton.track_attendance && daton.slots && daton.slots.length > 0 && (
+        {daton.slots &&
+          daton.slots.length > 0 &&
+          (daton.track_attendance ||
+            daton.type === "internal" ||
+            (daton.questions?.length ?? 0) > 0) && (
           <div className="mt-6">
             <EventSlotPicker
               eventId={String(daton.id)}
               slots={daton.slots}
+              questions={daton.questions}
               className="bg-lightBlue hover:opacity-80"
               preview={preview}
             />
@@ -166,6 +171,12 @@ export default function EventInfo({
               <h1 className="font-semibold mb-4">
                 <span className="block">{daton.location_str}</span>
               </h1>
+            )}
+            {daton.type !== "forum" && daton.food_provided?.trim() && (
+              <p className="mb-4 text-gray-700">
+                <span className="font-semibold">Food provided: </span>
+                {daton.food_provided}
+              </p>
             )}
             <Editor content={loadingContent ? "Loading..." : eventContent} />
           </span>

@@ -5,13 +5,13 @@ import { ReactNode, useState } from "react";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa6";
 import { extensions } from "../Form/EditorExtensions";
 import { Event } from "@lib/constants";
-import supabase from "@server/supabase";
 import { CSVLink } from "react-csv";
 import { IoMdDownload } from "react-icons/io";
 import { motion } from "motion/react";
 import { DeleteConfirmationModal } from "./DeleteConfirmationModal";
 import EventQrModal from "../Form/EventQrModal";
 import { fetchEventAttendanceToken } from "@services/event";
+import { buildRegistrantCsv, fetchEventRegistrantsWithAnswers, type EventRegistrantRow } from "@services/eventQuestions";
 import DisplayToast from "@lib/hooks/useToast";
 export default function TableItem({
   daton,
@@ -22,12 +22,7 @@ export default function TableItem({
   handleDelete: (id: string) => Promise<void>;
   openEditModal: (daton: Event) => void;
 }) {
-  const [attendees, setAttendees] = useState<
-    {
-      user_id: string;
-      users: { email: string; first_name: string; last_name: string; major: string };
-    }[]
-  >([]);
+  const [attendees, setAttendees] = useState<EventRegistrantRow[]>([]);
   const [displayAttendees, setDisplayAttendees] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [qrModal, setQrModal] = useState<{
@@ -51,20 +46,8 @@ export default function TableItem({
   };
 
   const fetchAttendees = async () => {
-    const { data } = await supabase
-      .from("events_log")
-      .select("user_id, users (email, first_name,last_name,major)")
-      .eq("event_id", daton.id)
-      .eq("attended", true);
-    console.log(data);
-    if (data) {
-      setAttendees(
-        data as object as {
-          user_id: string;
-          users: { email: string; first_name: string; last_name: string; major: string };
-        }[]
-      );
-    }
+    const { rows } = await fetchEventRegistrantsWithAnswers(daton.id);
+    setAttendees(rows);
   };
 
   const openQrModal = async () => {
@@ -141,6 +124,12 @@ export default function TableItem({
         <DataPair data={daton.location_str ?? "N/A"}>
           <p className="font-bold text-blue">Location</p>
         </DataPair>
+        <DataPair data={daton.food_provided?.trim() ? daton.food_provided : "N/A"}>
+          <p className="font-bold text-blue">Food provided</p>
+        </DataPair>
+        <DataPair data={daton.as_funding ? "Yes" : "No"}>
+          <p className="font-bold text-blue">AS funding</p>
+        </DataPair>
         <DataPair data={daton.rsvp}>
           <p className="font-bold text-blue">RSVP Count</p>
         </DataPair>
@@ -163,7 +152,9 @@ export default function TableItem({
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.2 }}
                     >
-                      {attendee.users.email + ", "}
+                      {(attendee.users?.email ?? attendee.user_id) +
+                        (attendee.attended ? " (attended)" : " (RSVP)") +
+                        ", "}
                     </motion.div>
                   </>
                 );
@@ -177,14 +168,9 @@ export default function TableItem({
                 transition={{ duration: 0.2, delay: 0.1 }}
               >
                 <CSVLink
-                  data={attendees.map((attendee) => ({
-                    user_id: attendee.user_id,
-                    email: attendee.users.email,
-                    first_name: attendee.users.first_name,
-                    last_name: attendee.users.last_name,
-                    major: attendee.users.major,
-                  }))}
+                  data={buildRegistrantCsv(daton.questions ?? [], attendees)}
                   className="opacity-50 hover:opacity-95"
+                  filename={`registrants-${daton.title?.replace(/\s+/g, "-") || daton.id}.csv`}
                 >
                   <IoMdDownload />
                 </CSVLink>

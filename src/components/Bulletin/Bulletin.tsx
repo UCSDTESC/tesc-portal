@@ -8,7 +8,9 @@ import UserContext from "@lib/UserContext";
 import { BulletinContext, useBulletin } from "@lib/hooks/useBulletin";
 import { useQrEventFlow } from "@lib/hooks/useQrEventFlow";
 import { useEditModal } from "@lib/hooks/useEditModal";
-import { formdata, PortalMode } from "@lib/constants";
+import { formdata, PortalMode, type EventQuestion } from "@lib/constants";
+import { compareEventsByRecency, parseEventTime } from "@lib/eventListOrder";
+import type { EventQuestionAnswers } from "@lib/eventQuestions";
 import { FaArrowRightToBracket } from "react-icons/fa6";
 import { FaArrowRightFromBracket } from "react-icons/fa6";
 import CheckBoxes from "./CheckBoxes";
@@ -16,6 +18,8 @@ import PortalToggle from "./PortalToggle";
 import { EventsList } from "./EventsList";
 import BulletinDisplay from "./BulletinDisplay";
 import QrSlotPickerModal from "./QrSlotPickerModal";
+import RegistrationQuestionsModal from "./RegistrationQuestionsModal";
+import AsAttendanceFormModal from "./AsAttendanceFormModal";
 import Form from "../adminUser/Form/Form";
 
 type EventTimeFilter = "current" | "past";
@@ -29,6 +33,13 @@ export default function Bulletin() {
   const [eventTimeFilter, setEventTimeFilter] = useState<EventTimeFilter>("current");
   const [forumMode, setForumMode] = useState(false);
   const [portalMode, setPortalMode] = useState<PortalMode>("events");
+  const [asAttendanceFormUrl, setAsAttendanceFormUrl] = useState<string | null>(null);
+  const [questionsModal, setQuestionsModal] = useState<{
+    questions: EventQuestion[];
+    initialAnswers: EventQuestionAnswers;
+    submitLabel: string;
+    onSubmit: (answers: EventQuestionAnswers) => Promise<void>;
+  } | null>(null);
   const isRecruiterPortal = portalMode === "recruiter";
   const {
     data,
@@ -55,7 +66,7 @@ export default function Bulletin() {
     refreshEventView,
     applyUserRsvp,
     applyUserAttendance,
-  } = useBulletin(User, portalMode);
+  } = useBulletin(User, portalMode, setAsAttendanceFormUrl);
   const {
     showEditModal,
     setShowEditModal,
@@ -95,14 +106,6 @@ export default function Bulletin() {
     navigate("/bulletin/-1");
   };
 
-  const parseEventTime = (value: unknown): number | null => {
-    if (value === null || value === undefined) return null;
-    const str = String(value).trim();
-    if (!str) return null;
-    const t = new Date(str).getTime();
-    return Number.isFinite(t) ? t : null;
-  };
-
   // Auto-select Current/Past tab when loading an event from URL so it displays correctly
   useEffect(() => {
     if (isRecruiterPortal || !data) return;
@@ -126,7 +129,7 @@ export default function Bulletin() {
   const filteredData = useMemo(() => {
     if (!data || isRecruiterPortal) return data;
     const now = Date.now();
-    return data.filter((event) => {
+    const filtered = data.filter((event) => {
       if (forumMode) return event.type === "forum";
       // In Upcoming/Past mode, hide forum entries.
       if (event.type === "forum") return false;
@@ -135,7 +138,16 @@ export default function Bulletin() {
       const isCurrent = endTime !== null ? endTime >= now : false;
       return eventTimeFilter === "current" ? isCurrent : !isCurrent;
     });
-  }, [data, eventTimeFilter, forumMode, isRecruiterPortal]);
+
+    if (sortMethod === "Event Name (A-Z)") return filtered;
+
+    return [...filtered].sort((a, b) => {
+      if (forumMode) {
+        return (parseEventTime(b.created_at) ?? 0) - (parseEventTime(a.created_at) ?? 0);
+      }
+      return compareEventsByRecency(a, b, eventTimeFilter);
+    });
+  }, [data, eventTimeFilter, forumMode, isRecruiterPortal, sortMethod]);
 
   const selectedEvent = useMemo(() => {
     if (!data || selection === "-1") return undefined;
@@ -150,6 +162,7 @@ export default function Bulletin() {
     onRefresh: refreshEventView,
     onRsvp: applyUserRsvp,
     onAttended: applyUserAttendance,
+    onAsAttendanceForm: setAsAttendanceFormUrl,
   });
 
   const displayData = useMemo(() => {
@@ -171,6 +184,17 @@ export default function Bulletin() {
         attendedByEvent,
         handleAttendance,
         handleRSVP,
+        promptRegistrationQuestions: (options) => {
+          setQuestionsModal({
+            questions: options.questions,
+            initialAnswers: options.initialAnswers ?? {},
+            submitLabel: options.submitLabel ?? "Continue",
+            onSubmit: async (answers) => {
+              await options.onSubmit(answers);
+              setQuestionsModal(null);
+            },
+          });
+        },
         setTagFilters,
         setSearch,
         orgFilters,
@@ -369,13 +393,32 @@ export default function Bulletin() {
       </div>
       <QrSlotPickerModal
         open={qrFlow.showPicker}
+        eventId={selection}
         eventTitle={qrFlow.activeEvent?.title ?? "Event"}
         slots={qrFlow.activeEvent?.slots ?? []}
+        questions={qrFlow.activeEvent?.questions ?? []}
+        userId={User?.id}
         flowState={qrFlow.flowState}
         initialSlotId={rsvpByEvent?.[selection]}
         onConfirm={qrFlow.handleSlotConfirm}
         onClose={qrFlow.closePicker}
       />
+      <RegistrationQuestionsModal
+        open={Boolean(questionsModal)}
+        questions={questionsModal?.questions ?? []}
+        initialAnswers={questionsModal?.initialAnswers}
+        submitLabel={questionsModal?.submitLabel}
+        onSubmit={async (answers) => {
+          if (questionsModal) await questionsModal.onSubmit(answers);
+        }}
+        onClose={() => setQuestionsModal(null)}
+      />
+      {asAttendanceFormUrl && (
+        <AsAttendanceFormModal
+          src={asAttendanceFormUrl}
+          onClose={() => setAsAttendanceFormUrl(null)}
+        />
+      )}
       {showEditModal &&
         createPortal(
           <BulletinEditModal

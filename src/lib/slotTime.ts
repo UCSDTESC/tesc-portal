@@ -9,9 +9,14 @@ export function parseSlotTime(iso: string): Date {
   return new Date(iso.replace("+00:00", ""));
 }
 
+/** Open RSVPs and check-ins each take one seat. */
+export function seatsTaken(slot: Pick<EventSlot, "rsvp_count" | "attended_count">): number {
+  return slot.rsvp_count + slot.attended_count;
+}
+
 export function isSlotFull(slot: EventSlot): boolean {
   if (slot.capacity == null) return false;
-  return slot.rsvp_count >= slot.capacity;
+  return seatsTaken(slot) >= slot.capacity;
 }
 
 export function isSlotEnded(slot: EventSlot, now: Date = new Date()): boolean {

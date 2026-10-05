@@ -4,10 +4,10 @@ import { useState } from "react";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa6";
 import { CSVLink } from "react-csv";
 import { IoMdDownload } from "react-icons/io";
-import supabase from "@server/supabase";
 import { DeleteConfirmationModal } from "./DeleteConfirmationModal";
 import EventQrModal from "../Form/EventQrModal";
 import { fetchEventAttendanceToken } from "@services/event";
+import { buildRegistrantCsv, fetchEventRegistrantsWithAnswers, type EventRegistrantRow } from "@services/eventQuestions";
 import DisplayToast from "@lib/hooks/useToast";
 
 type ColumnDef = { key: string; label: string };
@@ -29,12 +29,7 @@ export default function TableRow({
   onEdit,
   focusId,
 }: Props) {
-  const [attendees, setAttendees] = useState<
-    {
-      user_id: string;
-      users: { email: string; first_name: string; last_name: string; major: string };
-    }[]
-  >([]);
+  const [attendees, setAttendees] = useState<EventRegistrantRow[]>([]);
   const [showAttendees, setShowAttendees] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [qrModal, setQrModal] = useState<{
@@ -59,19 +54,8 @@ export default function TableRow({
   };
 
   const fetchAttendees = async () => {
-    const { data } = await supabase
-      .from("events_log")
-      .select("user_id, users (email, first_name, last_name, major)")
-      .eq("event_id", daton.id)
-      .eq("attended", true);
-    if (data) {
-      setAttendees(
-        data as unknown as {
-          user_id: string;
-          users: { email: string; first_name: string; last_name: string; major: string };
-        }[],
-      );
-    }
+    const { rows } = await fetchEventRegistrantsWithAnswers(daton.id);
+    setAttendees(rows);
   };
 
   const openQrModal = async () => {
@@ -137,13 +121,13 @@ export default function TableRow({
                       <QrcodeOutlined />
                     </button>
                   )}
-                  {daton.track_attendance && (
+                  {(daton.track_attendance || (daton.questions?.length ?? 0) > 0) && (
                     <div className="relative inline-block">
                       <button
                         type="button"
                         className="p-1.5 rounded text-slate-600 hover:bg-slate-200 cursor-pointer"
                         onClick={toggleAttendees}
-                        title={showAttendees ? "Hide attendees" : "View attendees"}
+                        title={showAttendees ? "Hide registrants" : "View registrants"}
                       >
                         {showAttendees ? (
                           <FaRegEye className="inline" />
@@ -152,30 +136,25 @@ export default function TableRow({
                         )}
                       </button>
                       {showAttendees && (
-                        <div className="absolute right-0 top-full mt-1 z-10 min-w-[200px] max-h-48 overflow-auto bg-white border border-slate-200 rounded-lg shadow-lg py-2">
+                        <div className="absolute right-0 top-full mt-1 z-10 min-w-[220px] max-h-48 overflow-auto bg-white border border-slate-200 rounded-lg shadow-lg py-2">
                           <div className="px-2 py-1 text-xs font-semibold text-slate-500 border-b border-slate-100 flex items-center justify-between">
-                            Attendees
+                            Registrants
                             <CSVLink
-                              data={attendees.map((a) => ({
-                                user_id: a.user_id,
-                                email: a.users.email,
-                                first_name: a.users.first_name,
-                                last_name: a.users.last_name,
-                                major: a.users.major,
-                              }))}
+                              data={buildRegistrantCsv(daton.questions ?? [], attendees)}
                               className="text-blue-600 hover:underline"
-                              filename={`attendees-${daton.title?.replace(/\s+/g, "-") || daton.id}.csv`}
+                              filename={`registrants-${daton.title?.replace(/\s+/g, "-") || daton.id}.csv`}
                             >
                               <IoMdDownload className="inline" />
                             </CSVLink>
                           </div>
                           <ul className="text-xs text-slate-700 divide-y divide-slate-100">
                             {attendees.length === 0 ? (
-                              <li className="px-2 py-2 text-slate-500">Loading…</li>
+                              <li className="px-2 py-2 text-slate-500">None yet</li>
                             ) : (
                               attendees.map((a) => (
-                                <li key={a.user_id} className="px-2 py-1.5">
-                                  {a.users.email}
+                                <li key={a.events_log_id} className="px-2 py-1.5">
+                                  {a.users?.email ?? a.user_id}
+                                  {a.attended ? " · attended" : " · RSVP"}
                                 </li>
                               ))
                             )}

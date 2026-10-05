@@ -5,6 +5,7 @@ import {
   buildEventQrUrl,
   consumeAuthReturnTo,
   googleOAuthRedirectTo,
+  oauthLandingLocation,
   rememberAuthReturnTo,
 } from "./eventLinks";
 
@@ -45,8 +46,53 @@ describe("buildEventQrUrl", () => {
 });
 
 describe("googleOAuthRedirectTo", () => {
-  it("drops search params so QR tokens are not part of the allowlisted URL", () => {
-    expect(googleOAuthRedirectTo()).toBe("https://portal.tescatucsd.org/bulletin/42");
+  it("uses the current origin without path or search params", () => {
+    expect(googleOAuthRedirectTo()).toBe("https://portal.tescatucsd.org");
+  });
+
+  it("keeps localhost when developing locally", () => {
+    Object.defineProperty(globalThis, "location", {
+      value: {
+        origin: "http://localhost:5173",
+        pathname: "/bulletin/42",
+        search: "?from=qr&token=abc",
+      },
+      configurable: true,
+    });
+    expect(googleOAuthRedirectTo()).toBe("http://localhost:5173");
+    Object.defineProperty(globalThis, "location", {
+      value: {
+        origin: "https://portal.tescatucsd.org",
+        pathname: "/bulletin/42",
+        search: "?from=qr&token=abc",
+      },
+      configurable: true,
+    });
+  });
+});
+
+describe("oauthLandingLocation", () => {
+  it("keeps PKCE search params on the home redirect", () => {
+    expect(
+      oauthLandingLocation("bulletin/-1", { search: "?code=abc&state=xyz" }),
+    ).toEqual({
+      pathname: "bulletin/-1",
+      search: "?code=abc&state=xyz",
+      hash: "",
+    });
+  });
+
+  it("keeps implicit-flow hash tokens on the home redirect", () => {
+    expect(
+      oauthLandingLocation("bulletin/-1", {
+        search: "",
+        hash: "#access_token=tok&token_type=bearer",
+      }),
+    ).toEqual({
+      pathname: "bulletin/-1",
+      search: "",
+      hash: "#access_token=tok&token_type=bearer",
+    });
   });
 });
 

@@ -5,7 +5,9 @@ import {
   isEventEnded,
   isEventNotStarted,
   isSlotActive,
+  isSlotFull,
   isSlotFuture,
+  seatsTaken,
 } from "./slotTime";
 import type { EventSlot } from "@lib/constants";
 const slot = (id: string, start: string, end: string): EventSlot => ({
@@ -82,6 +84,19 @@ describe("getSlotQrAction", () => {
     const s = slot("1", "2030-06-01T18:00:00", "2030-06-01T19:00:00");
     const now = new Date("2030-06-01T18:30:00");
     expect(getSlotQrAction(s, now)).toBe("checkin");
+  });
+
+  it("counts a check-in as a filled seat", () => {
+    const open = slot("1", "2030-06-01T18:00:00", "2030-06-01T19:00:00");
+    const heldByCheckins = { ...open, capacity: 2, rsvp_count: 0, attended_count: 2 };
+    const mixed = { ...open, capacity: 2, rsvp_count: 1, attended_count: 1 };
+    const roomLeft = { ...open, capacity: 3, rsvp_count: 1, attended_count: 1 };
+
+    expect(seatsTaken(heldByCheckins)).toBe(2);
+    expect(isSlotFull(heldByCheckins)).toBe(true);
+    expect(isSlotFull(mixed)).toBe(true);
+    expect(isSlotFull(roomLeft)).toBe(false);
+    expect(isSlotFull({ ...open, capacity: null, rsvp_count: 5, attended_count: 5 })).toBe(false);
   });
 
   it("returns ended after slot grace period", () => {

@@ -1,8 +1,10 @@
 import { fetchEventById } from "@services/event";
+import { markQuestionAnswerCounts } from "@services/eventQuestions";
 import { eventFormDataDefault, formdata } from "@lib/constants";
 import { useState } from "react";
 import { Event } from "@lib/constants";
 import { toISO, toLocalDatetimeInput } from "@lib/utils";
+import { normalizeEventQuestions } from "@lib/eventQuestions";
 
 // custom hook managing the edit modal in the DataTable component
 export function useEditModal() {
@@ -17,6 +19,10 @@ export function useEditModal() {
       const { event } = await fetchEventById(daton.id);
       if (event) source = event as unknown as Event;
     }
+
+    const questions = await markQuestionAnswerCounts(
+      normalizeEventQuestions(source.questions),
+    );
 
     setShowEditModal(true);
     setCurrID(source.id);
@@ -34,6 +40,8 @@ export function useEditModal() {
       has_parent: source.dependent_on !== null,
       dependent_on: source.dependent_on,
       track_attendance: source.track_attendance ?? false,
+      food_provided: source.food_provided ?? "",
+      as_funding: source.as_funding ?? false,
       type: source.type ?? "external",
       manual_attendance: source.manual_attendance != null ? String(source.manual_attendance) : "",
       slots:
@@ -43,6 +51,7 @@ export function useEditModal() {
           ends_at: toLocalDatetimeInput(slot.ends_at),
           capacity: slot.capacity,
         })) ?? [],
+      questions,
     });
   };
 
@@ -61,12 +70,15 @@ export function useEditModal() {
       tags: [],
       poster: "",
       track_attendance: false,
+      food_provided: "",
+      as_funding: false,
       attendance_cap: undefined,
       manual_attendance: "",
       recurring_rate: "none",
       recurrence_end_date: "",
       password: "",
       content: "",
+      questions: [],
     });
   };
 

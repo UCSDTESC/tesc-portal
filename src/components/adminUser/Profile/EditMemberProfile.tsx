@@ -12,7 +12,7 @@ import {
   SelectItem,
   SelectLabel,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@components/components/ui/select";
 import { majors } from "@lib/constants";
 
@@ -238,18 +238,23 @@ export default function EditMemberProfile({
     }
   };
 
-  const linkPreview = resumeUrl && isValidUrl(resumeUrl) ? getPdfPreviewUrl(resumeUrl).previewUrl : null;
+  const linkPreview =
+    resumeUrl && isValidUrl(resumeUrl) ? getPdfPreviewUrl(resumeUrl).previewUrl : null;
   const previewUrl = pendingResumeFile
     ? URL.createObjectURL(pendingResumeFile)
     : storagePreviewUrl || linkPreview;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full min-w-0"
+    >
       <div
-        className={`flex flex-col gap-6 mx-auto ${isOnboarding ? "max-w-3xl" : "lg:flex-row max-w-6xl"}`}
+        className={`mx-auto flex w-full min-w-0 flex-col gap-6 ${isOnboarding ? "max-w-3xl" : "max-w-6xl lg:flex-row"}`}
       >
         {/* Left: Edit Card */}
-        <Card className="flex-1 shadow-lg h-fit">
+        <Card className="h-fit min-w-0 w-full flex-1 shadow-lg">
           <CardHeader>
             <CardTitle className="text-2xl">
               {isOnboarding ? "Complete your profile" : "Edit Profile"}
@@ -420,16 +425,26 @@ export default function EditMemberProfile({
 
         {/* Right: PDF Preview */}
         {previewUrl && (
-          <Card className="flex-1 shadow-lg h-full">
+          <Card className="h-fit min-w-0 w-full flex-1 shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl">Resume Preview</CardTitle>
             </CardHeader>
-            <CardContent className="h-full">
+            <CardContent className="min-w-0 overflow-hidden">
               <iframe
                 src={previewUrl}
                 title="Resume PDF preview"
-                className="h-[640px] aspect-[1/1.2] border rounded-md"
+                className="block h-[min(70dvh,560px)] w-full max-w-full rounded-md border bg-white"
               />
+              {!previewUrl.startsWith("blob:") && (
+                <a
+                  href={previewUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 inline-block text-sm text-blue underline"
+                >
+                  Open resume
+                </a>
+              )}
             </CardContent>
           </Card>
         )}
@@ -437,11 +452,10 @@ export default function EditMemberProfile({
 
       {/* recently attended events list */}
       {!isOnboarding && User && User.id && (
-        <div className="max-w-6xl mx-auto pt-12">
+        <div className="mx-auto w-full min-w-0 max-w-6xl pt-12">
           <ListAttendedEvents userId={User.id} />
         </div>
       )}
-
     </motion.div>
   );
 }

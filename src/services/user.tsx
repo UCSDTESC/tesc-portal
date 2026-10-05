@@ -1,6 +1,7 @@
 import supabase from "@server/supabase";
 import { googleOAuthRedirectTo, rememberAuthReturnTo } from "@lib/eventLinks";
 import { resolveUserRoleFromNames } from "@lib/roles";
+import { isMemberProfileIncomplete } from "@lib/userProfile";
 
 type RoleRow = { roles: { name: string } };
 
@@ -91,6 +92,35 @@ export const fetchUser = async () => {
   };
 };
 
+export const fetchUserExpectedGrad = async (userId: string) => {
+  const { data, error } = await supabase
+    .from("users")
+    .select("expected_grad")
+    .eq("uuid", userId)
+    .maybeSingle();
+  if (error || data?.expected_grad == null || String(data.expected_grad).trim() === "") {
+    return null;
+  }
+  return String(data.expected_grad);
+};
+
+export const memberNeedsProfileSetup = async (
+  userId: string | undefined | null,
+  role?: string | null,
+) => {
+  if (!userId || role === "company") return false;
+  const { data, error } = await supabase
+    .from("users")
+    .select("first_name, last_name, major, expected_grad")
+    .eq("uuid", userId)
+    .maybeSingle();
+  if (error) {
+    console.error(error.message);
+    return false;
+  }
+  return isMemberProfileIncomplete(data);
+};
+
 export const signOut = async () => {
   console.log("---Sign User out---");
   const { error } = await supabase.auth.signOut();
@@ -122,12 +152,20 @@ export const signUp = async (email: string, password: string) => {
 
 export const signInWithGoogle = async () => {
   rememberAuthReturnTo();
+  const redirectTo = googleOAuthRedirectTo();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: googleOAuthRedirectTo(),
+      redirectTo,
+      skipBrowserRedirect: true,
     },
   });
+  if (error) return { data, error };
+  if (data?.url && typeof window !== "undefined") {
+    const oauthUrl = new URL(data.url);
+    if (redirectTo) oauthUrl.searchParams.set("redirect_to", redirectTo);
+    window.location.assign(oauthUrl.toString());
+  }
   return { data, error };
 };
 

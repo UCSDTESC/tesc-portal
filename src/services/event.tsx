@@ -1,6 +1,8 @@
 import supabase from "@server/supabase";
-import { EventSlot, EventSlotForm, formdata } from "@lib/constants";
+import { EventQuestion, EventSlot, EventSlotForm, formdata } from "@lib/constants";
 import { logAttendance } from "./user";
+import { filterEventsForInternalVisibility } from "@lib/internalEventVisibility";
+import { normalizeEventQuestions } from "@lib/eventQuestions";
 import {
   deriveAttendanceCap,
   deriveEventRange,
@@ -17,12 +19,14 @@ export {
 } from "./eventSlotUtils";
 
 /** Lean columns for bulletin list / search — excludes heavy or sensitive fields. */
+const EVENT_QUESTIONS_EMBED = "event_questions(id,sort_order,prompt,type,options,required)";
+
 const EVENT_LIST_SELECT =
-  "id,created_at,end_date,location_str,start_date,tags,title,attendance,dependent_on,poster,rsvp,org_id,orgs!inner(name,pfp_str),attendance_cap,track_attendance,type";
+  `id,created_at,end_date,location_str,start_date,tags,title,attendance,dependent_on,poster,rsvp,org_id,orgs!inner(name,pfp_str),attendance_cap,track_attendance,type,food_provided,as_funding,${EVENT_QUESTIONS_EMBED}`;
 
 /** Full columns for admin tables, edit forms, and single-event detail fetches. */
 const EVENT_FULL_SELECT =
-  "id,content,created_at,end_date,location_str,start_date,tags,title,dependent_on,attendance,poster,rsvp,org_id,orgs!inner(name,pfp_str),attendance_cap,track_attendance,type,password,manual_attendance,attendance_token";
+  `id,content,created_at,end_date,location_str,start_date,tags,title,dependent_on,attendance,poster,rsvp,org_id,orgs!inner(name,pfp_str),attendance_cap,track_attendance,type,password,manual_attendance,attendance_token,food_provided,as_funding,${EVENT_QUESTIONS_EMBED}`;
 
 export type CreateEventSuccess = {
   eventId: string;
@@ -72,10 +76,14 @@ async function enrichEventsWithSlotStats<T extends { id: number | string }>(even
     slotsByEvent.set(row.event_id, list);
   }
 
-  return events.map((event) => ({
-    ...event,
-    slots: slotsByEvent.get(Number(event.id)) ?? [],
-  }));
+  return events.map((event) => {
+    const nested = event as T & { event_questions?: unknown; questions?: unknown };
+    return {
+      ...event,
+      slots: slotsByEvent.get(Number(event.id)) ?? [],
+      questions: normalizeEventQuestions(nested.event_questions ?? nested.questions),
+    };
+  });
 }
 
 export async function fetchEventSlotStatsForEvent(eventId: string) {
@@ -194,6 +202,62 @@ async function upsertEventSlots(eventId: string, slots: EventSlotForm[]) {
   return null;
 }
 
+async function upsertEventQuestions(eventId: string, questions: EventQuestion[] | undefined) {
+  const valid = (questions ?? []).filter((question) => question.prompt.trim()).slice(0, 8);
+  const { data: current, error: currentError } = await supabase
+    .from("event_questions")
+    .select("id")
+    .eq("event_id", eventId);
+  if (currentError) return currentError;
+
+  const keepIds = new Set(
+    valid
+      .map((question) => (question.id ? Number(question.id) : null))
+      .filter((id): id is number => id != null && Number.isFinite(id)),
+  );
+  const currentIds = (current ?? []).map((row) => Number(row.id));
+  let answeredIds = new Set<number>();
+  if (currentIds.length) {
+    const { data: answered } = await supabase
+      .from("event_question_answers")
+      .select("question_id")
+      .in("question_id", currentIds);
+    answeredIds = new Set((answered ?? []).map((row) => Number(row.question_id)));
+  }
+
+  for (const row of current ?? []) {
+    if (!keepIds.has(row.id) && !answeredIds.has(row.id)) {
+      const { error } = await supabase.from("event_questions").delete().eq("id", row.id);
+      if (error) return error;
+    }
+  }
+
+  for (const [index, question] of valid.entries()) {
+    const payload = {
+      event_id: Number(eventId),
+      sort_order: index,
+      prompt: question.prompt.trim(),
+      type: question.type,
+      options:
+        question.type === "choice"
+          ? (question.options ?? []).map((option) => option.trim()).filter(Boolean)
+          : null,
+      required: question.required !== false,
+    };
+    if (question.id) {
+      const { error } = await supabase
+        .from("event_questions")
+        .update(payload)
+        .eq("id", Number(question.id));
+      if (error) return error;
+    } else {
+      const { error } = await supabase.from("event_questions").insert(payload);
+      if (error) return error;
+    }
+  }
+  return null;
+}
+
 function generateRecurringDates(
   startDateStr: string,
   recurrenceEndStr: string,
@@ -243,7 +307,8 @@ export const fetchEventByOrg = async (uid: string, includeAllEvents: boolean = f
     const { data, error } = await supabase
       .from("events")
       .select(EVENT_FULL_SELECT)
-      .eq("deleted", false);
+      .eq("deleted", false)
+      .order("created_at", { ascending: false });
     if (error) return { data, error };
     const enriched = await enrichEventsWithSlotStats(data ?? []);
     return { data: enriched, error: null };
@@ -261,7 +326,8 @@ export const fetchEventByOrg = async (uid: string, includeAllEvents: boolean = f
       "org_id",
       orgs.map((org) => org.org_uuid),
     )
-    .eq("deleted", false);
+    .eq("deleted", false)
+    .order("created_at", { ascending: false });
   if (eventsError) return { data: null, error: eventsError };
   const enriched = await enrichEventsWithSlotStats(data ?? []);
   return { data: enriched, error: null };
@@ -310,7 +376,7 @@ export const createEvent = async (formData: formdata, activeOrgName: string) => 
   const buildEventPayload = (slots: EventSlotForm[]) => {
     const slotRange = deriveEventRange(slots);
     const attendanceCap = deriveAttendanceCap(slots);
-    const tracksAttendance = !isInternal && !isForum && (formData.track_attendance ?? false);
+    const tracksAttendance = !isForum && (formData.track_attendance ?? false);
 
     return {
       title: formData.title,
@@ -325,8 +391,10 @@ export const createEvent = async (formData: formdata, activeOrgName: string) => 
       org_id: org_name[0].uuid,
       poster: isInternal ? "" : formData.poster,
       dependent_on: formData.dependent_on,
-      attendance_cap: isInternal || isForum ? null : attendanceCap,
-      track_attendance: isInternal || isForum ? false : (formData.track_attendance ?? false),
+      attendance_cap: isForum ? null : attendanceCap,
+      track_attendance: tracksAttendance,
+      food_provided: isForum ? null : (formData.food_provided?.trim() || null),
+      as_funding: isForum ? false : (formData.as_funding ?? false),
       type: eventType,
       manual_attendance: isForum
         ? null
@@ -373,6 +441,8 @@ export const createEvent = async (formData: formdata, activeOrgName: string) => 
       if (insertedEvent?.id) {
         const slotError = await syncSlotsForEvent(String(insertedEvent.id), occurrenceSlots);
         if (slotError) return slotError;
+        const questionError = await upsertEventQuestions(String(insertedEvent.id), formData.questions);
+        if (questionError) return questionError;
         if (!firstResult) {
           firstResult = {
             eventId: String(insertedEvent.id),
@@ -397,6 +467,8 @@ export const createEvent = async (formData: formdata, activeOrgName: string) => 
   if (insertedEvent?.id) {
     const slotError = await syncSlotsForEvent(String(insertedEvent.id), templateSlots);
     if (slotError) return slotError;
+    const questionError = await upsertEventQuestions(String(insertedEvent.id), formData.questions);
+    if (questionError) return questionError;
     return {
       eventId: String(insertedEvent.id),
       attendanceToken: insertedEvent.attendance_token
@@ -434,6 +506,19 @@ export const updateEvent = async (eventId: string, formData: formdata) => {
   const slots = formData.slots ?? [];
   const slotRange = deriveEventRange(slots);
   const attendanceCap = deriveAttendanceCap(slots);
+  const tracksAttendance = !isForum && (formData.track_attendance ?? false);
+
+  let attendanceToken: string | undefined;
+  if (tracksAttendance) {
+    const { data: existing } = await supabase
+      .from("events")
+      .select("attendance_token")
+      .eq("id", eventId)
+      .maybeSingle();
+    if (!existing?.attendance_token) {
+      attendanceToken = generateAttendanceToken();
+    }
+  }
 
   const { error } = await supabase
     .from("events")
@@ -448,8 +533,11 @@ export const updateEvent = async (eventId: string, formData: formdata) => {
       tags: isInternal || isForum ? [] : formData.tags,
       poster: isInternal ? "" : formData.poster,
       dependent_on: formData.dependent_on,
-      attendance_cap: isInternal || isForum ? null : attendanceCap,
-      track_attendance: isInternal || isForum ? false : (formData.track_attendance ?? false),
+      attendance_cap: isForum ? null : attendanceCap,
+      track_attendance: tracksAttendance,
+      ...(attendanceToken ? { attendance_token: attendanceToken } : {}),
+      food_provided: isForum ? null : (formData.food_provided?.trim() || null),
+      as_funding: isForum ? false : (formData.as_funding ?? false),
       type: eventType,
       manual_attendance: isForum
         ? null
@@ -463,7 +551,11 @@ export const updateEvent = async (eventId: string, formData: formdata) => {
   if (error) return error;
 
   if (!isForum && slots.length > 0) {
-    return upsertEventSlots(eventId, slots);
+    const slotError = await upsertEventSlots(eventId, slots);
+    if (slotError) return slotError;
+  }
+  if (!isForum) {
+    return upsertEventQuestions(eventId, formData.questions);
   }
   return null;
 };
@@ -496,38 +588,24 @@ export const queryEventsBySearchAndFilters = async (
   }
 
   if (sortMethod === "Event Name (A-Z)") query = query.order("title", { ascending: true });
-  else if (sortMethod == "Most Recent") query = query.order("start_date", { ascending: false });
-  else query = query.order("start_date", { ascending: false });
+  else query = query.order("start_date", { ascending: true, nullsFirst: false });
 
   const { data, error } = await query;
 
-  // Filter internal events: only show to users with org membership matching event's org_id
-  let filteredEvents = data ?? [];
-
-  if (isSuperOrg) {
-    const enriched = await enrichEventsWithSlotStats(filteredEvents);
-    return { events: enriched, error };
+  // Filter internal events: only show to users with org membership matching event's org_id.
+  // org_id is bigint from Postgres; membership ids are strings in app state — compare as strings.
+  let membershipOrgIds = userOrgIds ?? [];
+  if (!isSuperOrg && userId && membershipOrgIds.length === 0) {
+    membershipOrgIds = (
+      (await supabase.from("user_org_roles").select("org_uuid").eq("user_uuid", userId)).data ?? []
+    ).map((row: { org_uuid: string | number }) => String(row.org_uuid));
   }
 
-  if (filteredEvents.length > 0) {
-    const internalEvents = filteredEvents.filter((e: { type?: string }) => e.type === "internal");
-    if (internalEvents.length > 0 && userId) {
-      const orgIdSet = userOrgIds
-        ? new Set(userOrgIds)
-        : new Set(
-            (
-              (await supabase.from("user_org_roles").select("org_uuid").eq("user_uuid", userId))
-                .data ?? []
-            ).map((r: { org_uuid: string }) => r.org_uuid),
-          );
-      filteredEvents = filteredEvents.filter(
-        (e: { type?: string; org_id?: string }) =>
-          e.type !== "internal" || (e.org_id && orgIdSet.has(e.org_id)),
-      );
-    } else if (internalEvents.length > 0 && !userId) {
-      filteredEvents = filteredEvents.filter((e: { type?: string }) => e.type !== "internal");
-    }
-  }
+  const filteredEvents = filterEventsForInternalVisibility(data ?? [], {
+    isSuperOrg,
+    userOrgIds: membershipOrgIds,
+    userId,
+  });
 
   const enriched = await enrichEventsWithSlotStats(filteredEvents);
   return { events: enriched, error };

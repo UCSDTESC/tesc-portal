@@ -35,11 +35,18 @@ export const EventsList = memo(function ({
   const showRecruiterList =
     portalMode === "recruiter" && canAccessRecruiterData(User?.role);
   const [showSkeleton, setShowSkeleton] = useState(isLoading);
+  const [sidebarHasAnimated, setSidebarHasAnimated] = useState(false);
+  const hasLoadedOnceRef = useRef(!isLoading);
   const skeletonStartRef = useRef<number | null>(isLoading ? Date.now() : null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (isLoading) {
+    if (!isLoading) hasLoadedOnceRef.current = true;
+  }, [isLoading]);
+
+  useEffect(() => {
+    // Keep the loaded sidebar mounted; only skeleton on the first fetch.
+    if (isLoading && !hasLoadedOnceRef.current) {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
@@ -83,8 +90,9 @@ export const EventsList = memo(function ({
           key={`company-${forumMode}-${eventTimeFilter}`}
           className="flex flex-col"
           variants={{ ...container, show: { opacity: 1, transition: { staggerChildren: 0.06 } } }}
-          initial="hidden"
+          initial={sidebarHasAnimated ? false : "hidden"}
           animate="show"
+          onAnimationComplete={() => setSidebarHasAnimated(true)}
         >
           {People?.map((daton) => (
             <motion.div key={daton.email} variants={item}>
@@ -110,8 +118,9 @@ export const EventsList = memo(function ({
         key={`events-${forumMode}-${eventTimeFilter}`}
         className="flex flex-col"
         variants={{ ...container, show: { opacity: 1, transition: { staggerChildren: 0.06 } } }}
-        initial="hidden"
+        initial={sidebarHasAnimated ? false : "hidden"}
         animate="show"
+        onAnimationComplete={() => setSidebarHasAnimated(true)}
       >
         {data?.map((daton) => (
           <motion.div key={daton.id} variants={item}>
