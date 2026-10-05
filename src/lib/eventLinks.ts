@@ -47,6 +47,17 @@ export function googleOAuthRedirectTo(): string | undefined {
   return origin;
 }
 
+export function oauthLandingLocation(
+  pathname: string,
+  location: { search?: string; hash?: string },
+) {
+  return {
+    pathname,
+    search: location.search ?? "",
+    hash: location.hash ?? "",
+  };
+}
+
 export function rememberAuthReturnTo(pathWithSearch?: string) {
   const storage = globalThis.sessionStorage;
   if (!storage) return;

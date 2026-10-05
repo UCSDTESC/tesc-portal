@@ -8,12 +8,13 @@ import Profile from "@components/adminUser/Profile/Profile.tsx";
 import OrgManagement from "@components/adminUser/Profile/OrgManagement.tsx";
 import { Toaster } from "react-hot-toast";
 
+import { oauthLandingLocation } from "@lib/eventLinks";
 import Page from "./pageRoot/Page.tsx";
 import "./index.css";
 
 function RedirectWithSearch({ to }: { to: string }) {
   const location = useLocation();
-  return <Navigate to={{ pathname: to, search: location.search }} replace />;
+  return <Navigate to={oauthLandingLocation(to, location)} replace />;
 }
 
 createRoot(document.getElementById("root")!).render(

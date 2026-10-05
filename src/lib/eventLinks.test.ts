@@ -5,6 +5,7 @@ import {
   buildEventQrUrl,
   consumeAuthReturnTo,
   googleOAuthRedirectTo,
+  oauthLandingLocation,
   rememberAuthReturnTo,
 } from "./eventLinks";
 
@@ -66,6 +67,31 @@ describe("googleOAuthRedirectTo", () => {
         search: "?from=qr&token=abc",
       },
       configurable: true,
+    });
+  });
+});
+
+describe("oauthLandingLocation", () => {
+  it("keeps PKCE search params on the home redirect", () => {
+    expect(
+      oauthLandingLocation("bulletin/-1", { search: "?code=abc&state=xyz" }),
+    ).toEqual({
+      pathname: "bulletin/-1",
+      search: "?code=abc&state=xyz",
+      hash: "",
+    });
+  });
+
+  it("keeps implicit-flow hash tokens on the home redirect", () => {
+    expect(
+      oauthLandingLocation("bulletin/-1", {
+        search: "",
+        hash: "#access_token=tok&token_type=bearer",
+      }),
+    ).toEqual({
+      pathname: "bulletin/-1",
+      search: "",
+      hash: "#access_token=tok&token_type=bearer",
     });
   });
 });
