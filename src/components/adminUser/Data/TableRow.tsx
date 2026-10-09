@@ -9,6 +9,7 @@ import EventQrModal from "../Form/EventQrModal";
 import { fetchEventAttendanceToken } from "@services/event";
 import { buildRegistrantCsv, fetchEventRegistrantsWithAnswers, type EventRegistrantRow } from "@services/eventQuestions";
 import DisplayToast from "@lib/hooks/useToast";
+import AnimatedNumber from "./AnimatedNumber";
 
 type ColumnDef = { key: string; label: string };
 
@@ -164,6 +165,24 @@ export default function TableRow({
                     </div>
                   )}
                 </div>
+              </td>
+            );
+          }
+          if (col.key === "rsvp" || col.key === "attendance") {
+            const count = Number(col.key === "rsvp" ? daton.rsvp : daton.attendance);
+            return (
+              <td
+                key={col.key}
+                className="px-3 py-2 border-r border-slate-200 last:border-r-0 text-slate-700 overflow-hidden text-ellipsis min-w-0"
+              >
+                <AnimatedNumber
+                  value={Number.isFinite(count) ? count : 0}
+                  hourDelta={
+                    col.key === "rsvp"
+                      ? daton.rsvp_hour_delta ?? 0
+                      : daton.attendance_hour_delta ?? 0
+                  }
+                />
               </td>
             );
           }

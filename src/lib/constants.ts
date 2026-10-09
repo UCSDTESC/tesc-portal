@@ -50,8 +50,10 @@ export type Event = {
   start_date: string;
   end_date: string;
   attendance: number;
+  attendance_hour_delta?: number;
   dependent_on: string;
   rsvp: number;
+  rsvp_hour_delta?: number;
   orgs: {
     name: string;
     pfp_str: string;
