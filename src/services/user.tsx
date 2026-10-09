@@ -26,7 +26,9 @@ async function finalizeUserSignup(resumeVisible = true) {
   return error;
 }
 
-async function ensureUserProfile(userId: string, resumeVisible = true) {
+const profileCreates = new Map<string, Promise<{ message: string } | null>>();
+
+async function createUserProfile(userId: string, resumeVisible: boolean) {
   const { data: profile } = await supabase
     .from("users")
     .select("uuid")
@@ -36,7 +38,6 @@ async function ensureUserProfile(userId: string, resumeVisible = true) {
   if (profile) return null;
 
   const finalizeError = await finalizeUserSignup(resumeVisible);
-  if (finalizeError) return finalizeError;
 
   const { data: created } = await supabase
     .from("users")
@@ -44,11 +45,20 @@ async function ensureUserProfile(userId: string, resumeVisible = true) {
     .eq("uuid", userId)
     .maybeSingle();
 
-  if (!created) {
-    return { message: "Unable to create user profile" };
-  }
+  if (created) return null;
+  if (finalizeError) return finalizeError;
+  return { message: "Unable to create user profile" };
+}
 
-  return null;
+function ensureUserProfile(userId: string, resumeVisible = true) {
+  const existing = profileCreates.get(userId);
+  if (existing) return existing;
+
+  const promise = createUserProfile(userId, resumeVisible).finally(() => {
+    profileCreates.delete(userId);
+  });
+  profileCreates.set(userId, promise);
+  return promise;
 }
 
 export const signIn = async (email: string, password: string) => {
