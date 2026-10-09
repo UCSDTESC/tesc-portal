@@ -7,6 +7,7 @@ import {
   formatNextEventHint,
   formatStatNumber,
   groupDailyByPeriod,
+  insightCountsForSelection,
   percentChangeHint,
   type LineChartGroupBy,
   type OrgAttendanceInsightsPayload,
@@ -125,24 +126,28 @@ export function useOrgAttendanceInsights({
     payload.events.find((event) => event.id === selectedEvent)?.title ?? "Event";
 
   const stats = useMemo(() => {
+    const counts = insightCountsForSelection(
+      payload,
+      viewingOneEvent ? selectedEvent : null,
+    );
     const attendanceLabel = viewingOneEvent
       ? `${selectedEventTitle} attendance`
       : "Monthly Attendance";
     return {
       [attendanceLabel]: viewingOneEvent
         ? {
-            value: formatStatNumber(payload.totalCheckins),
+            value: formatStatNumber(counts.checkins),
           }
         : {
             value: formatStatNumber(payload.attendedLast30),
             hint: percentChangeHint(payload.attendedLast30, payload.attendedPrev30),
           },
       "Unique Attendees": {
-        value: formatStatNumber(payload.uniqueAttendees),
-        hint: `${formatStatNumber(payload.totalCheckins)} check-ins`,
+        value: formatStatNumber(counts.uniqueAttendees),
+        hint: `${formatStatNumber(counts.checkins)} check-ins`,
       },
       "RSVPs not checked in": {
-        value: formatStatNumber(payload.totalRsvps),
+        value: formatStatNumber(counts.openRsvps),
         hint: "Registered, but have not attended yet",
       },
       ...(viewingOneEvent
@@ -154,7 +159,7 @@ export function useOrgAttendanceInsights({
             },
           }),
     };
-  }, [payload, selectedEventTitle, viewingOneEvent]);
+  }, [payload, selectedEvent, selectedEventTitle, viewingOneEvent]);
 
   return {
     selectedOrg,
