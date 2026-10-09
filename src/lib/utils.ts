@@ -12,11 +12,6 @@ import type {
 } from "./constants";
 import type { Event } from "./constants";
 
-/** Normalizes date string for Google Calendar. Used in: formatGoogleCalendarEvent. */
-export const formatDate = (date: string) => {
-  return date.replaceAll(":", "").replaceAll("-", "").split("+")[0];
-};
-
 /** Current local time as YYYY-MM-DDTHH:MM. Used in: getFormDataDefault. */
 export const getCurrentTime = () => {
   const tzoffset = new Date().getTimezoneOffset() * 60000; //offset in milliseconds
@@ -132,20 +127,6 @@ export const formatGoogleMapsLocation = (location: string) => {
   return `https://www.google.com/maps/dir/?api=1&destination=${location
     .replace(" ", "+")
     .replace(",", "%2C")}&travelmode=walking`;
-};
-
-export const formatGoogleCalendarEvent = (
-  title: string,
-  location: string,
-  start_date: string,
-  end_date: string,
-) => {
-  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title.replace(
-    " ",
-    "+",
-  )}&details=More+details+see:+${window.location.href}&location=${location}&dates=${formatDate(
-    start_date,
-  )}/${formatDate(end_date)}&ctz=America/Los_Angeles`;
 };
 
 /** Resolves PDF preview URL (supports Drive, Dropbox, OneDrive). Used in: poster preview. */
