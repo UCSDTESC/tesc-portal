@@ -3,7 +3,9 @@ import {
   filterDailyByDateRange,
   formatNextEventHint,
   groupDailyByPeriod,
+  insightCountsForSelection,
   percentChangeHint,
+  type OrgAttendanceInsightsPayload,
 } from "./attendanceInsights";
 
 const daily = [
@@ -51,5 +53,62 @@ describe("percentChangeHint", () => {
 describe("formatNextEventHint", () => {
   it("returns a short date label", () => {
     expect(formatNextEventHint("2026-10-15T18:00:00.000Z")).toMatch(/^Next: /);
+  });
+});
+
+describe("insightCountsForSelection", () => {
+  const payload: OrgAttendanceInsightsPayload = {
+    daily: [],
+    tags: [],
+    venues: [],
+    timeOfDay: [],
+    orgs: [],
+    majors: [],
+    years: [],
+    events: [
+      {
+        id: "408",
+        title: "Engineers On The Green",
+        startDate: "2026-09-29T00:00:00.000Z",
+        openRsvps: 226,
+        checkins: 533,
+        uniqueAttendees: 533,
+      },
+    ],
+    uniqueAttendees: 900,
+    totalCheckins: 1200,
+    totalRsvps: 433,
+    attendedLast30: 10,
+    attendedPrev30: 8,
+    upcomingEvents: 2,
+    nextEventStart: null,
+  };
+
+  it("uses org-wide totals when no event is selected", () => {
+    expect(insightCountsForSelection(payload, null)).toEqual({
+      checkins: 1200,
+      uniqueAttendees: 900,
+      openRsvps: 433,
+    });
+  });
+
+  it("uses the selected event's open RSVP count", () => {
+    expect(insightCountsForSelection(payload, "408")).toEqual({
+      checkins: 533,
+      uniqueAttendees: 533,
+      openRsvps: 226,
+    });
+  });
+
+  it("falls back to org totals when the event has no per-event counts", () => {
+    const withoutCounts: OrgAttendanceInsightsPayload = {
+      ...payload,
+      events: [{ id: "408", title: "Engineers On The Green", startDate: null }],
+    };
+    expect(insightCountsForSelection(withoutCounts, "408")).toEqual({
+      checkins: 1200,
+      uniqueAttendees: 900,
+      openRsvps: 433,
+    });
   });
 });

@@ -17,6 +17,9 @@ export type InsightEventOption = {
   id: string;
   title: string;
   startDate: string | null;
+  openRsvps?: number;
+  checkins?: number;
+  uniqueAttendees?: number;
 };
 
 export type OrgAttendanceInsightsPayload = {
@@ -182,6 +185,20 @@ export function formatNextEventHint(iso: string | null | undefined) {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
   return `Next: ${date.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
+}
+
+export function insightCountsForSelection(
+  payload: OrgAttendanceInsightsPayload,
+  selectedEventId?: string | null,
+) {
+  const event = selectedEventId
+    ? payload.events.find((row) => row.id === selectedEventId)
+    : undefined;
+  return {
+    checkins: event?.checkins ?? payload.totalCheckins,
+    uniqueAttendees: event?.uniqueAttendees ?? payload.uniqueAttendees,
+    openRsvps: event?.openRsvps ?? payload.totalRsvps,
+  };
 }
 
 export function emptyInsightsPayload(): OrgAttendanceInsightsPayload {

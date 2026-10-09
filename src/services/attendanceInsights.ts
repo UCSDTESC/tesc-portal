@@ -32,11 +32,21 @@ function asDaily(raw: unknown): DailyAttendance[] {
 function asEvents(raw: unknown): OrgAttendanceInsightsPayload["events"] {
   if (!Array.isArray(raw)) return [];
   return raw.map((row) => {
-    const item = row as { id?: unknown; title?: unknown; startDate?: unknown };
+    const item = row as {
+      id?: unknown;
+      title?: unknown;
+      startDate?: unknown;
+      openRsvps?: unknown;
+      checkins?: unknown;
+      uniqueAttendees?: unknown;
+    };
     return {
       id: String(item.id ?? ""),
       title: String(item.title ?? "Untitled event"),
       startDate: item.startDate ? String(item.startDate) : null,
+      ...(item.openRsvps == null ? {} : { openRsvps: Number(item.openRsvps) }),
+      ...(item.checkins == null ? {} : { checkins: Number(item.checkins) }),
+      ...(item.uniqueAttendees == null ? {} : { uniqueAttendees: Number(item.uniqueAttendees) }),
     };
   }).filter((row) => row.id);
 }
@@ -45,10 +55,9 @@ export async function fetchOrgAttendanceInsights(
   orgId: number | null,
   eventId: number | null = null,
 ) {
-  const { data, error } = await supabase.rpc("get_org_attendance_insights", {
-    p_org_id: orgId,
-    p_event_id: eventId,
-  });
+  const args: { p_org_id: number | null; p_event_id?: number } = { p_org_id: orgId };
+  if (eventId != null) args.p_event_id = eventId;
+  const { data, error } = await supabase.rpc("get_org_attendance_insights", args);
   if (error) return { payload: emptyInsightsPayload(), error };
 
   const raw = (data ?? {}) as Record<string, unknown>;
