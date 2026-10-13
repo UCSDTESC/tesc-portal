@@ -3,7 +3,7 @@ import { BulletinContext } from "@lib/hooks/useBulletin";
 import UserContext from "@lib/UserContext";
 import { EventQuestion, EventSlot } from "@lib/constants";
 import { DateParser } from "@lib/utils";
-import { getSlotQrAction, isEventEnded, isSlotFull, seatsTaken } from "@lib/slotTime";
+import { getSlotQrAction, isEventEnded, isSlotFull, isSlotRsvpLocked, seatsTaken } from "@lib/slotTime";
 import { hasUnansweredRequired } from "@lib/eventQuestions";
 import { fetchMyEventQuestionAnswers } from "@services/eventQuestions";
 
@@ -63,12 +63,14 @@ export default function EventSlotPicker({
   questions = [],
   className = "",
   preview = false,
+  rsvpRequired = false,
 }: {
   eventId: string;
   slots: EventSlot[];
   questions?: EventQuestion[];
   className?: string;
   preview?: boolean;
+  rsvpRequired?: boolean;
 }) {
   const { rsvpByEvent, attendedByEvent, handleRSVP, handleAttendance, promptRegistrationQuestions } =
     useContext(BulletinContext);
@@ -79,11 +81,6 @@ export default function EventSlotPicker({
   const userRsvpSlotId = preview || loggedOut ? "" : (rsvpByEvent?.[eventId] ?? "");
   const userAttendedSlotId = preview || loggedOut ? "" : (attendedByEvent?.[eventId] ?? "");
   const activeSlotId = selectedSlotId || userRsvpSlotId || slots[0]?.id || "";
-
-  const activeSlot = useMemo(
-    () => slots.find((slot) => slot.id === activeSlotId) ?? slots[0],
-    [slots, activeSlotId],
-  );
 
   const attendedSlot = useMemo(
     () => (userAttendedSlotId ? slots.find((slot) => slot.id === userAttendedSlotId) : undefined),
@@ -96,7 +93,7 @@ export default function EventSlotPicker({
   );
 
   const rsvpStatusReady = preview || loggedOut || Boolean(rsvpByEvent && attendedByEvent);
-  if (!rsvpStatusReady || !slots.length || !activeSlot) return null;
+  if (!rsvpStatusReady || !slots.length) return null;
 
   const now = new Date();
   const buttonClassName = `border border-blue px-4 py-2 rounded-lg cursor-pointer w-fit h-fit ${className}`;
@@ -111,7 +108,23 @@ export default function EventSlotPicker({
     );
   }
 
-  const actionSlot = rsvpSlot ?? activeSlot;
+  if (rsvpRequired && !userRsvpSlotId && slots.every((slot) => isSlotRsvpLocked(slot, now))) {
+    return null;
+  }
+
+  const choosableSlots =
+    rsvpRequired && !userRsvpSlotId
+      ? slots.filter((slot) => !isSlotRsvpLocked(slot, now))
+      : slots;
+  const resolvedActiveId =
+    choosableSlots.some((slot) => slot.id === activeSlotId)
+      ? activeSlotId
+      : (choosableSlots[0]?.id ?? "");
+  const resolvedActive =
+    choosableSlots.find((slot) => slot.id === resolvedActiveId) ?? choosableSlots[0];
+  if (!resolvedActive) return null;
+
+  const actionSlot = rsvpSlot ?? resolvedActive;
   const slotAction = getSlotQrAction(actionSlot, now);
   const allEnded = isEventEnded(slots, now);
 
@@ -141,6 +154,32 @@ export default function EventSlotPicker({
     });
   };
 
+  if (rsvpRequired && rsvpSlot && isSlotRsvpLocked(rsvpSlot, now)) {
+    const canCheckIn = !preview && getSlotQrAction(rsvpSlot, now) === "checkin";
+    return (
+      <div className="flex w-full flex-col gap-3">
+        <SlotStatusCard
+          slot={rsvpSlot}
+          message="You're registered. This time can't be changed today."
+          tone="registered"
+        />
+        {canCheckIn && (
+          <button
+            type="button"
+            className={buttonClassName}
+            onClick={() =>
+              askQuestionsIfNeeded("Continue to check in", (answers) =>
+                handleAttendance(eventId, rsvpSlot.id, answers, questions),
+              )
+            }
+          >
+            Attend
+          </button>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div
       className={`w-full rounded-lg border p-4 shadow-sm ${
@@ -157,15 +196,17 @@ export default function EventSlotPicker({
               : "Choose a time slot"}
       </p>
       <div className="flex flex-col gap-2">
-        {slots.map((slot) => {
+        {choosableSlots.map((slot) => {
           const full = isSlotFull(slot);
-          const isSelected = slot.id === activeSlotId;
+          const isSelected = slot.id === resolvedActiveId;
           const isCurrentRsvp = slot.id === userRsvpSlotId;
           const action = getSlotQrAction(slot, now);
           const ended = action === "ended";
+          const lockedToday = rsvpRequired && isSlotRsvpLocked(slot, now);
           const disabled =
             ended ||
             allEnded ||
+            lockedToday ||
             (full && !isCurrentRsvp) ||
             Boolean(rsvpSlot && slotAction === "checkin" && !isCurrentRsvp);
 
@@ -212,7 +253,7 @@ export default function EventSlotPicker({
               className={buttonClassName}
               onClick={() =>
                 askQuestionsIfNeeded("Continue to check in", (answers) =>
-                  handleAttendance(eventId, userRsvpSlotId || activeSlotId, answers, questions),
+                  handleAttendance(eventId, userRsvpSlotId || resolvedActiveId, answers, questions),
                 )
               }
             >
@@ -224,9 +265,14 @@ export default function EventSlotPicker({
                 <button
                   type="button"
                   className={`${buttonClassName} bg-blue text-white`}
-                  disabled={!activeSlotId || activeSlotId === userRsvpSlotId || isSlotFull(activeSlot)}
+                  disabled={
+                    !resolvedActiveId ||
+                    resolvedActiveId === userRsvpSlotId ||
+                    isSlotFull(resolvedActive) ||
+                    (rsvpRequired && isSlotRsvpLocked(resolvedActive, now))
+                  }
                   onClick={() =>
-                    handleRSVP(eventId, activeSlotId, userRsvpSlotId ? "switch" : "rsvp")
+                    handleRSVP(eventId, resolvedActiveId, userRsvpSlotId ? "switch" : "rsvp")
                   }
                 >
                   Switch slot
@@ -243,10 +289,10 @@ export default function EventSlotPicker({
               <button
                 type="button"
                 className={buttonClassName}
-                disabled={!activeSlotId || isSlotFull(activeSlot)}
+                disabled={!resolvedActiveId || isSlotFull(resolvedActive)}
                 onClick={() =>
                   askQuestionsIfNeeded("RSVP", (answers) =>
-                    handleRSVP(eventId, activeSlotId, "rsvp", answers, questions),
+                    handleRSVP(eventId, resolvedActiveId, "rsvp", answers, questions),
                   )
                 }
               >

@@ -5,7 +5,7 @@ import UserContext from "@lib/UserContext";
 import { Event } from "@lib/constants";
 import { parseQrSearchParams, qrFlowSessionKey } from "@lib/eventLinks";
 import { resolveQrFlowState, type QrFlowState } from "@lib/resolveQrEventAction";
-import { getSlotQrAction, isSlotFull } from "@lib/slotTime";
+import { getSlotQrAction, isSlotFull, isSlotRsvpLocked } from "@lib/slotTime";
 import { fetchEventById } from "@services/event";
 import { editRSVP, fetchUserExpectedGrad, logAttendanceWithToken } from "@services/user";
 import { saveEventQuestionAnswers } from "@services/eventQuestions";
@@ -123,6 +123,19 @@ export function useQrEventFlow(options: {
       }
 
       const now = new Date();
+      const rsvpRequired = Boolean(activeEvent.rsvp_required);
+      const currentSlot = rsvpSlotId ? slots.find((item) => item.id === rsvpSlotId) : undefined;
+      const currentLocked = Boolean(currentSlot && isSlotRsvpLocked(currentSlot, now));
+      const targetLocked = isSlotRsvpLocked(slot, now);
+
+      if (rsvpRequired && !rsvpSlotId && targetLocked) {
+        DisplayToast("RSVP was required before the day of this event", "error");
+        return;
+      }
+      if (rsvpRequired && rsvpSlotId && rsvpSlotId !== slotId && (currentLocked || targetLocked)) {
+        DisplayToast("You can only check in to your registered time", "error");
+        return;
+      }
 
       try {
         const action = getSlotQrAction(slot, now);

@@ -470,6 +470,16 @@ export default function Form({
                 }
                 label="Track attendance on the portal"
               />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={formData.rsvp_required ?? false}
+                    onChange={(_, checked) => handleChange(checked, ["rsvp_required"])}
+                    color="primary"
+                  />
+                }
+                label="Require RSVP before the day of the event"
+              />
               <div className="flex items-center gap-2">
                 <label htmlFor="event-type">Event type</label>
                 <select

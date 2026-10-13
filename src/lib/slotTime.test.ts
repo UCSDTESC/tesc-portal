@@ -7,6 +7,7 @@ import {
   isSlotActive,
   isSlotFull,
   isSlotFuture,
+  isSlotRsvpLocked,
   seatsTaken,
 } from "./slotTime";
 import type { EventSlot } from "@lib/constants";
@@ -103,5 +104,17 @@ describe("getSlotQrAction", () => {
     const s = slot("1", "2030-06-01T18:00:00", "2030-06-01T19:00:00");
     const now = new Date("2030-06-01T20:00:00");
     expect(getSlotQrAction(s, now)).toBe("ended");
+  });
+
+  it("locks RSVP changes on the slot's Pacific calendar date", () => {
+    const workshop = slot("1", "2026-11-12T23:00:00Z", "2026-11-13T01:00:00Z");
+    expect(isSlotRsvpLocked(workshop, new Date("2026-11-12T18:00:00Z"))).toBe(true);
+    expect(isSlotRsvpLocked(workshop, new Date("2026-11-11T18:00:00Z"))).toBe(false);
+  });
+
+  it("uses the Pacific date when UTC is already the next day", () => {
+    const evening = slot("1", "2026-10-21T00:00:00Z", "2026-10-21T02:00:00Z");
+    expect(isSlotRsvpLocked(evening, new Date("2026-10-20T17:00:00Z"))).toBe(true);
+    expect(isSlotRsvpLocked(evening, new Date("2026-10-21T17:00:00Z"))).toBe(false);
   });
 });

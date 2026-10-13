@@ -50,6 +50,7 @@ export const getFormDataDefault = (): formdata => {
     tags: [],
     poster: "https://placehold.co/600x400",
     track_attendance: true,
+    rsvp_required: false,
     food_provided: "",
     as_funding: false,
     manual_attendance: "",

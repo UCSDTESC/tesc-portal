@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { EventQuestion, EventSlot } from "@lib/constants";
 import { DateParser } from "@lib/utils";
-import { getSlotQrAction, isSlotFull, seatsTaken } from "@lib/slotTime";
+import { getSlotQrAction, isSlotFull, isSlotRsvpLocked, seatsTaken } from "@lib/slotTime";
 import type { QrFlowState } from "@lib/resolveQrEventAction";
 import {
   type EventQuestionAnswers,
@@ -27,6 +27,7 @@ export default function QrSlotPickerModal({
   userId,
   flowState: _flowState,
   initialSlotId,
+  rsvpRequired = false,
   onConfirm,
   onClose,
 }: {
@@ -38,6 +39,7 @@ export default function QrSlotPickerModal({
   userId?: string;
   flowState: QrFlowState | null;
   initialSlotId?: string;
+  rsvpRequired?: boolean;
   onConfirm: (slotId: string, answers?: EventQuestionAnswers) => Promise<void>;
   onClose: () => void;
 }) {
@@ -56,7 +58,16 @@ export default function QrSlotPickerModal({
     }
   }, [open, initialSlotId]);
 
-  const activeSlotId = selectedSlotId || initialSlotId || slots[0]?.id || "";
+  const ownSlot = slots.find((slot) => slot.id === initialSlotId);
+  const ownLocked = Boolean(rsvpRequired && ownSlot && isSlotRsvpLocked(ownSlot, now));
+  const visibleSlots = slots.filter((slot) => {
+    if (!rsvpRequired || !isSlotRsvpLocked(slot, now)) return true;
+    return slot.id === initialSlotId;
+  });
+  const checkInOnly = ownLocked && ownSlot != null && getSlotQrAction(ownSlot, now) === "checkin";
+  const registeredOnly = ownLocked && !checkInOnly;
+
+  const activeSlotId = selectedSlotId || initialSlotId || visibleSlots[0]?.id || "";
   const activeSlot = slots.find((slot) => slot.id === activeSlotId);
   const activeAction = activeSlot ? getSlotQrAction(activeSlot, now) : "ended";
 
@@ -109,18 +120,32 @@ export default function QrSlotPickerModal({
       <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
       <div className="relative z-10 w-full max-w-md rounded-xl bg-white p-5 shadow-xl">
         <h2 className="font-DM text-xl font-bold text-navy">
-          {step === "questions" ? "Registration questions" : "Choose a time slot"}
+          {step === "questions"
+            ? "Registration questions"
+            : registeredOnly
+              ? "You're registered"
+              : "Choose a time slot"}
         </h2>
         <p className="mt-1 text-sm text-gray-600">{eventTitle}</p>
 
-        {step === "slot" ? (
+        {step === "slot" && registeredOnly && ownSlot ? (
+          <p className="mt-4 text-sm text-gray-700">
+            You're registered for {DateParser(ownSlot.starts_at)} – {DateParser(ownSlot.ends_at)}.
+            This time can't be changed today. Check-in opens closer to the start.
+          </p>
+        ) : step === "slot" && rsvpRequired && !initialSlotId && visibleSlots.length === 0 ? (
+          <p className="mt-4 text-sm text-gray-700">
+            RSVP was required before today, so check-in isn't available.
+          </p>
+        ) : step === "slot" ? (
           <div className="mt-4 flex max-h-64 flex-col gap-2 overflow-y-auto">
-            {slots.map((slot) => {
+            {visibleSlots.map((slot) => {
               const full = isSlotFull(slot);
               const isSelected = slot.id === activeSlotId;
               const isCurrentRsvp = slot.id === initialSlotId;
               const action = getSlotQrAction(slot, now);
-              const disabled = action === "ended" || (full && !isCurrentRsvp);
+              const lockedToday = rsvpRequired && isSlotRsvpLocked(slot, now) && !isCurrentRsvp;
+              const disabled = action === "ended" || lockedToday || (full && !isCurrentRsvp);
 
               return (
                 <label
@@ -169,7 +194,7 @@ export default function QrSlotPickerModal({
           </button>
           <button
             type="button"
-            disabled={submitDisabled}
+            disabled={submitDisabled || registeredOnly || visibleSlots.length === 0}
             onClick={handleSubmit}
             className="rounded-lg bg-blue px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
           >

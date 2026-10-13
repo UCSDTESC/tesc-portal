@@ -400,6 +400,7 @@ export default function Bulletin() {
         userId={User?.id}
         flowState={qrFlow.flowState}
         initialSlotId={rsvpByEvent?.[selection]}
+        rsvpRequired={Boolean(qrFlow.activeEvent?.rsvp_required)}
         onConfirm={qrFlow.handleSlotConfirm}
         onClose={qrFlow.closePicker}
       />
