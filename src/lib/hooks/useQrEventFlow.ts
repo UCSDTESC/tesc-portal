@@ -161,19 +161,12 @@ export function useQrEventFlow(options: {
           return;
         }
 
-        // Slot has started — check in
-        if (!rsvpSlotId) {
-          const rsvpError = await editRSVP(eventId, slotId, "rsvp");
-          if (rsvpError) {
-            DisplayToast(rsvpError.message ?? "Unable to register before check-in", "error");
-            return;
-          }
-        } else if (rsvpSlotId !== slotId) {
-          const switchError = await editRSVP(eventId, slotId, "switch");
-          if (switchError) {
-            DisplayToast(switchError.message ?? "Unable to switch slot", "error");
-            return;
-          }
+        // Slot has started — check in. No RSVP is needed; an existing RSVP for
+        // another slot is moved onto this one by the database.
+        const attendError = await logAttendanceWithToken(eventId, User.id, token, slotId);
+        if (attendError) {
+          DisplayToast(attendError.message ?? "Unable to check in", "error");
+          return;
         }
 
         if (answers && User.id && (activeEvent.questions?.length ?? 0) > 0) {
@@ -186,12 +179,6 @@ export function useQrEventFlow(options: {
           if (saveError) {
             DisplayToast(saveError.message ?? "Checked in, but answers could not be saved", "error");
           }
-        }
-
-        const attendError = await logAttendanceWithToken(eventId, User.id, token, slotId);
-        if (attendError) {
-          DisplayToast(attendError.message ?? "Unable to check in", "error");
-          return;
         }
 
         setBanner({ type: "success", message: "Attendance recorded. You're checked in!" });

@@ -175,9 +175,22 @@ export function useBulletin(
     setRsvpByEvent((prev) => ({ ...(prev ?? {}), [eventId]: slotId }));
   }, []);
 
-  const applyUserAttendance = useCallback((eventId: string, slotId: string) => {
-    setAttendedByEvent((prev) => ({ ...(prev ?? {}), [eventId]: slotId }));
+  const clearUserRsvp = useCallback((eventId: string) => {
+    setRsvpByEvent((prev) => {
+      if (!prev?.[eventId]) return prev;
+      const next = { ...prev };
+      delete next[eventId];
+      return next;
+    });
   }, []);
+
+  const applyUserAttendance = useCallback(
+    (eventId: string, slotId: string) => {
+      setAttendedByEvent((prev) => ({ ...(prev ?? {}), [eventId]: slotId }));
+      clearUserRsvp(eventId);
+    },
+    [clearUserRsvp],
+  );
 
   const handleRSVP = async (
     eventId: string,
@@ -196,7 +209,8 @@ export function useBulletin(
     if (error) {
       console.error(error.message);
       DisplayToast(
-        action === "cancel" ? "Unable to remove RSVP" : "Unable to RSVP for this slot",
+        error.message ||
+          (action === "cancel" ? "Unable to remove RSVP" : "Unable to RSVP for this slot"),
         "error",
       );
       return false;
@@ -248,7 +262,7 @@ export function useBulletin(
     const error = await logAttendance(eventId, User.id, userInput, slotId);
     if (error) {
       console.error(error.message);
-      DisplayToast("Error logging attendance", "error");
+      DisplayToast(error.message || "Error logging attendance", "error");
       return false;
     }
 
@@ -263,6 +277,7 @@ export function useBulletin(
       ...(prev ?? {}),
       [eventId]: slotId ?? "",
     }));
+    clearUserRsvp(eventId);
     await refreshEventView(eventId);
     DisplayToast("Succesfully logged attendance", "success");
 

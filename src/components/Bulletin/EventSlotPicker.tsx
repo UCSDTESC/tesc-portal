@@ -111,8 +111,7 @@ export default function EventSlotPicker({
     );
   }
 
-  const actionSlot = rsvpSlot ?? activeSlot;
-  const slotAction = getSlotQrAction(actionSlot, now);
+  const slotAction = getSlotQrAction(activeSlot, now);
   const allEnded = isEventEnded(slots, now);
 
   const askQuestionsIfNeeded = async (
@@ -152,7 +151,7 @@ export default function EventSlotPicker({
           ? "Time slots"
           : rsvpSlot && slotAction === "register"
             ? "Your registration"
-            : rsvpSlot && slotAction === "checkin"
+            : slotAction === "checkin" && activeSlotId === userRsvpSlotId
               ? "Check in to your slot"
               : "Choose a time slot"}
       </p>
@@ -163,11 +162,7 @@ export default function EventSlotPicker({
           const isCurrentRsvp = slot.id === userRsvpSlotId;
           const action = getSlotQrAction(slot, now);
           const ended = action === "ended";
-          const disabled =
-            ended ||
-            allEnded ||
-            (full && !isCurrentRsvp) ||
-            Boolean(rsvpSlot && slotAction === "checkin" && !isCurrentRsvp);
+          const disabled = ended || allEnded || (full && !isCurrentRsvp);
 
           return (
             <div
@@ -212,7 +207,7 @@ export default function EventSlotPicker({
               className={buttonClassName}
               onClick={() =>
                 askQuestionsIfNeeded("Continue to check in", (answers) =>
-                  handleAttendance(eventId, userRsvpSlotId || activeSlotId, answers, questions),
+                  handleAttendance(eventId, activeSlotId, answers, questions),
                 )
               }
             >
