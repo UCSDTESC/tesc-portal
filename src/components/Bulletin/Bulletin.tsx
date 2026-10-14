@@ -223,7 +223,7 @@ export default function Bulletin() {
         </div>
         <div className="flex w-full h-full flex-row relative">
           <div
-            className={`flex w-[300px] flex-col h-[calc(100vh-7rem)] bg-gray-200 absolute z-2 opacity-95 md:relative ${
+            className={`flex w-[300px] min-h-0 flex-col overflow-hidden h-[calc(90vh-3.5rem)] bg-gray-200 absolute z-2 opacity-95 md:relative ${
               displaysideBar == true ? "block" : "hidden"
             }`}
           >
@@ -376,7 +376,7 @@ export default function Bulletin() {
                 </div>
               </div>
             )}
-            <div className="flex-1 min-h-0 overflow-y-auto grid grid-rows-[repeat(auto-fill,100px)]">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
               <EventsList {...{ setSelection, selection }} />
             </div>
           </div>

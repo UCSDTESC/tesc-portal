@@ -24,3 +24,4 @@ databasepassword
 *.sln
 *.sw?
 .env
+updated-member-profiles.csv

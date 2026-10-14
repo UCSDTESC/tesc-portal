@@ -154,6 +154,17 @@ export function getPdfPreviewUrl(url: string): { previewUrl: string | null; note
       };
     }
 
+    if (u.hostname === "docs.google.com") {
+      const fileId = href.match(/\/d\/([^/]+)/)?.[1];
+      const kind = href.match(/docs\.google\.com\/(document|presentation|spreadsheets)\//)?.[1];
+      if (fileId && kind) {
+        return { previewUrl: `https://docs.google.com/${kind}/d/${fileId}/preview` };
+      }
+      if (fileId) {
+        return { previewUrl: `https://drive.google.com/file/d/${fileId}/preview` };
+      }
+    }
+
     if (u.hostname.includes("dropbox.com")) {
       const raw = href.replace(/\?dl=0$/, "?raw=1");
       return { previewUrl: raw };

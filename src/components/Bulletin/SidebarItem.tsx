@@ -104,23 +104,16 @@ export function SidebarCompany({
         }
       }}
     >
-      <div className="flex flex-col rounded-lg bg-white h-full w-full px-4">
-        <div className="flex gap-2 w-full h-1/2">
-          <div className="flex flex-col">
-            <div className="font-bold text-[20px] w-full line-clamp-1 text-left">
-              {daton.first_name && daton.last_name
-                ? daton.first_name + " " + daton.last_name
-                : "Unknown"}
-            </div>
-            <div className="text-[12px] opacity-70 w-full text-left">
-              {daton.major} | {daton.expected_grad}
-            </div>
-          </div>
+      <div className="flex flex-col justify-center gap-0.5 rounded-lg bg-white h-full w-full overflow-hidden px-4 py-1">
+        <div className="font-bold text-[18px] w-full line-clamp-1 text-left">
+          {daton.first_name && daton.last_name
+            ? daton.first_name + " " + daton.last_name
+            : "Unknown"}
         </div>
-        <span className="w-full flex flex-col items-start">
-          <p className="text-[12px] line-clamp-1">Events Attended: {daton.points}</p>
-          <p className="w-full text-left text-[12px] line-clamp-1 font-bold">{daton.email}</p>
-        </span>
+        <div className="text-[12px] opacity-70 w-full line-clamp-2 text-left">
+          {daton.major} | {daton.expected_grad}
+        </div>
+        <p className="w-full text-left text-[12px] line-clamp-1 font-bold">{daton.email}</p>
       </div>
     </button>
   );
