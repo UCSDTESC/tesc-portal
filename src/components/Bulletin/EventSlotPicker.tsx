@@ -92,6 +92,11 @@ export default function EventSlotPicker({
     [slots, userRsvpSlotId],
   );
 
+  const activeSlot = useMemo(
+    () => slots.find((slot) => slot.id === activeSlotId) ?? slots[0],
+    [slots, activeSlotId],
+  );
+
   const rsvpStatusReady = preview || loggedOut || Boolean(rsvpByEvent && attendedByEvent);
   if (!rsvpStatusReady || !slots.length) return null;
 
@@ -107,6 +112,8 @@ export default function EventSlotPicker({
       />
     );
   }
+
+  if (!activeSlot) return null;
 
   if (rsvpRequired && !userRsvpSlotId && slots.every((slot) => isSlotRsvpLocked(slot, now))) {
     return null;
@@ -191,7 +198,7 @@ export default function EventSlotPicker({
           ? "Time slots"
           : rsvpSlot && slotAction === "register"
             ? "Your registration"
-            : rsvpSlot && slotAction === "checkin"
+            : slotAction === "checkin" && resolvedActiveId === userRsvpSlotId
               ? "Check in to your slot"
               : "Choose a time slot"}
       </p>
@@ -203,12 +210,7 @@ export default function EventSlotPicker({
           const action = getSlotQrAction(slot, now);
           const ended = action === "ended";
           const lockedToday = rsvpRequired && isSlotRsvpLocked(slot, now);
-          const disabled =
-            ended ||
-            allEnded ||
-            lockedToday ||
-            (full && !isCurrentRsvp) ||
-            Boolean(rsvpSlot && slotAction === "checkin" && !isCurrentRsvp);
+          const disabled = ended || allEnded || lockedToday || (full && !isCurrentRsvp);
 
           return (
             <div
@@ -253,7 +255,7 @@ export default function EventSlotPicker({
               className={buttonClassName}
               onClick={() =>
                 askQuestionsIfNeeded("Continue to check in", (answers) =>
-                  handleAttendance(eventId, userRsvpSlotId || resolvedActiveId, answers, questions),
+                  handleAttendance(eventId, resolvedActiveId, answers, questions),
                 )
               }
             >
