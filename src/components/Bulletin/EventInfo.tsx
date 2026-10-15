@@ -154,6 +154,7 @@ export default function EventInfo({
         {daton.slots &&
           daton.slots.length > 0 &&
           (daton.track_attendance ||
+            daton.rsvp_required ||
             daton.type === "internal" ||
             (daton.questions?.length ?? 0) > 0) && (
           <div className="mt-6">
@@ -163,6 +164,7 @@ export default function EventInfo({
               questions={daton.questions}
               className="bg-lightBlue hover:opacity-80"
               preview={preview}
+              rsvpRequired={Boolean(daton.rsvp_required)}
             />
           </div>
         )}

@@ -1,5 +1,10 @@
 import { BulletinContext } from "@lib/hooks/useBulletin";
-import { container, item, canAccessRecruiterData } from "@lib/constants";
+import { container, item, canAccessRecruiterData, type Event, type Member } from "@lib/constants";
+import {
+  SIDEBAR_PAGE_SIZE,
+  sidebarPageForIndex,
+  sidebarPageSlice,
+} from "@lib/sidebarPage";
 import { memo, useContext, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { SidebarClub, SidebarCompany } from "./SidebarItem";
@@ -75,6 +80,40 @@ export const EventsList = memo(function ({
   }, [isLoading]);
 
   const fadeTransition = { duration: FADE_OUT_DURATION_MS / 1000 };
+  const items: Array<Member | Event> = showRecruiterList ? (People ?? []) : (data ?? []);
+  const rows = showRecruiterList ? People : data;
+  const [page, setPage] = useState(1);
+  const listRef = useRef<HTMLDivElement>(null);
+  const rowsRef = useRef<typeof rows>(undefined);
+  const selectionRef = useRef<string | null>(null);
+  const slice = sidebarPageSlice(items, page, SIDEBAR_PAGE_SIZE);
+
+  useEffect(() => {
+    const listChanged = rowsRef.current !== rows;
+    const selectionChanged = selectionRef.current !== selection;
+    rowsRef.current = rows;
+    selectionRef.current = selection;
+    if (!rows?.length) {
+      setPage(1);
+      return;
+    }
+
+    const index = showRecruiterList
+      ? (rows as Member[]).findIndex((person) => person.email === selection)
+      : (rows as Event[]).findIndex((event) => String(event.id) === String(selection));
+
+    if (listChanged) {
+      setPage(index >= 0 ? sidebarPageForIndex(index, SIDEBAR_PAGE_SIZE) : 1);
+      return;
+    }
+    if (selectionChanged && index >= 0) {
+      setPage(sidebarPageForIndex(index, SIDEBAR_PAGE_SIZE));
+    }
+  }, [rows, selection, showRecruiterList]);
+
+  useEffect(() => {
+    listRef.current?.scrollTo({ top: 0 });
+  }, [slice.page]);
 
   const renderContent = () => {
     if (portalMode === "recruiter" && !showRecruiterList) {
@@ -94,7 +133,7 @@ export const EventsList = memo(function ({
           animate="show"
           onAnimationComplete={() => setSidebarHasAnimated(true)}
         >
-          {People?.map((daton) => (
+          {(slice.items as Member[]).map((daton) => (
             <motion.div key={daton.email} variants={item}>
               <SidebarCompany {...{ daton, setSelection, selection }} />
             </motion.div>
@@ -122,7 +161,7 @@ export const EventsList = memo(function ({
         animate="show"
         onAnimationComplete={() => setSidebarHasAnimated(true)}
       >
-        {data?.map((daton) => (
+        {(slice.items as Event[]).map((daton) => (
           <motion.div key={daton.id} variants={item}>
             <SidebarClub {...{ daton, setSelection, selection }} />
           </motion.div>
@@ -132,26 +171,53 @@ export const EventsList = memo(function ({
   };
 
   return (
-    <AnimatePresence mode="wait">
-      {showSkeleton ? (
-        <motion.div
-          key="skeleton"
-          initial={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={fadeTransition}
-        >
-          <EventListSkeleton />
-        </motion.div>
-      ) : (
-        <motion.div
-          key="content"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={fadeTransition}
-        >
-          {renderContent()}
-        </motion.div>
+    <div ref={listRef} className="h-full min-h-0 overflow-y-auto">
+      <AnimatePresence mode="wait">
+        {showSkeleton ? (
+          <motion.div
+            key="skeleton"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={fadeTransition}
+          >
+            <EventListSkeleton />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="content"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={fadeTransition}
+          >
+            {renderContent()}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {!showSkeleton && items.length > SIDEBAR_PAGE_SIZE && (
+        <div className="flex items-center justify-between gap-1 px-2 py-2">
+          <button
+            type="button"
+            className="rounded px-2 py-1 text-xs font-medium text-slate-700 disabled:opacity-40"
+            onClick={() => setPage(slice.page - 1)}
+            disabled={slice.page <= 1}
+            aria-label="Previous page"
+          >
+            Prev
+          </button>
+          <span className="text-xs text-slate-600">
+            {slice.start}–{slice.end} of {items.length}
+          </span>
+          <button
+            type="button"
+            className="rounded px-2 py-1 text-xs font-medium text-slate-700 disabled:opacity-40"
+            onClick={() => setPage(slice.page + 1)}
+            disabled={slice.page >= slice.totalPages}
+            aria-label="Next page"
+          >
+            Next
+          </button>
+        </div>
       )}
-    </AnimatePresence>
+    </div>
   );
 });

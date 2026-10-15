@@ -50,6 +50,7 @@ export const getFormDataDefault = (): formdata => {
     tags: [],
     poster: "https://placehold.co/600x400",
     track_attendance: true,
+    rsvp_required: false,
     food_provided: "",
     as_funding: false,
     manual_attendance: "",
@@ -151,6 +152,17 @@ export function getPdfPreviewUrl(url: string): { previewUrl: string | null; note
           href,
         )}`,
       };
+    }
+
+    if (u.hostname === "docs.google.com") {
+      const fileId = href.match(/\/d\/([^/]+)/)?.[1];
+      const kind = href.match(/docs\.google\.com\/(document|presentation|spreadsheets)\//)?.[1];
+      if (fileId && kind) {
+        return { previewUrl: `https://docs.google.com/${kind}/d/${fileId}/preview` };
+      }
+      if (fileId) {
+        return { previewUrl: `https://drive.google.com/file/d/${fileId}/preview` };
+      }
     }
 
     if (u.hostname.includes("dropbox.com")) {

@@ -22,11 +22,11 @@ export {
 const EVENT_QUESTIONS_EMBED = "event_questions(id,sort_order,prompt,type,options,required)";
 
 const EVENT_LIST_SELECT =
-  `id,created_at,end_date,location_str,start_date,tags,title,attendance,dependent_on,poster,rsvp,org_id,orgs!inner(name,pfp_str),attendance_cap,track_attendance,type,food_provided,as_funding,${EVENT_QUESTIONS_EMBED}`;
+  `id,created_at,end_date,location_str,start_date,tags,title,attendance,dependent_on,poster,rsvp,org_id,orgs!inner(name,pfp_str),attendance_cap,track_attendance,rsvp_required,type,food_provided,as_funding,${EVENT_QUESTIONS_EMBED}`;
 
 /** Full columns for admin tables, edit forms, and single-event detail fetches. */
 const EVENT_FULL_SELECT =
-  `id,content,created_at,end_date,location_str,start_date,tags,title,dependent_on,attendance,poster,rsvp,org_id,orgs!inner(name,pfp_str),attendance_cap,track_attendance,type,password,manual_attendance,attendance_token,food_provided,as_funding,${EVENT_QUESTIONS_EMBED}`;
+  `id,content,created_at,end_date,location_str,start_date,tags,title,dependent_on,attendance,poster,rsvp,org_id,orgs!inner(name,pfp_str),attendance_cap,track_attendance,rsvp_required,type,password,manual_attendance,attendance_token,food_provided,as_funding,${EVENT_QUESTIONS_EMBED}`;
 
 export type CreateEventSuccess = {
   eventId: string;
@@ -393,6 +393,7 @@ export const createEvent = async (formData: formdata, activeOrgName: string) => 
       dependent_on: formData.dependent_on,
       attendance_cap: isForum ? null : attendanceCap,
       track_attendance: tracksAttendance,
+      rsvp_required: isForum ? false : (formData.rsvp_required ?? false),
       food_provided: isForum ? null : (formData.food_provided?.trim() || null),
       as_funding: isForum ? false : (formData.as_funding ?? false),
       type: eventType,
@@ -535,6 +536,7 @@ export const updateEvent = async (eventId: string, formData: formdata) => {
       dependent_on: formData.dependent_on,
       attendance_cap: isForum ? null : attendanceCap,
       track_attendance: tracksAttendance,
+      rsvp_required: isForum ? false : (formData.rsvp_required ?? false),
       ...(attendanceToken ? { attendance_token: attendanceToken } : {}),
       food_provided: isForum ? null : (formData.food_provided?.trim() || null),
       as_funding: isForum ? false : (formData.as_funding ?? false),

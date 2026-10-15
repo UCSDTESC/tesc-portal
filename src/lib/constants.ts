@@ -69,6 +69,7 @@ export type Event = {
   attendance_token?: string | null;
   slots?: EventSlot[];
   questions?: EventQuestion[];
+  rsvp_required?: boolean;
 };
 
 /** Time slot for an event with RSVP capacity. */
@@ -117,6 +118,7 @@ export type formdata = {
   poster: string;
   attendance_cap?: number;
   track_attendance?: boolean;
+  rsvp_required?: boolean;
   food_provided?: string;
   as_funding?: boolean;
   has_parent: boolean;
@@ -146,6 +148,7 @@ export const eventFormDataDefault: formdata = {
   has_parent: false,
   dependent_on: null,
   track_attendance: false,
+  rsvp_required: false,
   food_provided: "",
   as_funding: false,
   manual_attendance: "",

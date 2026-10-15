@@ -61,6 +61,23 @@ export function hasEventStarted(slots: EventSlot[], now: Date = new Date()): boo
   return slots.some((slot) => !isSlotFuture(slot, now));
 }
 
+export function pacificDateKey(instant: Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Los_Angeles",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(instant);
+}
+
+/** True when this slot starts on today's date in America/Los_Angeles. */
+export function isSlotRsvpLocked(
+  slot: Pick<EventSlot, "starts_at">,
+  now: Date = new Date(),
+): boolean {
+  return pacificDateKey(parseSlotTime(slot.starts_at)) === pacificDateKey(now);
+}
+
 /** Per-slot QR/bulletin action based on whether the slot window is open. */
 export function getSlotQrAction(
   slot: EventSlot,

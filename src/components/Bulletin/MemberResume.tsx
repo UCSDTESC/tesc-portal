@@ -34,8 +34,25 @@ function CandidateResumePreview({
   const linkPreview =
     resumeLink && isValidUrl(resumeLink) ? getPdfPreviewUrl(resumeLink).previewUrl : null;
   const previewUrl = signedUrl || linkPreview;
+  const openUrl = resumeLink && isValidUrl(resumeLink) ? resumeLink : signedUrl;
 
-  if (!previewUrl) return null;
+  if (!previewUrl) {
+    return (
+      <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-600">
+        <p>This resume can’t be previewed here.</p>
+        {openUrl && (
+          <a
+            href={openUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 inline-block font-medium text-blue underline"
+          >
+            Open resume
+          </a>
+        )}
+      </div>
+    );
+  }
 
   return (
     <Card className="flex-1 shadow-lg h-fit">
@@ -92,7 +109,7 @@ export default function MemberResume({ selection }: { selection: string }) {
 
   return (
     <motion.span
-      className="w-full grid grid-cols-[70px_1fr] grid-rows-[auto_auto] gap-4"
+      className="w-full grid grid-cols-[70px_1fr] items-start gap-4"
       variants={container}
       initial="hidden"
       animate="show"
@@ -101,9 +118,9 @@ export default function MemberResume({ selection }: { selection: string }) {
         variants={item}
         src={profile_picture_src}
         alt=""
-        className="h-full rounded-full object-cover aspect-square"
+        className="h-[70px] w-[70px] shrink-0 rounded-full object-cover"
       />
-      <motion.div className="flex flex-col h-full justify-center relative" variants={item}>
+      <motion.div className="flex min-w-0 flex-col justify-center" variants={item}>
         <div className="flex gap-1 flex-wrap items-center">
           <h1 className="font-bold text-4xl">
             {selectedCandidate.first_name && selectedCandidate.last_name
