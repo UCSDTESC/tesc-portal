@@ -25,7 +25,13 @@ type WebhookBody = {
 };
 
 function resolveKind(body: WebhookBody): EmailKind | null {
-  if (body.kind === "confirmation" || body.kind === "update" || body.kind === "reminder") {
+  if (
+    body.kind === "confirmation" ||
+    body.kind === "update" ||
+    body.kind === "reminder" ||
+    body.kind === "reminder_5d" ||
+    body.kind === "reminder_1d"
+  ) {
     return body.kind;
   }
   const record = body.record;

@@ -1,4 +1,9 @@
-export type EventEmailKind = "confirmation" | "update" | "reminder";
+export type EventEmailKind =
+  | "confirmation"
+  | "update"
+  | "reminder"
+  | "reminder_5d"
+  | "reminder_1d";
 
 export type EventEmailContext = {
   to: string;
@@ -12,7 +17,14 @@ export type EventEmailContext = {
   kind: EventEmailKind;
 };
 
+export type ReminderWindow = {
+  kind: Extract<EventEmailKind, "reminder" | "reminder_5d" | "reminder_1d">;
+  min: string;
+  max: string;
+};
+
 const PACIFIC = "America/Los_Angeles";
+const HOUR_MS = 60 * 60 * 1000;
 
 function envOr(name: string, fallback: string) {
   const value = Deno.env.get(name);
@@ -56,10 +68,11 @@ function calendarStamp(iso: string) {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
-    hour12: false,
+    hourCycle: "h23",
   }).formatToParts(date);
   const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
-  return `${get("year")}${get("month")}${get("day")}T${get("hour")}${get("minute")}${get("second")}`;
+  const hour = get("hour") === "24" ? "00" : get("hour");
+  return `${get("year")}${get("month")}${get("day")}T${hour}${get("minute")}${get("second")}`;
 }
 
 export function googleCalendarUrl(ctx: EventEmailContext) {
@@ -82,6 +95,20 @@ function copyForKind(kind: EventEmailKind) {
       subjectPrefix: "Updated time slot",
       heading: "Your event time was updated",
       intro: "You switched to a new time slot. Here are the updated details.",
+    };
+  }
+  if (kind === "reminder_5d") {
+    return {
+      subjectPrefix: "Coming up in 5 days",
+      heading: "Your event is in 5 days",
+      intro: "This is a reminder that you are registered for an upcoming event.",
+    };
+  }
+  if (kind === "reminder_1d") {
+    return {
+      subjectPrefix: "Tomorrow",
+      heading: "Your event is tomorrow",
+      intro: "This is a reminder that you are registered for an event tomorrow.",
     };
   }
   if (kind === "reminder") {
@@ -138,7 +165,7 @@ export function renderEventEmail(ctx: EventEmailContext) {
           <a href="${escapeAttr(link)}" style="display:inline-block;background:#3B7DB6;color:#fff;text-decoration:none;padding:10px 16px;border-radius:999px;">View on the bulletin</a>
         </p>
         <p style="margin:0;">
-          <a href="${escapeAttr(calendar)}" style="color:#114675;">Add to Google Calendar</a>
+          <a href="${escapeAttr(calendar)}" style="display:inline-block;background:#114675;color:#fff;text-decoration:none;padding:10px 16px;border-radius:999px;">Add to Google Calendar</a>
         </p>
       </td></tr>
     </table>
@@ -187,16 +214,43 @@ export async function sendResendEmail(ctx: EventEmailContext) {
   return body.id ?? null;
 }
 
+export function providedHookSecret(req: Request) {
+  const auth = req.headers.get("Authorization") ?? "";
+  if (auth.startsWith("Bearer ")) return auth.slice("Bearer ".length).trim();
+  return (req.headers.get("x-webhook-secret") ?? "").trim();
+}
+
 export function hookAuthorized(req: Request) {
   const secret = Deno.env.get("EMAIL_HOOK_SECRET");
   if (!secret) return false;
-  const auth = req.headers.get("Authorization") ?? "";
-  const headerSecret = req.headers.get("x-webhook-secret") ?? "";
-  return auth === `Bearer ${secret}` || headerSecret === secret;
+  const provided = providedHookSecret(req);
+  return Boolean(provided) && provided === secret;
 }
 
+/** Hourly cron windows (±30 minutes) around each reminder offset. */
+export function reminderWindows(now = new Date()): ReminderWindow[] {
+  return [
+    windowAround(now, 120 * HOUR_MS, "reminder_5d"),
+    windowAround(now, 24 * HOUR_MS, "reminder_1d"),
+    windowAround(now, 3 * HOUR_MS, "reminder"),
+  ];
+}
+
+function windowAround(
+  now: Date,
+  offsetMs: number,
+  kind: ReminderWindow["kind"],
+): ReminderWindow {
+  const center = now.getTime() + offsetMs;
+  return {
+    kind,
+    min: new Date(center - 0.5 * HOUR_MS).toISOString(),
+    max: new Date(center + 0.5 * HOUR_MS).toISOString(),
+  };
+}
+
+/** @deprecated Prefer reminderWindows(); kept for callers that expect a single 3h window. */
 export function reminderWindow(now = new Date()) {
-  const min = new Date(now.getTime() + 2.5 * 60 * 60 * 1000);
-  const max = new Date(now.getTime() + 3.5 * 60 * 60 * 1000);
-  return { min: min.toISOString(), max: max.toISOString() };
+  const [threeHour] = reminderWindows(now).filter((window) => window.kind === "reminder");
+  return { min: threeHour.min, max: threeHour.max };
 }

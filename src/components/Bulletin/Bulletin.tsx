@@ -19,7 +19,6 @@ import { EventsList } from "./EventsList";
 import BulletinDisplay from "./BulletinDisplay";
 import QrSlotPickerModal from "./QrSlotPickerModal";
 import RegistrationQuestionsModal from "./RegistrationQuestionsModal";
-import AsAttendanceFormModal from "./AsAttendanceFormModal";
 import Form from "../adminUser/Form/Form";
 
 type EventTimeFilter = "current" | "past";
@@ -33,7 +32,6 @@ export default function Bulletin() {
   const [eventTimeFilter, setEventTimeFilter] = useState<EventTimeFilter>("current");
   const [forumMode, setForumMode] = useState(false);
   const [portalMode, setPortalMode] = useState<PortalMode>("events");
-  const [asAttendanceFormUrl, setAsAttendanceFormUrl] = useState<string | null>(null);
   const [questionsModal, setQuestionsModal] = useState<{
     questions: EventQuestion[];
     initialAnswers: EventQuestionAnswers;
@@ -66,7 +64,9 @@ export default function Bulletin() {
     refreshEventView,
     applyUserRsvp,
     applyUserAttendance,
-  } = useBulletin(User, portalMode, setAsAttendanceFormUrl);
+  } = useBulletin(User, portalMode, (url) => {
+    window.open(url, "_blank", "noopener,noreferrer");
+  });
   const {
     showEditModal,
     setShowEditModal,
@@ -162,7 +162,9 @@ export default function Bulletin() {
     onRefresh: refreshEventView,
     onRsvp: applyUserRsvp,
     onAttended: applyUserAttendance,
-    onAsAttendanceForm: setAsAttendanceFormUrl,
+    onAsAttendanceForm: (url) => {
+      window.open(url, "_blank", "noopener,noreferrer");
+    },
   });
 
   const displayData = useMemo(() => {
@@ -414,12 +416,6 @@ export default function Bulletin() {
         }}
         onClose={() => setQuestionsModal(null)}
       />
-      {asAttendanceFormUrl && (
-        <AsAttendanceFormModal
-          src={asAttendanceFormUrl}
-          onClose={() => setAsAttendanceFormUrl(null)}
-        />
-      )}
       {showEditModal &&
         createPortal(
           <BulletinEditModal
