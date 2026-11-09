@@ -29,7 +29,7 @@ function resolveKind(body: WebhookBody): EmailKind | null {
     body.kind === "confirmation" ||
     body.kind === "update" ||
     body.kind === "reminder" ||
-    body.kind === "reminder_3d" ||
+    body.kind === "reminder_5d" ||
     body.kind === "reminder_1d"
   ) {
     return body.kind;

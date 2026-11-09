@@ -2,7 +2,7 @@ export type EventEmailKind =
   | "confirmation"
   | "update"
   | "reminder"
-  | "reminder_3d"
+  | "reminder_5d"
   | "reminder_1d";
 
 export type EventEmailContext = {
@@ -18,7 +18,7 @@ export type EventEmailContext = {
 };
 
 export type ReminderWindow = {
-  kind: Extract<EventEmailKind, "reminder" | "reminder_3d" | "reminder_1d">;
+  kind: Extract<EventEmailKind, "reminder" | "reminder_5d" | "reminder_1d">;
   min: string;
   max: string;
 };
@@ -97,10 +97,10 @@ function copyForKind(kind: EventEmailKind) {
       intro: "You switched to a new time slot. Here are the updated details.",
     };
   }
-  if (kind === "reminder_3d") {
+  if (kind === "reminder_5d") {
     return {
-      subjectPrefix: "Coming up in 3 days",
-      heading: "Your event is in 3 days",
+      subjectPrefix: "Coming up in 5 days",
+      heading: "Your event is in 5 days",
       intro: "This is a reminder that you are registered for an upcoming event.",
     };
   }
@@ -230,7 +230,7 @@ export function hookAuthorized(req: Request) {
 /** Hourly cron windows (±30 minutes) around each reminder offset. */
 export function reminderWindows(now = new Date()): ReminderWindow[] {
   return [
-    windowAround(now, 72 * HOUR_MS, "reminder_3d"),
+    windowAround(now, 120 * HOUR_MS, "reminder_5d"),
     windowAround(now, 24 * HOUR_MS, "reminder_1d"),
     windowAround(now, 3 * HOUR_MS, "reminder"),
   ];

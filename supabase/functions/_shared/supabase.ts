@@ -5,7 +5,7 @@ export type EmailKind =
   | "confirmation"
   | "update"
   | "reminder"
-  | "reminder_3d"
+  | "reminder_5d"
   | "reminder_1d";
 
 export type EventEmailRow = {

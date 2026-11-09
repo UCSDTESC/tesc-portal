@@ -6,7 +6,7 @@
 --     POST https://<project>.supabase.co/functions/v1/send-rsvp-email
 --     Header Authorization: Bearer <EMAIL_HOOK_SECRET>
 --   Hourly schedule POST .../functions/v1/send-event-reminders
---   Reminder windows: 3 days before, 1 day before, and 3 hours before
+--   Reminder windows: 5 days before, 1 day before, and 3 hours before
 --     same Authorization header
 --
 -- This file (pg_net + pg_cron):
