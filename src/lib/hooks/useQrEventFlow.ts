@@ -205,7 +205,6 @@ export function useQrEventFlow(options: {
           const expectedGrad = await fetchUserExpectedGrad(User.id);
           onAsAttendanceForm(
             buildAsAttendanceFormUrl({
-              title: activeEvent.title,
               foodProvided: activeEvent.food_provided,
               expectedGrad,
             }),

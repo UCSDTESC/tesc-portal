@@ -286,7 +286,6 @@ export function useBulletin(
       const expectedGrad = await fetchUserExpectedGrad(User.id);
       onAsAttendanceForm(
         buildAsAttendanceFormUrl({
-          title: event.title,
           foodProvided: event.food_provided,
           expectedGrad,
         }),

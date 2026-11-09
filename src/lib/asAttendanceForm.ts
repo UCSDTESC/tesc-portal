@@ -1,9 +1,13 @@
 export const AS_ATTENDANCE_FORM_BASE =
   "https://docs.google.com/forms/d/e/1FAIpQLSc3CypbxjZgU7ZzbhlpEy1XtytmzDquuU4ELmf_VtDRjkDomw/viewform";
 
-const EVENT_NAME_ENTRY = "entry.219446721";
 const ACADEMIC_YEAR_ENTRY = "entry.1687560837";
+const AFFILIATION_ENTRY = "entry.1851239463";
+const HEAR_ABOUT_ENTRY = "entry.153208156";
 const FOOD_ENTRY = "entry.570464428";
+
+export const AS_ATTENDANCE_AFFILIATION = "Attendee / Prospective Member";
+export const AS_ATTENDANCE_HEAR_ABOUT = "Posted Flyers / Posters";
 
 /** Exact Google Form radio labels, including the curly apostrophe on 2027. */
 const CLASS_YEAR_LABELS: Record<string, string> = {
@@ -22,18 +26,16 @@ export function classYearFormLabel(
 }
 
 export function buildAsAttendanceFormUrl({
-  title,
   foodProvided,
   expectedGrad,
 }: {
-  title: string;
   foodProvided?: string | null;
   expectedGrad?: string | number | null;
 }): string {
   const params = new URLSearchParams({
     usp: "pp_url",
-    embedded: "true",
-    [EVENT_NAME_ENTRY]: title,
+    [AFFILIATION_ENTRY]: AS_ATTENDANCE_AFFILIATION,
+    [HEAR_ABOUT_ENTRY]: AS_ATTENDANCE_HEAR_ABOUT,
     [FOOD_ENTRY]: foodProvided?.trim() ? foodProvided.trim() : "N/A",
   });
   const yearLabel = classYearFormLabel(expectedGrad);

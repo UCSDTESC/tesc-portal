@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  AS_ATTENDANCE_AFFILIATION,
   AS_ATTENDANCE_FORM_BASE,
+  AS_ATTENDANCE_HEAR_ABOUT,
   buildAsAttendanceFormUrl,
   classYearFormLabel,
 } from "./asAttendanceForm";
@@ -22,24 +24,24 @@ describe("classYearFormLabel", () => {
 });
 
 describe("buildAsAttendanceFormUrl", () => {
-  it("includes embedded=true, event title, and food", () => {
+  it("prefills year, affiliation, how they heard, and food", () => {
     const url = buildAsAttendanceFormUrl({
-      title: "Fall 2026 DECaF",
       foodProvided: "Pizza",
       expectedGrad: 2028,
     });
     const parsed = new URL(url);
     expect(`${parsed.origin}${parsed.pathname}`).toBe(AS_ATTENDANCE_FORM_BASE);
     expect(parsed.searchParams.get("usp")).toBe("pp_url");
-    expect(parsed.searchParams.get("embedded")).toBe("true");
-    expect(parsed.searchParams.get("entry.219446721")).toBe("Fall 2026 DECaF");
+    expect(parsed.searchParams.get("embedded")).toBeNull();
+    expect(parsed.searchParams.get("entry.219446721")).toBeNull();
     expect(parsed.searchParams.get("entry.570464428")).toBe("Pizza");
     expect(parsed.searchParams.get("entry.1687560837")).toBe("Class of '28");
+    expect(parsed.searchParams.get("entry.1851239463")).toBe(AS_ATTENDANCE_AFFILIATION);
+    expect(parsed.searchParams.get("entry.153208156")).toBe(AS_ATTENDANCE_HEAR_ABOUT);
   });
 
   it("uses N/A when food is missing and omits year when unknown", () => {
     const url = buildAsAttendanceFormUrl({
-      title: "GBM",
       foodProvided: "  ",
       expectedGrad: 2035,
     });

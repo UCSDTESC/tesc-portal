@@ -1,7 +1,12 @@
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { hookAuthorized, providedHookSecret } from "./email.ts";
 
-export type EmailKind = "confirmation" | "update" | "reminder";
+export type EmailKind =
+  | "confirmation"
+  | "update"
+  | "reminder"
+  | "reminder_3d"
+  | "reminder_1d";
 
 export type EventEmailRow = {
   user_id: string;
