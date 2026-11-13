@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { ShieldCheck, UserPlus } from "lucide-react";
 import { Button } from "@components/components/ui/button";
 import { Label } from "@components/components/ui/label";
 import {
@@ -83,25 +84,37 @@ export default function UserRolesEditor({ user, roles, orgs, onUpdated }: Props)
 
   return (
     <div className="flex flex-col gap-4">
-      <h3 className="text-lg font-semibold">Organization roles</h3>
+      <h3 className="flex items-center gap-2 text-base font-semibold text-ink">
+        <ShieldCheck className="h-4 w-4 text-brand-500" />
+        Organization roles
+      </h3>
 
       {user.roles.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No organization memberships yet.</p>
+        <p className="text-sm text-ink-muted">No organization memberships yet.</p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border">
+        <div className="card-shadow overflow-x-auto rounded-2xl border border-line bg-white">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left">
-              <tr>
-                <th className="px-3 py-2 font-medium">Organization</th>
-                <th className="px-3 py-2 font-medium">Role</th>
-                <th className="px-3 py-2 font-medium w-28">Actions</th>
+            <thead>
+              <tr className="border-b border-line bg-surface text-left">
+                <th className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                  Organization
+                </th>
+                <th className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                  Role
+                </th>
+                <th className="w-28 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
               {user.roles.map((membership) => (
-                <tr key={membership.user_org_role_uuid} className="border-t">
-                  <td className="px-3 py-2">{membership.org_name}</td>
-                  <td className="px-3 py-2">
+                <tr
+                  key={membership.user_org_role_uuid}
+                  className="border-b border-line transition-colors last:border-b-0 hover:bg-brand-50/40"
+                >
+                  <td className="px-4 py-2.5 font-medium text-ink">{membership.org_name}</td>
+                  <td className="px-4 py-2.5">
                     <Select
                       value={String(membership.role_id)}
                       onValueChange={(value) => handleRoleChange(membership, value)}
@@ -119,11 +132,12 @@ export default function UserRolesEditor({ user, roles, orgs, onUpdated }: Props)
                       </SelectContent>
                     </Select>
                   </td>
-                  <td className="px-3 py-2">
+                  <td className="px-4 py-2.5">
                     <Button
                       type="button"
-                      variant="secondary"
+                      variant="ghost"
                       size="sm"
+                      className="text-destructive hover:bg-red-50 hover:text-destructive"
                       disabled={savingKey === `remove-${membership.org_uuid}`}
                       onClick={() => handleRemove(membership)}
                     >
@@ -137,9 +151,12 @@ export default function UserRolesEditor({ user, roles, orgs, onUpdated }: Props)
         </div>
       )}
 
-      <div className="rounded-lg border p-4 flex flex-col gap-3">
-        <h4 className="font-medium">Add membership</h4>
-        <div className="grid gap-3 md:grid-cols-2">
+      <div className="rounded-2xl border border-line bg-surface/60 p-4">
+        <h4 className="flex items-center gap-2 text-sm font-semibold text-ink">
+          <UserPlus className="h-4 w-4 text-brand-500" />
+          Add membership
+        </h4>
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
           <div className="grid gap-2">
             <Label>Organization</Label>
             <Select value={pendingOrgId} onValueChange={setPendingOrgId}>
@@ -173,7 +190,7 @@ export default function UserRolesEditor({ user, roles, orgs, onUpdated }: Props)
         </div>
         <Button
           type="button"
-          className="w-fit bg-navy"
+          className="mt-4 w-fit rounded-xl bg-navy-900 text-white hover:bg-navy-800"
           disabled={savingKey === "add" || availableOrgs.length === 0}
           onClick={handleAdd}
         >

@@ -1,5 +1,6 @@
 import { PortalMode } from "@lib/constants";
-import { FaBriefcase, FaCalendarDays } from "react-icons/fa6";
+import { Briefcase, CalendarDays } from "lucide-react";
+import { cn } from "@components/lib/utils";
 
 export default function PortalToggle({
   portalMode,
@@ -10,14 +11,15 @@ export default function PortalToggle({
 }) {
   return (
     <div
-      className="relative flex shrink-0 items-center rounded-full bg-white/80 p-0.5 shadow-sm h-7 w-[3.75rem]"
+      className="relative flex shrink-0 items-center rounded-full border border-line bg-white p-1 shadow-sm"
       role="tablist"
       aria-label="Portal view"
     >
       <div
-        className="absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] rounded-full bg-blue shadow-sm transition-transform duration-200 ease-out"
+        className="absolute bottom-1 top-1 rounded-full bg-navy-900 shadow-sm transition-transform duration-200 ease-out"
         style={{
-          left: "2px",
+          width: "calc(50% - 4px)",
+          left: "4px",
           transform: portalMode === "events" ? "translateX(0)" : "translateX(100%)",
         }}
       />
@@ -28,10 +30,13 @@ export default function PortalToggle({
         aria-selected={portalMode === "events"}
         title="Events"
         onClick={() => onChange("events")}
-        className="relative z-10 flex h-6 w-1/2 items-center justify-center rounded-full transition-colors duration-200"
-        style={{ color: portalMode === "events" ? "white" : "#114675" }}
+        className={cn(
+          "relative z-10 flex items-center justify-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500",
+          portalMode === "events" ? "text-white" : "text-ink-secondary hover:text-ink",
+        )}
       >
-        <FaCalendarDays className="text-xs" aria-hidden />
+        <CalendarDays className="h-4 w-4" aria-hidden />
+        Events
       </button>
       <button
         type="button"
@@ -40,10 +45,13 @@ export default function PortalToggle({
         aria-selected={portalMode === "recruiter"}
         title="Recruiter Portal"
         onClick={() => onChange("recruiter")}
-        className="relative z-10 flex h-6 w-1/2 items-center justify-center rounded-full transition-colors duration-200"
-        style={{ color: portalMode === "recruiter" ? "white" : "#114675" }}
+        className={cn(
+          "relative z-10 flex items-center justify-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500",
+          portalMode === "recruiter" ? "text-white" : "text-ink-secondary hover:text-ink",
+        )}
       >
-        <FaBriefcase className="text-xs" aria-hidden />
+        <Briefcase className="h-4 w-4" aria-hidden />
+        Recruiter
       </button>
     </div>
   );

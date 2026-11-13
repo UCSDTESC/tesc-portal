@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useContext, useMemo } from "react";
+import type { ReactNode } from "react";
 import { useNavigate } from "react-router";
 
 import UserContext from "@lib/UserContext";
@@ -18,22 +19,85 @@ import Editor from "./Editor";
 import { MultipleSelectChip, Dropdown } from "./Dropdowns";
 import DisplayToast from "@lib/hooks/useToast";
 import { Tooltip, Switch, FormControlLabel } from "@mui/material";
-import { IoCloudUploadOutline, IoInformationCircleOutline } from "react-icons/io5";
+import {
+  AlertCircle,
+  AlignLeft,
+  CalendarDays,
+  ClipboardList,
+  FileText,
+  Image as ImageIcon,
+  Info,
+  MapPin,
+  QrCode,
+  Upload,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import PageHeader from "@components/shell/PageHeader";
 import EventSlotsEditor from "./EventSlotsEditor";
 import EventQuestionsEditor from "./EventQuestionsEditor";
 import EventQrModal from "./EventQrModal";
 import ProfileAdminTables from "../Profile/ProfileAdminTables";
+
+/** Shared field styling for the redesigned form. */
+const inputClass =
+  "h-12 w-full rounded-xl border border-line bg-white px-3 text-sm text-ink placeholder:text-ink-muted focus:border-brand-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500";
+const selectClass =
+  "h-12 w-full rounded-xl border border-line bg-white px-3 text-sm text-ink focus:border-brand-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500";
+const labelClass = "mb-1.5 block text-sm font-semibold text-ink";
+
+/** Navy/brand checked state for the MUI switches. */
+const switchSx = {
+  "& .MuiSwitch-switchBase.Mui-checked": { color: "#0f2440" },
+  "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+    backgroundColor: "#2f7fc1",
+  },
+};
+
+/** A white card grouping one logical section of the form. */
+function FormSection({
+  icon: Icon,
+  title,
+  description,
+  children,
+}: {
+  icon: LucideIcon;
+  title: string;
+  description?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="card-shadow rounded-2xl border border-line bg-white p-5 sm:p-6">
+      <div className="mb-5 flex items-start gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+          <Icon className="h-4 w-4" />
+        </span>
+        <div className="min-w-0">
+          <h2 className="text-base font-semibold text-ink">{title}</h2>
+          {description && (
+            <p className="mt-0.5 text-sm leading-relaxed text-ink-secondary">{description}</p>
+          )}
+        </div>
+      </div>
+      <div className="flex flex-col gap-4">{children}</div>
+    </section>
+  );
+}
 
 // TODO: refactor label and input components into an individual component
 export default function Form({
   formdata,
   id,
   editEvent = false,
+  inModal = false,
   onSuccess,
 }: {
   formdata?: formdata;
   id: string;
   editEvent?: boolean;
+  // True when rendered inside an edit modal (Bulletin / DataTable). The
+  // modal floats over the page, so the form needs its white panel there;
+  // on the /form page it is the page itself and stays panel-less.
+  inModal?: boolean;
   onSuccess: () => void;
 }) {
   const form = useRef<HTMLFormElement>(null);
@@ -317,238 +381,286 @@ export default function Form({
 
   return (
     <div
-      className={`w-[95%] flex flex-col lg:flex-row gap-8 m-auto bg-white z-101 ${
-        editEvent ? "mt-5" : "mt-20"
-      }`}
+      className={
+        editEvent || inModal
+          ? "relative z-[101] mx-auto my-5 w-[95%] max-w-7xl rounded-2xl bg-white p-4 shadow-xl sm:p-6"
+          : "mx-auto w-full max-w-7xl"
+      }
     >
-      <div className="flex flex-col min-w-0 lg:w-1/2">
-      {!editEvent && (
-        <>
-          {isForum ? (
-            <>
-              <div className="p-5">
-                <h1 className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A]">
-                  Post something to the Forum!
-                </h1>
-                <p className="font-DM text-xl w-3/4 text-balance text-[#262626] hidden md:block">
-                  Share an update with the community.
-                </p>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="p-5">
-                <h1 className="font-DM text-2xl text-navy font-bold [text-shadow:0px_2.83px_2.83px#0000001A]">
-                  Create a new Event!
-                </h1>
-                <p className="font-DM text-xl w-3/4 text-balance text-[#262626] hidden md:block">
-                  Submit a <strong>New Event</strong> to be displayed on the Bulletin
-                </p>
-              </div>
-            </>
-          )}
-        </>
-      )}
-      <form
-        className=" p-5 flex flex-col gap-2 w-full h-min"
-        ref={form}
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSubmit();
-        }}
-      >
-        <p className="text-red-500">{error}</p>
-
-        <label htmlFor="title">
-          Title <span className="text-red-500">*</span>
-        </label>
-        <input
-          name="title"
-          placeholder={isForum ? "Forum post title" : "Title"}
-          className="border-black border rounded-lg px-3 h-12"
-          value={formData.title}
-          onChange={(e) => setFormData({ ...formData, ["title"]: e.target.value })}
-          autoFocus
-          required
-        />
-        {(formData.track_attendance ?? false) && (
-          <>
-            <div className="flex items-center gap-1">
-              <label htmlFor="Password">Event Code </label>
-              <Tooltip
-                title={
-                  "This code is used for Event attendance validation for participants, show this code at your event to track attendance"
-                }
-                placement="bottom"
-                slotProps={{
-                  popper: {
-                    modifiers: [
-                      {
-                        name: "offset",
-                        options: {
-                          offset: [0, -14],
-                        },
-                      },
-                    ],
-                  },
-                }}
+      <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
+        <div className="min-w-0 flex-1">
+          <PageHeader
+            eyebrow={isForum ? "Forum" : "Events"}
+            title={
+              isForum
+                ? editEvent
+                  ? "Edit Forum Post"
+                  : "Post to the Forum"
+                : editEvent
+                  ? "Edit Event"
+                  : "New Event"
+            }
+            subtitle={
+              isForum
+                ? "Share an update with the community."
+                : editEvent
+                  ? "Update the details for this event."
+                  : "Submit a new event to be displayed on the Bulletin."
+            }
+          />
+          <form
+            className="flex w-full flex-col gap-5"
+            ref={form}
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmit();
+            }}
+          >
+            {error && (
+              <p
+                role="alert"
+                className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
               >
-                <IoInformationCircleOutline className="text-sm" />
-              </Tooltip>
-            </div>
-            <input
-              name="Password"
-              placeholder="Code"
-              className="border-black border rounded-lg px-3 h-12"
-              value={formData.password}
-              onChange={(e) => handleChange(e.target.value, ["password"])}
-              autoFocus
-              required
-            />
-          </>
-        )}
-        {!isForum && (
-          <EventSlotsEditor
-            slots={formData.slots ?? []}
-            onChange={(slots) => setFormData((prev) => ({ ...prev, slots }))}
-            showCapacity={formData.track_attendance ?? false}
-          />
-        )}
-        {!isForum && (
-          <EventQuestionsEditor
-            questions={formData.questions ?? []}
-            onChange={(questions) => setFormData((prev) => ({ ...prev, questions }))}
-          />
-        )}
-
-        {!editEvent && !isForum && (
-          <>
-            <label htmlFor="recurring">Recurring</label>
-            <select
-              id="recurring"
-              className="border-black border rounded-lg px-3 h-12"
-              value={formData.recurring_rate ?? "none"}
-              onChange={(e) =>
-                handleChange(
-                  e.target.value as "none" | "daily" | "weekly" | "biweekly" | "monthly",
-                  ["recurring_rate"],
-                )
-              }
-            >
-              {RECURRING_RATES.map((rate) => (
-                <option key={rate} value={rate}>
-                  {rate === "none" ? "None" : rate.charAt(0).toUpperCase() + rate.slice(1)}
-                </option>
-              ))}
-            </select>
-            {(formData.recurring_rate ?? "none") !== "none" && (
-              <>
-                <label htmlFor="recurrence_end">Recurrence end date</label>
-                <input
-                  id="recurrence_end"
-                  type="date"
-                  className="border-black border rounded-lg px-3 h-12"
-                  value={formData.recurrence_end_date ?? ""}
-                  min={firstSlotStart?.slice(0, 10)}
-                  onChange={(e) => handleChange(e.target.value, ["recurrence_end_date"])}
-                />
-              </>
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                {error}
+              </p>
             )}
-          </>
-        )}
 
-        <div className="flex flex-wrap items-center gap-6">
-          {!isForum && (
-            <>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.track_attendance ?? false}
-                    onChange={(_, checked) => handleChange(checked, ["track_attendance"])}
-                    color="primary"
-                  />
-                }
-                label="Track attendance on the portal"
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.rsvp_required ?? false}
-                    onChange={(_, checked) => handleChange(checked, ["rsvp_required"])}
-                    color="primary"
-                  />
-                }
-                label="Require RSVP before the day of the event"
-              />
-              <div className="flex items-center gap-2">
-                <label htmlFor="event-type">Event type</label>
-                <select
-                  id="event-type"
-                  className="border-black border rounded-lg px-3 h-10"
-                  value={formData.type ?? "external"}
-                  onChange={(e) =>
-                    handleChange(e.target.value as "internal" | "external", ["type"])
-                  }
-                >
-                  <option value="internal">internal</option>
-                  <option value="external">external</option>
-                </select>
+            <FormSection
+              icon={FileText}
+              title="Basics"
+              description="The title and type shown on the bulletin."
+            >
+              <div>
+                <label htmlFor="title" className={labelClass}>
+                  Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  name="title"
+                  placeholder={isForum ? "Forum post title" : "Title"}
+                  className={inputClass}
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, ["title"]: e.target.value })}
+                  autoFocus
+                  required
+                />
               </div>
-            </>
-          )}
-        </div>
-
-        {!isForum && !(formData.track_attendance ?? false) && (
-          <>
-            <div className="flex flex-wrap items-center gap-6">
+              {(formData.track_attendance ?? false) && (
+                <div>
+                  <div className="mb-1.5 flex items-center gap-1.5">
+                    <label htmlFor="Password" className="text-sm font-semibold text-ink">
+                      Event Code
+                    </label>
+                    <Tooltip
+                      title={
+                        "This code is used for Event attendance validation for participants, show this code at your event to track attendance"
+                      }
+                      placement="bottom"
+                      slotProps={{
+                        popper: {
+                          modifiers: [
+                            {
+                              name: "offset",
+                              options: {
+                                offset: [0, -14],
+                              },
+                            },
+                          ],
+                        },
+                      }}
+                    >
+                      <Info className="h-4 w-4 text-ink-muted" />
+                    </Tooltip>
+                  </div>
+                  <input
+                    name="Password"
+                    placeholder="Code"
+                    className={inputClass}
+                    value={formData.password}
+                    onChange={(e) => handleChange(e.target.value, ["password"])}
+                    autoFocus
+                    required
+                  />
+                </div>
+              )}
               {!isForum && (
-                <>
+                <div>
+                  <label htmlFor="event-type" className={labelClass}>
+                    Event type
+                  </label>
+                  <select
+                    id="event-type"
+                    className={selectClass}
+                    value={formData.type ?? "external"}
+                    onChange={(e) =>
+                      handleChange(e.target.value as "internal" | "external", ["type"])
+                    }
+                  >
+                    <option value="internal">internal</option>
+                    <option value="external">external</option>
+                  </select>
+                </div>
+              )}
+            </FormSection>
+
+            {!isForum && (
+              <FormSection
+                icon={CalendarDays}
+                title="Schedule"
+                description="Add one or more time slots. The event's overall start and end times come from your slots."
+              >
+                <EventSlotsEditor
+                  slots={formData.slots ?? []}
+                  onChange={(slots) => setFormData((prev) => ({ ...prev, slots }))}
+                  showCapacity={formData.track_attendance ?? false}
+                />
+                {!editEvent && (
+                  <>
+                    <div>
+                      <label htmlFor="recurring" className={labelClass}>
+                        Recurring
+                      </label>
+                      <select
+                        id="recurring"
+                        className={selectClass}
+                        value={formData.recurring_rate ?? "none"}
+                        onChange={(e) =>
+                          handleChange(
+                            e.target.value as
+                              | "none"
+                              | "daily"
+                              | "weekly"
+                              | "biweekly"
+                              | "monthly",
+                            ["recurring_rate"],
+                          )
+                        }
+                      >
+                        {RECURRING_RATES.map((rate) => (
+                          <option key={rate} value={rate}>
+                            {rate === "none"
+                              ? "None"
+                              : rate.charAt(0).toUpperCase() + rate.slice(1)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {(formData.recurring_rate ?? "none") !== "none" && (
+                      <div>
+                        <label htmlFor="recurrence_end" className={labelClass}>
+                          Recurrence end date
+                        </label>
+                        <input
+                          id="recurrence_end"
+                          type="date"
+                          className={inputClass}
+                          value={formData.recurrence_end_date ?? ""}
+                          min={firstSlotStart?.slice(0, 10)}
+                          onChange={(e) => handleChange(e.target.value, ["recurrence_end_date"])}
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
+              </FormSection>
+            )}
+
+            {!isForum && (
+              <FormSection
+                icon={ClipboardList}
+                title="Registration & attendance"
+                description="Control RSVPs, attendance tracking, and the questions attendees answer."
+              >
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
                   <FormControlLabel
                     control={
                       <Switch
                         checked={formData.track_attendance ?? false}
                         onChange={(_, checked) => handleChange(checked, ["track_attendance"])}
                         color="primary"
+                        sx={switchSx}
                       />
                     }
                     label="Track attendance on the portal"
                   />
-                  <div className="flex items-center gap-2">
-                    <label htmlFor="event-type">Event type</label>
-                    <select
-                      id="event-type"
-                      className="border-black border rounded-lg px-3 h-10"
-                      value={formData.type ?? "external"}
-                      onChange={(e) =>
-                        handleChange(e.target.value as "internal" | "external", ["type"])
-                      }
-                    >
-                      <option value="internal">internal</option>
-                      <option value="external">external</option>
-                    </select>
-                  </div>
-                </>
-              )}
-            </div>
-            <label htmlFor="manual_attendance">Manual attendance</label>
-            <input
-              id="manual_attendance"
-              name="manual_attendance"
-              type="number"
-              min={0}
-              placeholder="Enter attendance count"
-              className="border-black border rounded-lg px-3 h-12"
-              value={formData.manual_attendance ?? ""}
-              onChange={(e) => handleChange(e.target.value, ["manual_attendance"])}
-            />
-          </>
-        )}
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={formData.rsvp_required ?? false}
+                        onChange={(_, checked) => handleChange(checked, ["rsvp_required"])}
+                        color="primary"
+                        sx={switchSx}
+                      />
+                    }
+                    label="Require RSVP before the day of the event"
+                  />
+                </div>
 
-        {!isForum && (
-          <>
-            <div className="gap-6">
-              {!isForum && (
-                <>
+                {!(formData.track_attendance ?? false) && (
+                  <>
+                    <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.track_attendance ?? false}
+                            onChange={(_, checked) =>
+                              handleChange(checked, ["track_attendance"])
+                            }
+                            color="primary"
+                            sx={switchSx}
+                          />
+                        }
+                        label="Track attendance on the portal"
+                      />
+                      <div className="flex items-center gap-2">
+                        <label htmlFor="event-type" className="text-sm font-medium text-ink">
+                          Event type
+                        </label>
+                        <select
+                          id="event-type"
+                          className="h-10 rounded-xl border border-line bg-white px-3 text-sm text-ink focus:border-brand-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                          value={formData.type ?? "external"}
+                          onChange={(e) =>
+                            handleChange(e.target.value as "internal" | "external", ["type"])
+                          }
+                        >
+                          <option value="internal">internal</option>
+                          <option value="external">external</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label htmlFor="manual_attendance" className={labelClass}>
+                        Manual attendance
+                      </label>
+                      <input
+                        id="manual_attendance"
+                        name="manual_attendance"
+                        type="number"
+                        min={0}
+                        placeholder="Enter attendance count"
+                        className={inputClass}
+                        value={formData.manual_attendance ?? ""}
+                        onChange={(e) => handleChange(e.target.value, ["manual_attendance"])}
+                      />
+                    </div>
+                  </>
+                )}
+
+                <EventQuestionsEditor
+                  questions={formData.questions ?? []}
+                  onChange={(questions) => setFormData((prev) => ({ ...prev, questions }))}
+                />
+              </FormSection>
+            )}
+
+            {!isForum && (
+              <FormSection
+                icon={MapPin}
+                title="Location & food"
+                description="Where the event happens and what attendees can expect to eat."
+              >
+                <div>
                   <FormControlLabel
                     control={
                       <Switch
@@ -558,121 +670,156 @@ export default function Form({
                           if (!checked) handleChange(null, ["dependent_on"]);
                         }}
                         color="primary"
+                        sx={switchSx}
                       />
                     }
                     label="Dependent on another event?"
                   />
                   {formData.has_parent && (
-                    <>
-                      <div
-                        className="flex flex-wrap items-center gap-3 min-w-0"
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        <h2 className="text-xl font-semibold">Select parent event</h2>
-                        <ProfileAdminTables
-                          orgName={activeOrgName === "super_org" ? undefined : activeOrgName}
-                          orgId={activeOrgId}
-                          showUserAdmin={false}
-                          showOrgMembers={false}
-                          cols={["title", "start_date", "end_date"]}
-                          onRowClick={(e) => {
-                            handleChange(e.id, ["dependent_on"]);
-                          }}
-                          focusId={formData.dependent_on}
-                        />
-                      </div>
-                    </>
+                    <div
+                      className="mt-2 flex min-w-0 flex-wrap items-center gap-3"
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      <h2 className="text-base font-semibold text-ink">Select parent event</h2>
+                      <ProfileAdminTables
+                        orgName={activeOrgName === "super_org" ? undefined : activeOrgName}
+                        orgId={activeOrgId}
+                        showUserAdmin={false}
+                        showOrgMembers={false}
+                        cols={["title", "start_date", "end_date"]}
+                        onRowClick={(e) => {
+                          handleChange(e.id, ["dependent_on"]);
+                        }}
+                        focusId={formData.dependent_on}
+                      />
+                    </div>
                   )}
-                </>
+                </div>
+                <div>
+                  <label className={labelClass}>Event Location</label>
+                  <Dropdown formData={formData} handleChange={handleChange} />
+                </div>
+                <div>
+                  <label htmlFor="food_provided" className={labelClass}>
+                    What food is provided <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="food_provided"
+                    name="food_provided"
+                    placeholder="e.g. Pizza, snacks, or None"
+                    className={inputClass}
+                    value={formData.food_provided ?? ""}
+                    onChange={(e) => handleChange(e.target.value, ["food_provided"])}
+                    required
+                  />
+                </div>
+                <div>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={formData.as_funding ?? false}
+                        onChange={(_, checked) => handleChange(checked, ["as_funding"])}
+                        color="primary"
+                        sx={switchSx}
+                      />
+                    }
+                    label="AS funding will be used"
+                  />
+                </div>
+              </FormSection>
+            )}
+
+            {/* Forum posts have no poster (and tags are hidden for forum), so the
+                Media section would contain only the meaningless poster upload. */}
+            {(formData.type ?? "external") !== "internal" && !isForum && (
+              <FormSection
+                icon={ImageIcon}
+                title="Media"
+                description="Tags help students discover the event; the poster is shown at the top of the listing."
+              >
+                {!isForum && (
+                  <div>
+                    <label className={labelClass}>Tags</label>
+                    <MultipleSelectChip formData={formData} handleChange={handleChange} />
+                  </div>
+                )}
+                <div>
+                  <label className={labelClass}>Event Poster</label>
+                  <label
+                    htmlFor="event-poster-upload"
+                    className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-line bg-surface px-4 py-6 text-center transition-colors hover:border-brand-500 hover:bg-brand-50"
+                    title="Upload poster image"
+                  >
+                    <Upload className="h-5 w-5 text-navy-900" />
+                    <span className="text-sm font-semibold text-navy-900">
+                      Upload poster image
+                    </span>
+                    <span className="text-xs text-ink-secondary">PNG or JPG, up to 2 MB</span>
+                    <input
+                      id="event-poster-upload"
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={(e) => handlePosterUpload(e.target.files?.[0] ?? null)}
+                    />
+                  </label>
+                  {uploadingPoster && (
+                    <p className="mt-2 text-sm text-ink-secondary">Uploading poster…</p>
+                  )}
+                  {formData.poster && !uploadingPoster && (
+                    <img
+                      src={formData.poster}
+                      alt=""
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                      className="mt-3 max-w-[220px] rounded-xl border border-line"
+                    />
+                  )}
+                </div>
+              </FormSection>
+            )}
+
+            <FormSection icon={AlignLeft} title="Description">
+              <Editor
+                content={formData.content}
+                setEditorContent={(e) => handleChange(e, ["content"])}
+              />
+            </FormSection>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="submit"
+                className="cursor-pointer rounded-xl bg-navy-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-navy-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+              >
+                {isForum
+                  ? editEvent
+                    ? "Edit Forum Post"
+                    : "Post to the Forum"
+                  : editEvent
+                    ? "Edit Event"
+                    : "Submit New Event"}
+              </button>
+              {editEvent && !isForum && (formData.track_attendance ?? false) && (
+                <button
+                  type="button"
+                  onClick={openQrModal}
+                  disabled={loadingQr}
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-line bg-white px-5 py-2.5 text-sm font-semibold text-navy-900 transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <QrCode className="h-4 w-4" />
+                  {loadingQr ? "Loading QR…" : "Show QR Code"}
+                </button>
               )}
             </div>
-            <label>Event Location</label>
-            <Dropdown formData={formData} handleChange={handleChange} />
-            <label htmlFor="food_provided">
-              What food is provided <span className="text-red-500">*</span>
-            </label>
-            <input
-              id="food_provided"
-              name="food_provided"
-              placeholder="e.g. Pizza, snacks, or None"
-              className="border-black border rounded-lg px-3 h-12"
-              value={formData.food_provided ?? ""}
-              onChange={(e) => handleChange(e.target.value, ["food_provided"])}
-              required
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.as_funding ?? false}
-                  onChange={(_, checked) => handleChange(checked, ["as_funding"])}
-                  color="primary"
-                />
-              }
-              label="AS funding will be used"
-            />
-          </>
-        )}
-        {(formData.type ?? "external") !== "internal" && (
-          <>
-            {!isForum && (
-              <>
-                <label>Tags</label>
-                <MultipleSelectChip formData={formData} handleChange={handleChange} />
-              </>
-            )}
-            <label>Event Poster</label>
-            <label
-              htmlFor="event-poster-upload"
-              className="inline-flex items-center justify-center w-12 h-12 rounded-lg border-2 border-black border-dashed cursor-pointer hover:bg-gray-100 transition-colors"
-              title="Upload poster image"
-            >
-              <IoCloudUploadOutline className="w-6 h-6 text-navy" />
-              <input
-                id="event-poster-upload"
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                onChange={(e) => handlePosterUpload(e.target.files?.[0] ?? null)}
-              />
-            </label>
-            {uploadingPoster && <p className="text-sm text-gray-600">Uploading poster…</p>}
-            {formData.poster && !uploadingPoster && (
-              <img src={formData.poster} alt="" className="rounded-2xl max-w-[220px]" />
-            )}
-          </>
-        )}
-        <Editor content={formData.content} setEditorContent={(e) => handleChange(e, ["content"])} />
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="submit"
-            className="bg-[#6A97BD] border border-[#6A97BD] text-white w-fit rounded-lg px-5 py-2 cursor-pointer"
-          >
-            {isForum
-              ? editEvent
-                ? "Edit Forum Post"
-                : "Post to the Forum"
-              : editEvent
-                ? "Edit Event"
-                : "Submit New Event"}
-          </button>
-          {editEvent && !isForum && (formData.track_attendance ?? false) && (
-            <button
-              type="button"
-              onClick={openQrModal}
-              disabled={loadingQr}
-              className="border border-navy text-navy w-fit rounded-lg px-5 py-2 cursor-pointer disabled:opacity-50"
-            >
-              {loadingQr ? "Loading QR…" : "Show QR Code"}
-            </button>
-          )}
+          </form>
         </div>
-      </form>
+        <aside className="min-w-0 lg:w-1/2 lg:sticky lg:top-24 lg:self-start">
+          <div className="card-shadow max-h-[calc(100vh-8rem)] overflow-y-auto rounded-2xl border border-line bg-white p-4">
+            <EventInfo event={previewEvent} preview />
+          </div>
+        </aside>
       </div>
-      <aside className="min-w-0 lg:w-1/2 lg:sticky lg:top-24 lg:self-start">
-        <div className="border border-gray-200 rounded-lg p-4 overflow-y-auto max-h-[calc(100vh-8rem)] bg-white">
-          <EventInfo event={previewEvent} preview />
-        </div>
-      </aside>
       {qrModal && (
         <EventQrModal
           eventId={qrModal.eventId}

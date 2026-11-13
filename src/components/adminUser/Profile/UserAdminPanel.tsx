@@ -6,6 +6,7 @@ import {
   ArrowUpIcon,
   Columns2,
   FilterIcon,
+  Search,
 } from "lucide-react";
 
 import { Button } from "@components/components/ui/button";
@@ -233,31 +234,34 @@ export default function UserAdminPanel({
   if (loading && users.length === 0) {
     return (
       <div className={embedded ? "grid w-full gap-4" : "grid w-full gap-4 px-4 pb-4 pt-0"}>
-        {!embedded && <h2 className="text-xl font-semibold">User Management</h2>}
-        <div className="text-slate-500">Loading users…</div>
+        {!embedded && <h2 className="text-xl font-semibold tracking-tight text-ink">User Management</h2>}
+        <div className="text-sm text-ink-muted">Loading users…</div>
       </div>
     );
   }
 
   return (
     <div className={embedded ? "grid w-full gap-4" : "grid w-full gap-4 px-4 pb-4 pt-0"}>
-      {!embedded && <h2 className="text-xl font-semibold">User Management</h2>}
+      {!embedded && <h2 className="text-xl font-semibold tracking-tight text-ink">User Management</h2>}
 
       <div className="flex flex-wrap items-center gap-3">
-        <Input
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Search users"
-          className="max-w-sm"
-        />
+        <div className="relative max-w-sm flex-1">
+          <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-ink-muted" />
+          <Input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search users"
+            className="w-full pl-9"
+          />
+        </div>
         <div className="relative" ref={columnsPopupRef}>
           <button
             type="button"
             onClick={() => setShowColumnsPopup((p) => !p)}
-            className={`inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium border transition-colors ${
+            className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-colors ${
               hiddenColumnKeys.size > 0
-                ? "border-blue-400 bg-blue-50 text-blue-700"
-                : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                ? "border-brand-500/40 bg-brand-50 text-brand-600"
+                : "border-line bg-white text-ink-secondary hover:bg-surface"
             }`}
             title="Toggle columns"
           >
@@ -266,22 +270,22 @@ export default function UserAdminPanel({
           </button>
           {showColumnsPopup && (
             <div
-              className="absolute left-0 top-full mt-1 z-20 min-w-[180px] max-h-64 overflow-auto bg-white border border-slate-200 rounded-lg shadow-lg py-2"
+              className="card-shadow absolute top-full left-0 z-20 mt-1 max-h-64 min-w-[180px] overflow-auto rounded-2xl border border-line bg-white py-2"
               role="menu"
             >
-              <div className="px-3 py-1.5 text-xs font-semibold text-slate-500 border-b border-slate-100">
+              <div className="border-b border-line px-3 py-1.5 text-xs font-semibold text-ink-muted">
                 Show columns
               </div>
               {USER_ADMIN_TABLE_COLUMNS.map((col) => (
                 <label
                   key={col.key}
-                  className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm"
+                  className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm text-ink-secondary hover:bg-brand-50/40"
                 >
                   <input
                     type="checkbox"
                     checked={!hiddenColumnKeys.has(col.key)}
                     onChange={() => toggleColumnVisibility(col.key)}
-                    className="rounded cursor-pointer"
+                    className="cursor-pointer rounded accent-brand-600"
                   />
                   <span>{col.label || col.key}</span>
                 </label>
@@ -292,136 +296,137 @@ export default function UserAdminPanel({
       </div>
 
       <div
-        className={`border border-slate-300 rounded-lg overflow-hidden bg-white shadow-sm transition-opacity ${
+        className={`card-shadow max-h-[560px] overflow-auto rounded-2xl border border-line bg-white transition-opacity ${
           loading && users.length > 0 ? "opacity-60" : ""
         }`}
       >
-        <div className={isLgOrSmaller ? "overflow-x-auto" : ""}>
-          <table
-            className={
-              isLgOrSmaller
-                ? "w-[100%] min-w-max border-collapse text-sm"
-                : "w-full table-fixed border-collapse text-sm"
-            }
-          >
-            <colgroup>
+        <table
+          className={
+            isLgOrSmaller
+              ? "w-[100%] min-w-max border-collapse text-sm"
+              : "w-full table-fixed border-collapse text-sm"
+          }
+        >
+          <colgroup>
+            {visibleColumns.map((col) => (
+              <col
+                key={col.key}
+                style={
+                  isLgOrSmaller
+                    ? { width: `${col.widthPx}px`, minWidth: `${col.widthPx}px` }
+                    : { width: col.width }
+                }
+              />
+            ))}
+          </colgroup>
+          <thead>
+            <tr className="border-b border-line bg-surface">
               {visibleColumns.map((col) => (
-                <col
+                <th
                   key={col.key}
-                  style={
-                    isLgOrSmaller
-                      ? { width: `${col.widthPx}px`, minWidth: `${col.widthPx}px` }
-                      : { width: col.width }
-                  }
-                />
+                  className="sticky top-0 z-10 bg-surface px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted"
+                >
+                  <div className="inline-flex items-center gap-1 whitespace-nowrap">
+                    {col.label}
+                    {col.key !== "actions" &&
+                      "filterType" in col &&
+                      (col.filterType === "numeric" || col.filterType === "textPopup") && (
+                        <button
+                          type="button"
+                          onClick={(e) => openFilterPopup(col.key, e)}
+                          className={`rounded p-0.5 transition-colors hover:bg-line focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
+                            isFilterActive(col.key) ? "bg-brand-50 text-brand-600" : "text-ink-muted"
+                          }`}
+                          title={`Filter ${col.label}`}
+                          data-filter-trigger
+                        >
+                          <FilterIcon className="size-3.5 shrink-0" />
+                        </button>
+                      )}
+                    <span
+                      className={`inline-flex items-center gap-0.5 ${
+                        col.key !== "actions" ? "cursor-pointer select-none hover:text-ink" : ""
+                      } ${sortColumn === col.key ? "text-brand-600" : ""}`}
+                      onClick={() => handleSort(col.key)}
+                    >
+                      {col.key !== "actions" && sortColumn === col.key && sortDirection === "asc" && (
+                        <ArrowUpIcon className="size-3.5 shrink-0" />
+                      )}
+                      {col.key !== "actions" && sortColumn === col.key && sortDirection === "desc" && (
+                        <ArrowDownIcon className="size-3.5 shrink-0" />
+                      )}
+                      {col.key !== "actions" && sortColumn !== col.key && (
+                        <ArrowUpDownIcon className="size-3.5 shrink-0 opacity-50" />
+                      )}
+                    </span>
+                  </div>
+                </th>
               ))}
-            </colgroup>
-            <thead>
-              <tr className="bg-[#114675] border-b border-[#114675]/80">
-                {visibleColumns.map((col) => (
-                  <th
-                    key={col.key}
-                    className="text-left font-semibold text-white px-2 py-2 border-r border-white/20 last:border-r-0 align-top"
-                  >
-                    <div className="inline-flex items-center gap-1 whitespace-nowrap">
-                      {col.label}
-                      {col.key !== "actions" &&
-                        "filterType" in col &&
-                        (col.filterType === "numeric" || col.filterType === "textPopup") && (
-                          <button
-                            type="button"
-                            onClick={(e) => openFilterPopup(col.key, e)}
-                            className={`p-0.5 rounded hover:bg-white/20 focus:outline-none focus:ring-1 focus:ring-white shrink-0 ${
-                              isFilterActive(col.key) ? "text-blue-200" : "text-white/70"
-                            }`}
-                            title={`Filter ${col.label}`}
-                            data-filter-trigger
-                          >
-                            <FilterIcon className="size-3.5 shrink-0" />
-                          </button>
-                        )}
-                      <span
-                        className={`inline-flex items-center gap-0.5 ${
-                          col.key !== "actions" ? "cursor-pointer select-none hover:opacity-90" : ""
-                        }`}
-                        onClick={() => handleSort(col.key)}
-                      >
-                        {col.key !== "actions" && sortColumn === col.key && sortDirection === "asc" && (
-                          <ArrowUpIcon className="size-3.5 shrink-0" />
-                        )}
-                        {col.key !== "actions" && sortColumn === col.key && sortDirection === "desc" && (
-                          <ArrowDownIcon className="size-3.5 shrink-0" />
-                        )}
-                        {col.key !== "actions" && sortColumn !== col.key && (
-                          <ArrowUpDownIcon className="size-3.5 shrink-0 opacity-50" />
-                        )}
-                      </span>
-                    </div>
-                  </th>
-                ))}
+            </tr>
+          </thead>
+          <tbody>
+            {sortedData.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={visibleColumns.length}
+                  className="px-3 py-8 text-center text-sm text-ink-muted"
+                >
+                  {users.length === 0
+                    ? "No users yet."
+                    : "No users match your filters."}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {sortedData.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={visibleColumns.length}
-                    className="px-3 py-6 text-center text-slate-500 border-b border-slate-200"
-                  >
-                    {users.length === 0
-                      ? "No users yet."
-                      : "No users match your filters."}
-                  </td>
-                </tr>
-              ) : (
-                paginatedData.map((row) => (
-                  <tr
-                    key={row.uuid}
-                    className="border-b border-slate-200 hover:bg-slate-50/80 transition-colors"
-                  >
-                    {visibleColumns.map((col) => {
-                      if (col.key === "actions") {
-                        return (
-                          <td
-                            key={col.key}
-                            className="px-3 py-2 border-r border-slate-200 last:border-r-0 whitespace-nowrap"
-                          >
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => setSelectedUserId(row.uuid)}
-                            >
-                              View
-                            </Button>
-                          </td>
-                        );
-                      }
-                      const raw = getUserAdminCellValue(row, col.key);
-                      const display =
-                        col.key === "name" ? formatName(row) : raw || "—";
+            ) : (
+              paginatedData.map((row) => (
+                <tr
+                  key={row.uuid}
+                  className="border-b border-line transition-colors last:border-b-0 hover:bg-brand-50/40"
+                >
+                  {visibleColumns.map((col) => {
+                    if (col.key === "actions") {
                       return (
                         <td
                           key={col.key}
-                          className="px-3 py-2 border-r border-slate-200 last:border-r-0 text-slate-700 overflow-hidden text-ellipsis min-w-0"
-                          title={raw !== display ? raw : undefined}
+                          className="px-3 py-2 whitespace-nowrap"
                         >
-                          <span className="block truncate">{display}</span>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="rounded-xl"
+                            onClick={() => setSelectedUserId(row.uuid)}
+                          >
+                            View
+                          </Button>
                         </td>
                       );
-                    })}
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                    }
+                    const raw = getUserAdminCellValue(row, col.key);
+                    const display =
+                      col.key === "name" ? formatName(row) : raw || "—";
+                    return (
+                      <td
+                        key={col.key}
+                        className={`min-w-0 overflow-hidden px-3 py-2.5 text-ellipsis ${
+                          col.key === "name" ? "font-medium text-ink" : "text-ink-secondary"
+                        }`}
+                        title={raw !== display ? raw : undefined}
+                      >
+                        <span className="block truncate">{display}</span>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
       {users.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line pt-4">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-600">Rows per page</span>
+            <span className="text-sm text-ink-secondary">Rows per page</span>
             <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
               <SelectTrigger className="w-[70px]">
                 <SelectValue />
@@ -434,7 +439,7 @@ export default function UserAdminPanel({
                 ))}
               </SelectContent>
             </Select>
-            <span className="text-sm text-slate-600">
+            <span className="text-sm text-ink-secondary">
               {(currentPage - 1) * pageSize + 1}–
               {Math.min(currentPage * pageSize, sortedData.length)} of {sortedData.length}
             </span>
@@ -443,17 +448,19 @@ export default function UserAdminPanel({
             <Button
               variant="outline"
               size="sm"
+              className="rounded-xl"
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage <= 1}
             >
               Previous
             </Button>
-            <span className="text-sm text-slate-600">
+            <span className="text-sm text-ink-secondary">
               Page {currentPage} of {totalPages}
             </span>
             <Button
               variant="outline"
               size="sm"
+              className="rounded-xl"
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage >= totalPages}
             >
@@ -509,22 +516,22 @@ const UserAdminFilterPopup = forwardRef<
 ) {
   const content =
     filterType?.filterType === "textPopup" ? (
-      <div className="flex flex-col gap-2 p-3 min-w-[200px]">
-        <span className="text-xs font-medium text-slate-600">{columnLabel}</span>
+      <div className="flex min-w-[200px] flex-col gap-2 p-3">
+        <span className="text-xs font-medium text-ink-secondary">{columnLabel}</span>
         <input
           type="text"
           placeholder={`Filter ${columnLabel}…`}
-          className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full rounded-xl border border-line bg-white px-2 py-1.5 text-sm text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:outline-none"
           value={(columnFilters[columnKey] as string) ?? ""}
           onChange={(e) => setColumnFilter(columnKey, e.target.value)}
         />
       </div>
     ) : filterType?.filterType === "numeric" ? (
-      <div className="flex flex-col gap-2 p-3 min-w-[160px]">
-        <span className="text-xs font-medium text-slate-600">{columnLabel}</span>
+      <div className="flex min-w-[160px] flex-col gap-2 p-3">
+        <span className="text-xs font-medium text-ink-secondary">{columnLabel}</span>
         <div className="flex gap-2">
           <select
-            className="px-2 py-1.5 text-sm border border-slate-300 rounded bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="rounded-xl border border-line bg-white px-2 py-1.5 text-sm text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:outline-none"
             value={(columnFilters[columnKey] as DataTableNumericFilter)?.op ?? "eq"}
             onChange={(e) =>
               setColumnFilter(columnKey, {
@@ -542,7 +549,7 @@ const UserAdminFilterPopup = forwardRef<
           <input
             type="number"
             min={0}
-            className="flex-1 px-2 py-1.5 text-sm border border-slate-300 rounded bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 rounded-xl border border-line bg-white px-2 py-1.5 text-sm text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:outline-none"
             placeholder="#"
             value={(columnFilters[columnKey] as DataTableNumericFilter)?.value ?? ""}
             onChange={(e) =>
@@ -559,7 +566,7 @@ const UserAdminFilterPopup = forwardRef<
   return (
     <div
       ref={ref}
-      className="fixed z-[1400] rounded-lg border border-slate-200 bg-white shadow-lg"
+      className="card-shadow fixed z-[1400] rounded-2xl border border-line bg-white"
       style={{ top: anchorRect.top, left: anchorRect.left }}
     >
       {content}

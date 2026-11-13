@@ -27,6 +27,17 @@ function getStyles(name: string, personName: readonly string[], theme: Theme) {
   };
 }
 
+/** Shared outline styling for the MUI inputs, matched to the design system. */
+const outlinedInputSx = {
+  borderRadius: "0.75rem",
+  "& .MuiOutlinedInput-notchedOutline": { borderColor: "#e5e9f0" },
+  "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#2f7fc1" },
+  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+    borderColor: "#2f7fc1",
+    borderWidth: "1px",
+  },
+} as const;
+
 export function MultipleSelectChip({
   formData,
   handleChange
@@ -40,8 +51,8 @@ export function MultipleSelectChip({
     <Select
       labelId="demo-multiple-chip-label"
       id="demo-multiple-chip"
-      className="border-black border rounded-lg px-0 h-fit w-full flex text-5xl"
-      sx={{ borderRadius: "0.5rem" }}
+      className="w-full"
+      sx={{ ...outlinedInputSx, minHeight: "3rem" }}
       multiple
       value={formData.tags}
       onChange={(e) => {
@@ -53,9 +64,13 @@ export function MultipleSelectChip({
       MenuProps={MenuProps}
       input={<OutlinedInput />}
       renderValue={(selected) => (
-        <Box className="flex flex-wrap gap-2">
+        <Box className="flex flex-wrap gap-2 py-1">
           {selected.map((value: string) => (
-            <Chip key={value} label={value} className="!bg-lightBlue font-DM" />
+            <Chip
+              key={value}
+              label={value}
+              className="!bg-brand-50 font-medium !text-navy-900"
+            />
           ))}
         </Box>
       )}
@@ -80,9 +95,18 @@ export function Dropdown({
     <Autocomplete
       disablePortal
       options={locations}
-      className="border-black border rounded-lg px-0 h-fit w-full flex text-5xl"
+      className="w-full"
       freeSolo
-      sx={{ borderRadius: "0.5rem" }}
+      sx={{
+        ...outlinedInputSx,
+        "& .MuiOutlinedInput-root": { borderRadius: "0.75rem", minHeight: "3rem" },
+        "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
+          borderColor: "#2f7fc1",
+        },
+        "& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline": {
+          borderColor: "#2f7fc1",
+        },
+      }}
       inputValue={formData.location_str}
       onInputChange={(_e, newInputValue) => {
         handleChange(newInputValue, ["location_str"]);

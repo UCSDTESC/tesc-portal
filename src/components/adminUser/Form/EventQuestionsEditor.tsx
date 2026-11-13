@@ -1,5 +1,9 @@
 import { EventQuestion, EventQuestionType } from "@lib/constants";
 import { EVENT_QUESTION_MAX, blankEventQuestion } from "@lib/eventQuestions";
+import { Plus, Trash2 } from "lucide-react";
+
+const inputClass =
+  "h-10 w-full rounded-xl border border-line bg-white px-3 text-sm text-ink placeholder:text-ink-muted focus:border-brand-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500";
 
 export default function EventQuestionsEditor({
   questions,
@@ -26,31 +30,35 @@ export default function EventQuestionsEditor({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
-        <label className="font-medium">Registration questions</label>
+        <label className="text-sm font-semibold text-ink">Registration questions</label>
         <button
           type="button"
-          className="text-sm text-navy underline cursor-pointer disabled:opacity-50"
+          className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-line bg-white px-3 py-2 text-sm font-semibold text-navy-900 transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
           onClick={addQuestion}
           disabled={questions.length >= EVENT_QUESTION_MAX}
         >
-          + Add question
+          <Plus className="h-4 w-4" />
+          Add question
         </button>
       </div>
-      <p className="text-xs text-gray-600">
+      <p className="text-xs leading-relaxed text-ink-secondary">
         Asked when someone RSVPs. If they skip RSVP, unanswered required questions are asked at
         check-in. Maximum {EVENT_QUESTION_MAX}.
       </p>
       {questions.map((question, index) => (
-        <div key={question.id ?? `new-${index}`} className="rounded-lg border border-gray-200 p-3">
+        <div
+          key={question.id ?? `new-${index}`}
+          className="rounded-xl border border-line bg-surface p-4"
+        >
           <div className="flex flex-wrap items-center gap-2">
             <input
-              className="border-black border rounded-lg px-3 h-10 flex-1 min-w-[12rem]"
+              className={`${inputClass} min-w-[12rem] flex-1`}
               placeholder={`Question ${index + 1}`}
               value={question.prompt}
               onChange={(e) => updateQuestion(index, { prompt: e.target.value })}
             />
             <select
-              className="border-black border rounded-lg px-2 h-10"
+              className="h-10 rounded-xl border border-line bg-white px-2 text-sm text-ink focus:border-brand-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               value={question.type}
               onChange={(e) =>
                 updateQuestion(index, { type: e.target.value as EventQuestionType })
@@ -60,9 +68,10 @@ export default function EventQuestionsEditor({
               <option value="choice">Multiple choice</option>
               <option value="yes_no">Yes / No</option>
             </select>
-            <label className="flex items-center gap-1 text-sm">
+            <label className="flex cursor-pointer items-center gap-1.5 text-sm font-medium text-ink-secondary">
               <input
                 type="checkbox"
+                className="h-4 w-4 accent-navy-900"
                 checked={question.required}
                 onChange={(e) => updateQuestion(index, { required: e.target.checked })}
               />
@@ -70,7 +79,7 @@ export default function EventQuestionsEditor({
             </label>
             <button
               type="button"
-              className="text-sm text-red-600 underline disabled:opacity-40"
+              className="inline-flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-40"
               onClick={() => removeQuestion(index)}
               disabled={Boolean(question.has_answers)}
               title={
@@ -79,15 +88,16 @@ export default function EventQuestionsEditor({
                   : "Remove question"
               }
             >
+              <Trash2 className="h-3.5 w-3.5" />
               Remove
             </button>
           </div>
           {question.type === "choice" && (
-            <div className="mt-2 flex flex-col gap-1">
+            <div className="mt-3 flex flex-col gap-2">
               {(question.options ?? ["", ""]).map((option, optionIndex) => (
                 <input
                   key={optionIndex}
-                  className="border-black border rounded-lg px-3 h-9"
+                  className={`${inputClass} h-9`}
                   placeholder={`Option ${optionIndex + 1}`}
                   value={option}
                   onChange={(e) => {
@@ -99,12 +109,13 @@ export default function EventQuestionsEditor({
               ))}
               <button
                 type="button"
-                className="self-start text-sm text-navy underline"
+                className="inline-flex cursor-pointer items-center gap-1 self-start rounded-lg px-2 py-1 text-sm font-medium text-navy-900 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                 onClick={() =>
                   updateQuestion(index, { options: [...(question.options ?? []), ""] })
                 }
               >
-                + Add option
+                <Plus className="h-4 w-4" />
+                Add option
               </button>
             </div>
           )}

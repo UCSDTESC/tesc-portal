@@ -37,20 +37,20 @@ function SlotStatusCard({
 }) {
   return (
     <div
-      className={`w-full rounded-lg border p-4 shadow-sm ${
+      className={`w-full rounded-2xl border p-4 ${
         tone === "attended"
-          ? "border-green-300 bg-green-50"
-          : "border-blue/30 bg-blue/5"
+          ? "border-emerald-200 bg-emerald-50"
+          : "border-brand-100 bg-brand-50"
       }`}
     >
       <p
         className={`text-sm font-semibold ${
-          tone === "attended" ? "text-green-800" : "text-navy"
+          tone === "attended" ? "text-emerald-800" : "text-navy-900"
         }`}
       >
         {message}
       </p>
-      <p className="mt-1 text-sm text-gray-700">
+      <p className="mt-1 text-sm text-ink-secondary">
         {DateParser(slot.starts_at)} – {DateParser(slot.ends_at)}
       </p>
     </div>
@@ -101,7 +101,9 @@ export default function EventSlotPicker({
   if (!rsvpStatusReady || !slots.length) return null;
 
   const now = new Date();
-  const buttonClassName = `border border-blue px-4 py-2 rounded-lg cursor-pointer w-fit h-fit ${className}`;
+  const buttonClassName = `inline-flex cursor-pointer items-center justify-center rounded-xl border border-line bg-white px-4 py-2 text-sm font-semibold text-navy-900 shadow-sm transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50 ${className}`;
+  const primaryButtonClassName =
+    "inline-flex cursor-pointer items-center justify-center rounded-xl bg-navy-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-navy-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50";
 
   if (userAttendedSlotId && attendedSlot) {
     return (
@@ -189,11 +191,11 @@ export default function EventSlotPicker({
 
   return (
     <div
-      className={`w-full rounded-lg border p-4 shadow-sm ${
-        allEnded ? "border-gray-200 bg-gray-50 opacity-80" : "border-blue/30 bg-white"
+      className={`card-shadow w-full rounded-2xl border border-line bg-white p-5 ${
+        allEnded ? "opacity-80" : ""
       }`}
     >
-      <p className={`mb-2 text-sm font-semibold ${allEnded ? "text-gray-500" : "text-navy"}`}>
+      <p className={`mb-3 text-sm font-semibold ${allEnded ? "text-ink-muted" : "text-navy-900"}`}>
         {allEnded
           ? "Time slots"
           : rsvpSlot && slotAction === "register"
@@ -215,25 +217,27 @@ export default function EventSlotPicker({
           return (
             <div
               key={slot.id}
-              className={`flex items-start gap-2 rounded-md border p-2 text-sm ${
-                isSelected && !allEnded ? "border-blue bg-blue/10" : "border-gray-200"
+              className={`flex items-start gap-2 rounded-xl border p-3 text-sm transition-colors ${
+                isSelected && !allEnded
+                  ? "border-brand-500 bg-brand-50"
+                  : "border-line bg-white hover:border-brand-400"
               } ${disabled ? "opacity-60" : ""}`}
             >
               {!allEnded && !preview && (
                 <input
                   type="radio"
                   name={`slot-${eventId}`}
-                  className="mt-1"
+                  className="mt-1 h-4 w-4 shrink-0 accent-brand-600"
                   checked={isSelected}
                   disabled={disabled}
                   onChange={() => setSelectedSlotId(slot.id)}
                 />
               )}
               <span>
-                <span className={`block font-medium ${ended || allEnded ? "text-gray-500" : ""}`}>
+                <span className={`block font-medium ${ended || allEnded ? "text-ink-muted" : "text-ink"}`}>
                   {DateParser(slot.starts_at)} – {DateParser(slot.ends_at)}
                 </span>
-                <span className="text-xs text-gray-600">
+                <span className="text-xs text-ink-secondary">
                   {slotStatusLabel(slot, now, {
                     isCurrentRsvp,
                     isAttended: slot.id === userAttendedSlotId,
@@ -266,7 +270,7 @@ export default function EventSlotPicker({
               <>
                 <button
                   type="button"
-                  className={`${buttonClassName} bg-blue text-white`}
+                  className={primaryButtonClassName}
                   disabled={
                     !resolvedActiveId ||
                     resolvedActiveId === userRsvpSlotId ||

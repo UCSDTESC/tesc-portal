@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import supabase from "@server/supabase";
-import Editor from "../Form/Editor"; 
+import Editor from "../Form/Editor";
 
-export default function TescOrgProfileEditor({orgUuid = 42, containerClassName = "bg-blue text-white",}: {orgUuid?: number; containerClassName?: string;}) {
+export default function TescOrgProfileEditor({orgUuid = 42, containerClassName = "card-shadow border border-line bg-white",}: {orgUuid?: number; containerClassName?: string;}) {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -79,24 +79,26 @@ export default function TescOrgProfileEditor({orgUuid = 42, containerClassName =
     <div className={`w-full rounded-2xl p-6 ${containerClassName}`}>
 
 
-      <h2 className="text-xl font-semibold mb-2">TESC Profile</h2>
+      <h2 className="mb-2 text-xl font-semibold tracking-tight text-ink">TESC Profile</h2>
 
 
       {loading ? (
-        <div className="text-white/80">Loading…</div>
+        <div className="text-ink-muted">Loading…</div>
       ) : (
         <>
           {/* EXACT same editor from New Event */}
           <Editor content={editorContent} setEditorContent={setEditorContent} />
 
-          {errorMsg && <div className="mt-3 text-red-200">Error: {errorMsg}</div>}
+          {errorMsg && <div className="mt-3 text-sm text-destructive">Error: {errorMsg}</div>}
 
           <button
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className={`mt-4 px-5 py-2 rounded-xl font-semibold ${
-              saving ? "bg-white/30 cursor-not-allowed" : "bg-white text-blue-900 hover:bg-white/90"
+            className={`mt-4 rounded-xl px-5 py-2 text-sm font-semibold transition-colors ${
+              saving
+                ? "cursor-not-allowed bg-surface text-ink-muted"
+                : "bg-navy-900 text-white hover:bg-navy-800"
             }`}
           >
             {saving ? "Saving…" : "Save"}

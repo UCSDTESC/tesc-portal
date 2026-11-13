@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useContext } from "react";
+import { CalendarCheck, Loader2, LogIn } from "lucide-react";
 import EventCard from "./EventCard";
 import EventDetails from "./EventDetails";
 import { AttendedEvent } from "../lib/interfaces/AttendedEvent";
 import { fetchAttendedEvents } from "../../services/user";
 import UserContext from "@lib/UserContext";
+import EmptyState from "@components/shell/EmptyState";
 
 const AllAttendedEventsPage: React.FC = () => {
   const { User } = useContext(UserContext);
@@ -49,24 +51,41 @@ const AllAttendedEventsPage: React.FC = () => {
     handleCloseModal();
   };
 
-  if (loading) return <p>Loading event history...</p>;
-  if (error) return <p style={{ color: "red" }}>Error: {error}</p>;
-  if (!User || !User.id) return <h1>Please log in to view history.</h1>;
+  if (loading)
+    return (
+      <p className="flex items-center gap-2 text-sm text-ink-secondary">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Loading event history...
+      </p>
+    );
+  if (error)
+    return (
+      <EmptyState
+        title={`Error: ${error}`}
+        description="Something went wrong while loading your event history. Please try again later."
+      />
+    );
+  if (!User || !User.id)
+    return (
+      <EmptyState
+        icon={<LogIn className="h-6 w-6" />}
+        title="Please log in to view history."
+        description="Sign in with your UCSD Google account to see the events you've attended."
+      />
+    );
 
   //page structure
   return (
-    <div style={{ padding: "40px", maxWidth: "1200px", margin: "0 auto" }}>
+    <div>
       {allEvents.length === 0 ? (
-        <p>No event history found.</p>
+        <EmptyState
+          icon={<CalendarCheck className="h-6 w-6" />}
+          title="No event history found."
+          description="Events you check in to will show up here."
+        />
       ) : (
         // grid layout
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-            gap: "20px",
-          }}
-        >
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {allEvents.map((event) => (
             <EventCard key={event.id} event={event} onViewDetails={handleViewDetails} />
           ))}

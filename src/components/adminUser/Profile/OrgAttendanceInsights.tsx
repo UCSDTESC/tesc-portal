@@ -4,7 +4,6 @@ import {
   LINE_GROUP_BY_LABELS,
   LINE_GROUP_BY_OPTIONS,
   MEMBERS_GROUP_BY,
-  PIE_COLORS,
   PIE_GROUP_BY_LABELS,
   exportLineChartPdf,
   exportPieChartPdf,
@@ -23,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@components/components/ui/select";
+import StatCard from "@components/shell/StatCard";
 import {
   ArcElement,
   CategoryScale,
@@ -36,7 +36,7 @@ import {
 } from "chart.js";
 import { useMemo, useRef, useState } from "react";
 import { Line, Pie } from "react-chartjs-2";
-import { IoMdDownload } from "react-icons/io";
+import { CalendarCheck, CalendarDays, ChartLine, ChartPie, ClipboardList, Download, Users } from "lucide-react";
 
 ChartJS.register(
   CategoryScale,
@@ -48,6 +48,18 @@ ChartJS.register(
   Legend,
   ArcElement,
 );
+
+/** Navy / brand sequential palette for the pie chart (presentation only). */
+const PIE_PALETTE = [
+  "#0f2440",
+  "#11426b",
+  "#1d5c8a",
+  "#2f7fc1",
+  "#5ea3d6",
+  "#a1c7e7",
+  "#7c8ba1",
+  "#c2d3e5",
+];
 
 function slicesForGroup(
   payload: OrgAttendanceInsightsPayload,
@@ -72,31 +84,11 @@ function eventOptionLabel(event: InsightEventOption) {
   })})`;
 }
 
-function StatCard({
-  label,
-  value,
-  hint,
-  loading,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-  loading: boolean;
-}) {
-  const hintTone = hint?.startsWith("+")
-    ? "text-green-600"
-    : hint?.startsWith("-")
-      ? "text-red-600"
-      : "text-slate-500";
-  return (
-    <div className="min-w-[180px] flex-1 rounded-xl border border-slate-200 bg-white p-5">
-      <div className="text-sm font-semibold text-slate-500">{label}</div>
-      <div className="mt-2 text-3xl font-semibold text-navy">
-        {loading ? "…" : value}
-      </div>
-      {hint && !loading ? <div className={`mt-1 text-sm ${hintTone}`}>{hint}</div> : null}
-    </div>
-  );
+function statIcon(label: string) {
+  if (label.includes("Upcoming")) return <CalendarDays className="h-5 w-5" />;
+  if (label.includes("Unique")) return <Users className="h-5 w-5" />;
+  if (label.includes("RSVP")) return <ClipboardList className="h-5 w-5" />;
+  return <CalendarCheck className="h-5 w-5" />;
 }
 
 export default function OrgAttendanceInsights({
@@ -134,8 +126,10 @@ export default function OrgAttendanceInsights({
         {
           label: "Attendance",
           data: insights.groupedData.map((row) => row.count),
-          borderColor: "rgb(15, 76, 129)",
-          backgroundColor: "rgba(106, 151, 189, 0.45)",
+          borderColor: "#1d5c8a",
+          backgroundColor: "rgba(47, 127, 193, 0.18)",
+          pointBackgroundColor: "#1d5c8a",
+          pointBorderColor: "#ffffff",
         },
       ],
     }),
@@ -149,9 +143,9 @@ export default function OrgAttendanceInsights({
         {
           label: pieCategory === "members" ? "Attendees" : "Events",
           data: pieSlices.map((slice) => slice.value),
-          backgroundColor: pieSlices.map((_, index) => PIE_COLORS[index % PIE_COLORS.length].bg),
-          borderColor: pieSlices.map((_, index) => PIE_COLORS[index % PIE_COLORS.length].border),
-          borderWidth: 1,
+          backgroundColor: pieSlices.map((_, index) => PIE_PALETTE[index % PIE_PALETTE.length]),
+          borderColor: "#ffffff",
+          borderWidth: 2,
         },
       ],
     }),
@@ -218,11 +212,11 @@ export default function OrgAttendanceInsights({
   };
 
   return (
-    <section className="flex w-full flex-col gap-4 px-4">
+    <section className="flex w-full flex-col gap-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-xl font-semibold text-navy">Attendance insights</h2>
-          <p className="text-sm text-slate-500">
+          <h2 className="text-xl font-semibold tracking-tight text-ink">Attendance insights</h2>
+          <p className="mt-0.5 text-sm text-ink-secondary">
             Check-ins, RSVPs, and attendee makeup for{" "}
             {insights.viewingOneEvent
               ? "this event"
@@ -234,7 +228,7 @@ export default function OrgAttendanceInsights({
         </div>
         <div className="flex flex-wrap items-end gap-3">
           {isSuperOrg && (
-            <div className="flex min-w-[220px] flex-col gap-1">
+            <div className="flex min-w-[220px] flex-col gap-1.5">
               <Label htmlFor="insights-org">Organization</Label>
               <Select value={insights.selectedOrg} onValueChange={insights.setSelectedOrg}>
                 <SelectTrigger id="insights-org" className="w-[min(100%,280px)]">
@@ -251,7 +245,7 @@ export default function OrgAttendanceInsights({
               </Select>
             </div>
           )}
-          <div className="flex min-w-[220px] flex-col gap-1">
+          <div className="flex min-w-[220px] flex-col gap-1.5">
             <Label htmlFor="insights-event">Event</Label>
             <Select value={insights.selectedEvent} onValueChange={insights.setSelectedEvent}>
               <SelectTrigger id="insights-event" className="w-[min(100%,320px)]">
@@ -270,28 +264,61 @@ export default function OrgAttendanceInsights({
           <Button
             type="button"
             variant="outline"
+            className="rounded-xl"
             title="Export full report to PDF"
             disabled={insights.loading}
             onClick={exportFullReport}
           >
-            <IoMdDownload />
+            <Download className="h-4 w-4" />
             Export report
           </Button>
         </div>
       </div>
 
-      <div className="flex w-full flex-wrap gap-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {Object.entries(insights.stats).map(([label, stat]) => (
-          <StatCard key={label} label={label} {...stat} loading={insights.loading} />
+          <StatCard
+            key={label}
+            label={label}
+            value={insights.loading ? "…" : stat.value}
+            hint={stat.hint}
+            icon={statIcon(label)}
+          />
         ))}
       </div>
 
-      {insights.error && <p className="text-sm text-red-600">{insights.error}</p>}
+      {insights.error && <p className="text-sm text-destructive">{insights.error}</p>}
 
-      <div className="flex min-h-[420px] w-full flex-wrap items-stretch justify-center gap-6">
-        <div className="flex min-h-0 min-w-[min(100%,300px)] flex-1 flex-col gap-3">
+      <div className="grid gap-5 lg:grid-cols-2">
+        <div className="card-shadow flex flex-col gap-4 rounded-2xl border border-line bg-white p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+                <ChartPie className="h-4 w-4" />
+              </span>
+              <h3 className="text-base font-semibold text-ink">{pieTitle}</h3>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="rounded-xl"
+              title="Export to PDF"
+              disabled={insights.loading || pieSlices.length === 0}
+              onClick={() =>
+                exportPieChartPdf({
+                  category: pieCategory,
+                  groupBy: effectivePieGroup,
+                  canvas: pieRef.current?.canvas ?? null,
+                  slices: pieSlices,
+                })
+              }
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+          </div>
           <div className="flex flex-wrap items-end gap-3">
-            <div className="flex min-w-[150px] flex-col gap-1">
+            <div className="flex min-w-[150px] flex-col gap-1.5">
               <Label>Category</Label>
               <Select
                 value={pieCategory}
@@ -310,7 +337,7 @@ export default function OrgAttendanceInsights({
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex min-w-[150px] flex-col gap-1">
+            <div className="flex min-w-[150px] flex-col gap-1.5">
               <Label>Group by</Label>
               <Select
                 value={effectivePieGroup}
@@ -328,30 +355,13 @@ export default function OrgAttendanceInsights({
                 </SelectContent>
               </Select>
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              title="Export to PDF"
-              disabled={insights.loading || pieSlices.length === 0}
-              onClick={() =>
-                exportPieChartPdf({
-                  category: pieCategory,
-                  groupBy: effectivePieGroup,
-                  canvas: pieRef.current?.canvas ?? null,
-                  slices: pieSlices,
-                })
-              }
-            >
-              <IoMdDownload />
-            </Button>
           </div>
           {insights.loading ? (
-            <p className="text-sm text-slate-500">Loading chart…</p>
+            <p className="text-sm text-ink-muted">Loading chart…</p>
           ) : pieSlices.length === 0 ? (
-            <p className="text-sm text-slate-500">No attendance data yet.</p>
+            <p className="text-sm text-ink-muted">No attendance data yet.</p>
           ) : (
-            <div className="h-[360px] w-full">
+            <div className="h-[320px] w-full">
               <Pie
                 ref={pieRef}
                 data={pieData}
@@ -370,9 +380,36 @@ export default function OrgAttendanceInsights({
           )}
         </div>
 
-        <div className="flex min-h-0 min-w-[min(100%,320px)] flex-[1.4] flex-col gap-3">
+        <div className="card-shadow flex flex-col gap-4 rounded-2xl border border-line bg-white p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+                <ChartLine className="h-4 w-4" />
+              </span>
+              <h3 className="text-base font-semibold text-ink">{lineTitle}</h3>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="rounded-xl"
+              title="Export to PDF"
+              disabled={insights.loading || insights.groupedData.length === 0}
+              onClick={() =>
+                exportLineChartPdf({
+                  groupBy: insights.groupBy,
+                  startDate: insights.startDate,
+                  endDate: insights.endDate,
+                  canvas: lineRef.current?.canvas ?? null,
+                  groupedData: insights.groupedData,
+                })
+              }
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+          </div>
           <div className="flex flex-wrap items-end gap-3">
-            <div className="flex min-w-[150px] flex-col gap-1">
+            <div className="flex min-w-[150px] flex-col gap-1.5">
               <Label htmlFor="insights-start">Start date</Label>
               <Input
                 id="insights-start"
@@ -382,7 +419,7 @@ export default function OrgAttendanceInsights({
                 className="w-[180px]"
               />
             </div>
-            <div className="flex min-w-[150px] flex-col gap-1">
+            <div className="flex min-w-[150px] flex-col gap-1.5">
               <Label htmlFor="insights-end">End date</Label>
               <Input
                 id="insights-end"
@@ -392,7 +429,7 @@ export default function OrgAttendanceInsights({
                 className="w-[180px]"
               />
             </div>
-            <div className="flex min-w-[150px] flex-col gap-1">
+            <div className="flex min-w-[150px] flex-col gap-1.5">
               <Label>Group by</Label>
               <Select
                 value={insights.groupBy}
@@ -412,31 +449,13 @@ export default function OrgAttendanceInsights({
                 </SelectContent>
               </Select>
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              title="Export to PDF"
-              disabled={insights.loading || insights.groupedData.length === 0}
-              onClick={() =>
-                exportLineChartPdf({
-                  groupBy: insights.groupBy,
-                  startDate: insights.startDate,
-                  endDate: insights.endDate,
-                  canvas: lineRef.current?.canvas ?? null,
-                  groupedData: insights.groupedData,
-                })
-              }
-            >
-              <IoMdDownload />
-            </Button>
           </div>
           {insights.loading ? (
-            <p className="text-sm text-slate-500">Loading chart…</p>
+            <p className="text-sm text-ink-muted">Loading chart…</p>
           ) : insights.groupedData.length === 0 ? (
-            <p className="text-sm text-slate-500">No attendance data in this range.</p>
+            <p className="text-sm text-ink-muted">No attendance data in this range.</p>
           ) : (
-            <div className="h-[360px] w-full">
+            <div className="h-[320px] w-full">
               <Line ref={lineRef} data={lineData} options={LINE_CHART_OPTIONS} />
             </div>
           )}
