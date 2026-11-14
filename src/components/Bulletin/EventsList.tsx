@@ -7,6 +7,8 @@ import {
 } from "@lib/sidebarPage";
 import { memo, useContext, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { CalendarX, ChevronLeft, ChevronRight, MessageSquareOff, Users } from "lucide-react";
+import EmptyState from "@components/shell/EmptyState";
 import { SidebarClub, SidebarCompany } from "./SidebarItem";
 import UserContext from "@lib/UserContext";
 
@@ -15,13 +17,21 @@ const FADE_OUT_DURATION_MS = 300;
 
 function EventListSkeleton() {
   return (
-    <div className="flex flex-col gap-2 p-1">
-      {[1, 2, 3, 4, 5].map((i) => (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {[1, 2, 3, 4, 5, 6].map((i) => (
         <div
           key={i}
-          className="h-[100px] shrink-0 rounded-lg bg-white/80 animate-pulse w-full"
+          className="card-shadow overflow-hidden rounded-2xl border border-line bg-white"
           style={{ animationDelay: `${(i - 1) * 100}ms` }}
-        />
+        >
+          <div className="aspect-[16/9] w-full animate-pulse bg-brand-50" />
+          <div className="space-y-2.5 p-4">
+            <div className="h-3 w-1/3 animate-pulse rounded-full bg-surface" />
+            <div className="h-4 w-4/5 animate-pulse rounded-full bg-surface" />
+            <div className="h-3 w-1/2 animate-pulse rounded-full bg-surface" />
+            <div className="h-3 w-2/3 animate-pulse rounded-full bg-surface" />
+          </div>
+        </div>
       ))}
     </div>
   );
@@ -118,16 +128,18 @@ export const EventsList = memo(function ({
   const renderContent = () => {
     if (portalMode === "recruiter" && !showRecruiterList) {
       return (
-        <p className="px-4 py-6 text-center text-sm text-slate-600">
-          Log in with an approved recruiter account to browse candidates.
-        </p>
+        <EmptyState
+          icon={<Users className="h-6 w-6" />}
+          title="Recruiter access required"
+          description="Log in with an approved recruiter account to browse candidates."
+        />
       );
     }
     if (showRecruiterList) {
       return (
         <motion.div
           key={`company-${forumMode}-${eventTimeFilter}`}
-          className="flex flex-col"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
           variants={{ ...container, show: { opacity: 1, transition: { staggerChildren: 0.06 } } }}
           initial={sidebarHasAnimated ? false : "hidden"}
           animate="show"
@@ -143,26 +155,42 @@ export const EventsList = memo(function ({
     }
     if (!data || data.length === 0) {
       return (
-        <p className="px-4 py-6 text-center text-sm text-slate-600">
-          {forumMode
-            ? "There are no forum posts right now. Please check back later!"
-            : eventTimeFilter === "current"
-              ? "There are no upcoming events right now. Please check back later!"
-              : "There are no past events right now. Please check back later!"}
-        </p>
+        <EmptyState
+          icon={
+            forumMode ? (
+              <MessageSquareOff className="h-6 w-6" />
+            ) : (
+              <CalendarX className="h-6 w-6" />
+            )
+          }
+          title={
+            forumMode
+              ? "No forum posts yet"
+              : eventTimeFilter === "current"
+                ? "No upcoming events"
+                : "No past events"
+          }
+          description={
+            forumMode
+              ? "There are no forum posts right now. Please check back later!"
+              : eventTimeFilter === "current"
+                ? "There are no upcoming events right now. Please check back later!"
+                : "There are no past events right now. Please check back later!"
+          }
+        />
       );
     }
     return (
       <motion.div
         key={`events-${forumMode}-${eventTimeFilter}`}
-        className="flex flex-col"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
         variants={{ ...container, show: { opacity: 1, transition: { staggerChildren: 0.06 } } }}
         initial={sidebarHasAnimated ? false : "hidden"}
         animate="show"
         onAnimationComplete={() => setSidebarHasAnimated(true)}
       >
         {(slice.items as Event[]).map((daton) => (
-          <motion.div key={daton.id} variants={item}>
+          <motion.div key={daton.id} variants={item} className="h-full">
             <SidebarClub {...{ daton, setSelection, selection }} />
           </motion.div>
         ))}
@@ -171,7 +199,7 @@ export const EventsList = memo(function ({
   };
 
   return (
-    <div ref={listRef} className="h-full min-h-0 overflow-y-auto">
+    <div ref={listRef} className="min-h-0">
       <AnimatePresence mode="wait">
         {showSkeleton ? (
           <motion.div
@@ -194,27 +222,29 @@ export const EventsList = memo(function ({
         )}
       </AnimatePresence>
       {!showSkeleton && items.length > SIDEBAR_PAGE_SIZE && (
-        <div className="flex items-center justify-between gap-1 px-2 py-2">
+        <div className="mt-6 flex items-center justify-between gap-2">
           <button
             type="button"
-            className="rounded px-2 py-1 text-xs font-medium text-slate-700 disabled:opacity-40"
+            className="inline-flex items-center gap-1 rounded-xl border border-line bg-white px-3 py-2 text-sm font-medium text-ink-secondary shadow-sm transition-colors hover:bg-surface hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
             onClick={() => setPage(slice.page - 1)}
             disabled={slice.page <= 1}
             aria-label="Previous page"
           >
+            <ChevronLeft className="h-4 w-4" />
             Prev
           </button>
-          <span className="text-xs text-slate-600">
+          <span className="text-sm text-ink-secondary">
             {slice.start}–{slice.end} of {items.length}
           </span>
           <button
             type="button"
-            className="rounded px-2 py-1 text-xs font-medium text-slate-700 disabled:opacity-40"
+            className="inline-flex items-center gap-1 rounded-xl border border-line bg-white px-3 py-2 text-sm font-medium text-ink-secondary shadow-sm transition-colors hover:bg-surface hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
             onClick={() => setPage(slice.page + 1)}
             disabled={slice.page >= slice.totalPages}
             aria-label="Next page"
           >
             Next
+            <ChevronRight className="h-4 w-4" />
           </button>
         </div>
       )}
