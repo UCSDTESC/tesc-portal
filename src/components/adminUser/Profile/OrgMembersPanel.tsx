@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Search, UserPlus } from "lucide-react";
 import { Button } from "@components/components/ui/button";
 import { Input } from "@components/components/ui/input";
 import { Label } from "@components/components/ui/label";
@@ -159,9 +160,12 @@ export default function OrgMembersPanel({ orgId, pagination, embedded = false }:
 
   return (
     <div className={wrapperClass}>
-      <div className="rounded-lg border p-4 flex flex-col gap-3 bg-slate-50/50">
-        <h3 className="font-medium">Assign role by email</h3>
-        <div className="grid gap-3 md:grid-cols-[1fr_auto_auto] items-end">
+      <div className="card-shadow rounded-2xl border border-line bg-white p-5">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-ink">
+          <UserPlus className="h-4 w-4 text-brand-500" />
+          Assign role by email
+        </h3>
+        <div className="mt-3 grid items-end gap-3 md:grid-cols-[1fr_auto_auto]">
           <div className="grid gap-2">
             <Label htmlFor="assign-email">Email</Label>
             <Input
@@ -187,120 +191,128 @@ export default function OrgMembersPanel({ orgId, pagination, embedded = false }:
               </SelectContent>
             </Select>
           </div>
-          <Button type="button" className="bg-navy" disabled={assigning} onClick={handleAssign}>
+          <Button
+            type="button"
+            className="rounded-xl bg-navy-900 text-white hover:bg-navy-800"
+            disabled={assigning}
+            onClick={handleAssign}
+          >
             Assign
           </Button>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="relative max-w-sm">
+        <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-ink-muted" />
         <Input
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           placeholder="Search org members"
-          className="max-w-sm"
+          className="pl-9"
         />
       </div>
 
       <div
-        className={`border border-slate-300 rounded-lg overflow-hidden bg-white shadow-sm transition-opacity ${
+        className={`card-shadow max-h-[560px] overflow-auto rounded-2xl border border-line bg-white transition-opacity ${
           loading && members.length > 0 ? "opacity-60" : ""
         }`}
       >
-        <div className={isLgOrSmaller ? "overflow-x-auto" : ""}>
-          <table
-            className={
-              isLgOrSmaller
-                ? "w-[100%] min-w-max border-collapse text-sm"
-                : "w-full table-fixed border-collapse text-sm"
-            }
-          >
-            <colgroup>
+        <table
+          className={
+            isLgOrSmaller
+              ? "w-[100%] min-w-max border-collapse text-sm"
+              : "w-full table-fixed border-collapse text-sm"
+          }
+        >
+          <colgroup>
+            {ORG_MEMBER_TABLE_COLUMNS.map((col) => (
+              <col
+                key={col.key}
+                style={
+                  isLgOrSmaller
+                    ? { width: `${col.widthPx}px`, minWidth: `${col.widthPx}px` }
+                    : { width: col.width }
+                }
+              />
+            ))}
+          </colgroup>
+          <thead>
+            <tr className="border-b border-line bg-surface">
               {ORG_MEMBER_TABLE_COLUMNS.map((col) => (
-                <col
+                <th
                   key={col.key}
-                  style={
-                    isLgOrSmaller
-                      ? { width: `${col.widthPx}px`, minWidth: `${col.widthPx}px` }
-                      : { width: col.width }
-                  }
-                />
+                  className="sticky top-0 z-10 bg-surface px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted"
+                >
+                  {col.label}
+                </th>
               ))}
-            </colgroup>
-            <thead>
-              <tr className="bg-[#114675] border-b border-[#114675]/80">
-                {ORG_MEMBER_TABLE_COLUMNS.map((col) => (
-                  <th
-                    key={col.key}
-                    className="text-left font-semibold text-white px-2 py-2 border-r border-white/20 last:border-r-0"
-                  >
-                    {col.label}
-                  </th>
-                ))}
+            </tr>
+          </thead>
+          <tbody>
+            {loading && members.length === 0 ? (
+              <tr>
+                <td colSpan={ORG_MEMBER_TABLE_COLUMNS.length} className="px-3 py-8 text-center text-sm text-ink-muted">
+                  Loading members…
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {loading && members.length === 0 ? (
-                <tr>
-                  <td colSpan={ORG_MEMBER_TABLE_COLUMNS.length} className="px-3 py-6 text-center text-slate-500">
-                    Loading members…
+            ) : members.length === 0 ? (
+              <tr>
+                <td colSpan={ORG_MEMBER_TABLE_COLUMNS.length} className="px-3 py-8 text-center text-sm text-ink-muted">
+                  No members found.
+                </td>
+              </tr>
+            ) : (
+              members.map((row) => (
+                <tr
+                  key={row.uuid}
+                  className="border-b border-line transition-colors last:border-b-0 hover:bg-brand-50/40"
+                >
+                  <td className="px-3 py-2.5 font-medium text-ink">{memberName(row)}</td>
+                  <td className="truncate px-3 py-2.5 text-ink-secondary">{row.email}</td>
+                  <td className="px-3 py-2.5 text-ink-secondary">{row.major || "—"}</td>
+                  <td className="px-3 py-2.5 text-ink-secondary">{row.expected_grad || "—"}</td>
+                  <td className="px-3 py-2.5 tabular-nums text-ink-secondary">{row.points ?? 0}</td>
+                  <td className="px-3 py-2.5">
+                    <Select
+                      value={String(row.role_id)}
+                      onValueChange={(value) => handleRoleChange(row, value)}
+                      disabled={savingEmail === row.email}
+                    >
+                      <SelectTrigger className="max-w-[160px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {roles.map((role) => (
+                          <SelectItem key={role.id} value={String(role.id)}>
+                            {formatRoleLabel(role.name)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive hover:bg-red-50 hover:text-destructive"
+                      disabled={savingEmail === row.email}
+                      onClick={() => handleRemove(row)}
+                    >
+                      Remove
+                    </Button>
                   </td>
                 </tr>
-              ) : members.length === 0 ? (
-                <tr>
-                  <td colSpan={ORG_MEMBER_TABLE_COLUMNS.length} className="px-3 py-6 text-center text-slate-500">
-                    No members found.
-                  </td>
-                </tr>
-              ) : (
-                members.map((row) => (
-                  <tr key={row.uuid} className="border-b border-slate-200 hover:bg-slate-50/80">
-                    <td className="px-3 py-2 border-r border-slate-200">{memberName(row)}</td>
-                    <td className="px-3 py-2 border-r border-slate-200 truncate">{row.email}</td>
-                    <td className="px-3 py-2 border-r border-slate-200">{row.major || "—"}</td>
-                    <td className="px-3 py-2 border-r border-slate-200">{row.expected_grad || "—"}</td>
-                    <td className="px-3 py-2 border-r border-slate-200">{row.points ?? 0}</td>
-                    <td className="px-3 py-2 border-r border-slate-200">
-                      <Select
-                        value={String(row.role_id)}
-                        onValueChange={(value) => handleRoleChange(row, value)}
-                        disabled={savingEmail === row.email}
-                      >
-                        <SelectTrigger className="max-w-[160px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {roles.map((role) => (
-                            <SelectItem key={role.id} value={String(role.id)}>
-                              {formatRoleLabel(role.name)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </td>
-                    <td className="px-3 py-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        disabled={savingEmail === row.email}
-                        onClick={() => handleRemove(row)}
-                      >
-                        Remove
-                      </Button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
       {totalCount > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line pt-4">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-600">Rows per page</span>
+            <span className="text-sm text-ink-secondary">Rows per page</span>
             <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
               <SelectTrigger className="w-[70px]">
                 <SelectValue />
@@ -313,7 +325,7 @@ export default function OrgMembersPanel({ orgId, pagination, embedded = false }:
                 ))}
               </SelectContent>
             </Select>
-            <span className="text-sm text-slate-600">
+            <span className="text-sm text-ink-secondary">
               {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, totalCount)} of{" "}
               {totalCount}
             </span>
@@ -322,17 +334,19 @@ export default function OrgMembersPanel({ orgId, pagination, embedded = false }:
             <Button
               variant="outline"
               size="sm"
+              className="rounded-xl"
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage <= 1 || loading}
             >
               Previous
             </Button>
-            <span className="text-sm text-slate-600">
+            <span className="text-sm text-ink-secondary">
               Page {currentPage} of {totalPages}
             </span>
             <Button
               variant="outline"
               size="sm"
+              className="rounded-xl"
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage >= totalPages || loading}
             >

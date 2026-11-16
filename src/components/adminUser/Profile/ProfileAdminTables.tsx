@@ -1,16 +1,10 @@
 import { useMemo, useState } from "react";
+import { CalendarDays, Plus, ShieldCheck, Users } from "lucide-react";
 import { NavLink } from "react-router";
 import DataTable from "../Data/DataTable";
 import UserAdminPanel from "./UserAdminPanel";
 import OrgMembersPanel from "./OrgMembersPanel";
 import { Event } from "@lib/constants";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@components/components/ui/select";
 import type { TablePaginationProps } from "@lib/constants";
 
 type AdminTableView = "events" | "users" | "members";
@@ -24,6 +18,12 @@ type Props = {
   onRowClick?: (daton: Event) => void;
   focusId?: string | null;
 };
+
+const VIEW_TABS: { value: AdminTableView; label: string; icon: typeof CalendarDays }[] = [
+  { value: "events", label: "Posted Events", icon: CalendarDays },
+  { value: "members", label: "Org Members", icon: Users },
+  { value: "users", label: "User Management", icon: ShieldCheck },
+];
 
 export default function ProfileAdminTables({
   orgName,
@@ -55,6 +55,12 @@ export default function ProfileAdminTables({
     setCurrentPage(1);
   };
 
+  const visibleTabs = VIEW_TABS.filter((tab) => {
+    if (tab.value === "members") return showOrgMembers;
+    if (tab.value === "users") return showUserAdmin;
+    return true;
+  });
+
   const renderTable = () => {
     if (view === "users" && showUserAdmin) {
       return <UserAdminPanel pagination={pagination} embedded />;
@@ -75,30 +81,48 @@ export default function ProfileAdminTables({
   };
 
   return (
-    <div className="grid w-full gap-4 px-4 pb-4 pt-0">
+    <div className="grid w-full gap-4">
       {!onRowClick && (
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3 min-w-0">
+          <div className="flex min-w-0 flex-wrap items-center gap-3">
             {hasViewSwitcher ? (
-              <Select value={view} onValueChange={handleViewChange}>
-                <SelectTrigger className="w-[min(100%,240px)]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="events">Posted Events</SelectItem>
-                  {showOrgMembers && <SelectItem value="members">Org Members</SelectItem>}
-                  {showUserAdmin && <SelectItem value="users">User Management</SelectItem>}
-                </SelectContent>
-              </Select>
+              <div
+                role="tablist"
+                aria-label="Admin views"
+                className="inline-flex flex-wrap gap-1 rounded-xl border border-line bg-surface p-1"
+              >
+                {visibleTabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const active = view === tab.value;
+                  return (
+                    <button
+                      key={tab.value}
+                      type="button"
+                      role="tab"
+                      aria-selected={active}
+                      onClick={() => handleViewChange(tab.value)}
+                      className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                        active
+                          ? "bg-white text-navy-900 shadow-sm"
+                          : "text-ink-secondary hover:text-ink"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
             ) : (
-              <h2 className="text-xl font-semibold">My Posted Events</h2>
+              <h2 className="text-xl font-semibold tracking-tight text-ink">My Posted Events</h2>
             )}
           </div>
           {view === "events" && (
             <NavLink
               to="/form"
-              className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-navy-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-navy-800"
             >
+              <Plus className="h-4 w-4" />
               New Event
             </NavLink>
           )}

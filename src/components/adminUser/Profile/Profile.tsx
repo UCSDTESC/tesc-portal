@@ -1,5 +1,6 @@
 import UserContext from "@lib/UserContext";
 import { useContext, useEffect } from "react";
+import PageHeader from "@components/shell/PageHeader";
 import EditProfileForm from "./EditMemberProfile";
 
 export default function Profile() {
@@ -10,11 +11,16 @@ export default function Profile() {
   }, []);
 
   return (
-    <div className="flex min-h-screen w-full flex-col gap-10 px-[min(15px,2vw)] pb-12 mt-8">
+    <div>
       {User?.role !== "company" && (
-        <section className="w-full">
+        <>
+          <PageHeader
+            eyebrow="Account"
+            title="My Profile"
+            subtitle="Update your personal details, resume, and recruiter sharing preferences."
+          />
           <EditProfileForm />
-        </section>
+        </>
       )}
     </div>
   );

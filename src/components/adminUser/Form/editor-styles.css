@@ -52,20 +52,20 @@
   }
 
   blockquote {
-    border-left: 3px solid #000000;
-    background-color: aliceblue;
+    border-left: 3px solid #2f7fc1;
+    background-color: #eef5fb;
     margin: 1.5rem 0;
     padding-left: 1rem;
   }
 
   hr {
     border: none;
-    border-top: 1px solid #000000;
+    border-top: 1px solid #e5e9f0;
     margin: 2rem 0;
   }
 }
 .tiptap p.is-editor-empty:first-child::before {
-  color: #adb5bd;
+  color: #8a97a8;
   content: "Content";
   float: left;
   height: 0;

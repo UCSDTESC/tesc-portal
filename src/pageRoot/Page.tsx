@@ -22,9 +22,8 @@ import {
   shouldSkipMemberProfileSetupPrompt,
 } from "@lib/userProfile";
 
-import Navbar from "./Navbar";
+import AppShell from "@components/shell/AppShell";
 import DisplayToast from "@lib/hooks/useToast";
-import Footer from "./Footer";
 
 export default function Page() {
   const [User, setUser] = useState<User | null>(null);
@@ -341,11 +340,9 @@ export default function Page() {
           userOrgIds,
         }}
       >
-        <Navbar />
-        <div className="pt-[10vh] w-full flex justify-center">
+        <AppShell>
           <Outlet />
-        </div>
-        <Footer />
+        </AppShell>
       </UserContext.Provider>
     </main>
   );

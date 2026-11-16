@@ -1,6 +1,13 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@components/components/ui/card";
+import {
+  ExternalLink,
+  FileText,
+  GraduationCap,
+  ShieldCheck,
+  Upload,
+  User as UserIcon,
+} from "lucide-react";
 import { Label } from "@components/components/ui/label";
 import { Input } from "@components/components/ui/input";
 import { Button } from "@components/components/ui/button";
@@ -244,6 +251,12 @@ export default function EditMemberProfile({
     ? URL.createObjectURL(pendingResumeFile)
     : storagePreviewUrl || linkPreview;
 
+  const inputClassName =
+    "h-11 rounded-xl border-line bg-white text-ink placeholder:text-ink-muted focus-visible:ring-brand-500";
+  const labelClassName = "text-sm font-medium text-ink";
+  const errorClassName = "text-sm text-red-600";
+  const helperClassName = "text-xs text-ink-muted";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -254,53 +267,69 @@ export default function EditMemberProfile({
         className={`mx-auto flex w-full min-w-0 flex-col gap-6 ${isOnboarding ? "max-w-3xl" : "max-w-6xl lg:flex-row"}`}
       >
         {/* Left: Edit Card */}
-        <Card className="h-fit min-w-0 w-full flex-1 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl">
-              {isOnboarding ? "Complete your profile" : "Edit Profile"}
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              {isOnboarding
-                ? "Tell us a bit about yourself so you can RSVP to events and connect with recruiters."
-                : "Update your profile, resume, and recruiter sharing preferences."}
-            </p>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="card-shadow h-fit min-w-0 w-full flex-1 rounded-2xl border border-line bg-white p-6 sm:p-7">
+          <h2 className="text-2xl font-bold tracking-tight text-ink">
+            {isOnboarding ? "Complete your profile" : "Edit Profile"}
+          </h2>
+          <p className="mt-1 text-sm leading-relaxed text-ink-secondary">
+            {isOnboarding
+              ? "Tell us a bit about yourself so you can RSVP to events and connect with recruiters."
+              : "Update your profile, resume, and recruiter sharing preferences."}
+          </p>
+
+          <form onSubmit={handleSubmit} className="mt-7 space-y-7">
+            {/* Personal information */}
+            <section className="space-y-4">
+              <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">
+                <UserIcon className="h-4 w-4" />
+                Personal information
+              </h3>
               {/* Name fields */}
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="grid gap-2">
-                  <Label htmlFor="firstName">First name</Label>
+                  <Label htmlFor="firstName" className={labelClassName}>
+                    First name
+                  </Label>
                   <Input
                     id="firstName"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     onBlur={() => setTouched((t) => ({ ...t, firstName: true }))}
                     aria-invalid={!!(touched.firstName && errors.firstName)}
+                    className={inputClassName}
                   />
                   {touched.firstName && errors.firstName && (
-                    <p className="text-sm text-destructive">{errors.firstName}</p>
+                    <p className={errorClassName}>{errors.firstName}</p>
                   )}
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="lastName">Last name</Label>
+                  <Label htmlFor="lastName" className={labelClassName}>
+                    Last name
+                  </Label>
                   <Input
                     id="lastName"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     onBlur={() => setTouched((t) => ({ ...t, lastName: true }))}
                     aria-invalid={!!(touched.lastName && errors.lastName)}
+                    className={inputClassName}
                   />
                   {touched.lastName && errors.lastName && (
-                    <p className="text-sm text-destructive">{errors.lastName}</p>
+                    <p className={errorClassName}>{errors.lastName}</p>
                   )}
                 </div>
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="major">Major</Label>
+                <Label htmlFor="major" className={labelClassName}>
+                  Major
+                </Label>
                 <Select value={major} onValueChange={setMajor}>
-                  <SelectTrigger id="major" aria-invalid={!!(touched.major && errors.major)}>
+                  <SelectTrigger
+                    id="major"
+                    aria-invalid={!!(touched.major && errors.major)}
+                    className="h-11 rounded-xl border-line bg-white text-ink focus:ring-brand-500"
+                  >
                     <SelectValue placeholder="Select your major" />
                   </SelectTrigger>
                   <SelectContent className="max-h-72">
@@ -315,12 +344,14 @@ export default function EditMemberProfile({
                   </SelectContent>
                 </Select>
                 {touched.major && errors.major && (
-                  <p className="text-sm text-destructive">{errors.major}</p>
+                  <p className={errorClassName}>{errors.major}</p>
                 )}
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="gradYear">Graduation Year</Label>
+                <Label htmlFor="gradYear" className={labelClassName}>
+                  Graduation Year
+                </Label>
                 <Input
                   id="gradYear"
                   type="number"
@@ -332,17 +363,27 @@ export default function EditMemberProfile({
                   onChange={(e) => setGradYear(e.target.value)}
                   onBlur={() => setTouched((t) => ({ ...t, gradYear: true }))}
                   aria-invalid={!!(touched.gradYear && errors.gradYear)}
+                  className={inputClassName}
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className={helperClassName}>
                   Suggested range: {yearMin}–{yearMax}
                 </p>
                 {touched.gradYear && errors.gradYear && (
-                  <p className="text-sm text-destructive">{errors.gradYear}</p>
+                  <p className={errorClassName}>{errors.gradYear}</p>
                 )}
               </div>
+            </section>
 
+            {/* Resume */}
+            <section className="space-y-4 border-t border-line pt-6">
+              <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">
+                <FileText className="h-4 w-4" />
+                Resume
+              </h3>
               <div className="grid gap-2">
-                <Label htmlFor="resumeUrl">Resume Link (optional)</Label>
+                <Label htmlFor="resumeUrl" className={labelClassName}>
+                  Resume Link <span className="font-normal text-ink-muted">(optional)</span>
+                </Label>
                 <Input
                   id="resumeUrl"
                   type="url"
@@ -351,14 +392,17 @@ export default function EditMemberProfile({
                   onChange={(e) => setResumeUrl(e.target.value)}
                   onBlur={() => setTouched((t) => ({ ...t, resumeUrl: true }))}
                   aria-invalid={!!(touched.resumeUrl && errors.resumeUrl)}
+                  className={inputClassName}
                 />
                 {touched.resumeUrl && errors.resumeUrl && (
-                  <p className="text-sm text-destructive">{errors.resumeUrl}</p>
+                  <p className={errorClassName}>{errors.resumeUrl}</p>
                 )}
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="resumeFile">Upload Resume PDF (optional)</Label>
+                <Label htmlFor="resumeFile" className={labelClassName}>
+                  Upload Resume PDF <span className="font-normal text-ink-muted">(optional)</span>
+                </Label>
                 <Input
                   id="resumeFile"
                   type="file"
@@ -367,19 +411,32 @@ export default function EditMemberProfile({
                     const file = e.target.files?.[0] ?? null;
                     setPendingResumeFile(file);
                   }}
+                  className="h-11 cursor-pointer rounded-xl border-line bg-white pt-2.5 text-sm text-ink file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-brand-700 focus-visible:ring-brand-500"
                 />
-                {resumeStoragePath && !pendingResumeFile && (
-                  <p className="text-xs text-muted-foreground">
-                    A resume PDF is stored on TESC Portal.
+                {pendingResumeFile ? (
+                  <p className="flex items-center gap-1.5 text-xs text-ink-secondary">
+                    <Upload className="h-3.5 w-3.5 shrink-0" />
+                    Selected: {pendingResumeFile.name} — it will be uploaded when you save.
                   </p>
+                ) : (
+                  resumeStoragePath && (
+                    <p className={helperClassName}>A resume PDF is stored on TESC Portal.</p>
+                  )
                 )}
               </div>
+            </section>
 
-              <div className="flex items-start gap-3 rounded-lg border p-3">
+            {/* Recruiter sharing */}
+            <section className="space-y-4 border-t border-line pt-6">
+              <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">
+                <ShieldCheck className="h-4 w-4" />
+                Recruiter sharing
+              </h3>
+              <div className="flex items-start gap-3 rounded-xl border border-line bg-brand-50/60 p-4">
                 <input
                   id="resumeVisible"
                   type="checkbox"
-                  className="mt-1"
+                  className="mt-1 h-4 w-4 shrink-0 accent-navy-900"
                   checked={resumeVisible}
                   onChange={(e) => {
                     setResumeVisible(e.target.checked);
@@ -387,66 +444,76 @@ export default function EditMemberProfile({
                   }}
                 />
                 <div className="grid gap-1">
-                  <Label htmlFor="resumeVisible" className="cursor-pointer">
+                  <Label htmlFor="resumeVisible" className={`cursor-pointer ${labelClassName}`}>
                     Share my resume with TESC recruiting partners
                   </Label>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs leading-relaxed text-ink-secondary">
                     Approved recruiters can view your resume, major, graduation year, and TESC
                     events you have attended.
                   </p>
                   {touched.resumeVisible && errors.resumeVisible && (
-                    <p className="text-sm text-destructive">{errors.resumeVisible}</p>
+                    <p className={errorClassName}>{errors.resumeVisible}</p>
                   )}
                 </div>
               </div>
+            </section>
 
-              <div className="flex items-center gap-3 pt-2">
+            <div className="flex flex-wrap items-center gap-3 border-t border-line pt-5">
+              <Button
+                type="submit"
+                disabled={Object.keys(errors).length > 0 || (!isOnboarding && !isDirty)}
+                className="h-11 rounded-xl bg-navy-900 px-5 text-sm font-semibold text-white hover:bg-navy-800"
+              >
+                {isOnboarding ? "Save profile" : "Save changes"}
+              </Button>
+              {!isOnboarding && (
                 <Button
-                  type="submit"
-                  disabled={Object.keys(errors).length > 0 || (!isOnboarding && !isDirty)}
-                  className="bg-blue"
+                  type="button"
+                  variant="secondary"
+                  onClick={() => onCancel?.()}
+                  className="h-11 rounded-xl border border-line bg-white px-5 text-sm font-semibold text-ink hover:bg-surface"
                 >
-                  {isOnboarding ? "Save profile" : "Save changes"}
+                  Cancel
                 </Button>
-                {!isOnboarding && (
-                  <Button type="button" variant="secondary" onClick={() => onCancel?.()}>
-                    Cancel
-                  </Button>
-                )}
-                {!isOnboarding && (
-                  <span className="ml-auto text-xs text-muted-foreground">
-                    {isDirty ? "Unsaved changes" : "All changes saved"}
-                  </span>
-                )}
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+              )}
+              {!isOnboarding && (
+                <span className="ml-auto flex items-center gap-1.5 text-xs text-ink-secondary">
+                  <span
+                    className={`h-2 w-2 rounded-full ${isDirty ? "bg-amber-500" : "bg-emerald-500"}`}
+                  />
+                  {isDirty ? "Unsaved changes" : "All changes saved"}
+                </span>
+              )}
+            </div>
+          </form>
+        </div>
 
         {/* Right: PDF Preview */}
         {previewUrl && (
-          <Card className="h-fit min-w-0 w-full flex-1 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-2xl">Resume Preview</CardTitle>
-            </CardHeader>
-            <CardContent className="min-w-0 overflow-hidden">
+          <div className="card-shadow h-fit min-w-0 w-full flex-1 rounded-2xl border border-line bg-white p-6 sm:p-7">
+            <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight text-ink">
+              <GraduationCap className="h-5 w-5 text-brand-500" />
+              Resume Preview
+            </h2>
+            <div className="mt-4 min-w-0 overflow-hidden">
               <iframe
                 src={previewUrl}
                 title="Resume PDF preview"
-                className="block h-[min(70dvh,560px)] w-full max-w-full rounded-md border bg-white"
+                className="block h-[min(70dvh,560px)] w-full max-w-full rounded-xl border border-line bg-white"
               />
               {!previewUrl.startsWith("blob:") && (
                 <a
                   href={previewUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-3 inline-block text-sm text-blue underline"
+                  className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-brand-600 hover:text-brand-700"
                 >
                   Open resume
+                  <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
       </div>
 

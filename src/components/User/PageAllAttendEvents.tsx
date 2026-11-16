@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useContext } from "react";
+import { CalendarCheck, Loader2, LogIn, Search } from "lucide-react";
 import EventCard from "@components/ui/EventCard";
 import { AttendedEvent } from "../lib/interfaces/AttendedEvent";
 import { fetchAttendedEvents } from "../../services/user";
 import UserContext from "@lib/UserContext";
 import { useNavigate } from "react-router";
+import PageHeader from "@components/shell/PageHeader";
+import EmptyState from "@components/shell/EmptyState";
 
 const PageAllAttendEvents: React.FC = () => {
   console.log("PageAllAttendEvents Component Loaded.");
@@ -70,25 +73,58 @@ const PageAllAttendEvents: React.FC = () => {
   });
 
   // loading + error states
-  if (loading) return <p>Loading event history...</p>;
-  if (error) return <p className="text-red-500">Error: {error}</p>;
+  if (loading)
+    return (
+      <p className="flex items-center gap-2 text-sm text-ink-secondary">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Loading event history...
+      </p>
+    );
+  if (error)
+    return (
+      <EmptyState
+        title={`Error: ${error}`}
+        description="Something went wrong while loading your event history. Please try again later."
+      />
+    );
   if (!User && loading) return <p>Checking user session...</p>;
-  if (!User || !User.id) return <h1>Please log in to view history.</h1>;
+  if (!User || !User.id)
+    return (
+      <EmptyState
+        icon={<LogIn className="h-6 w-6" />}
+        title="Please log in to view history."
+        description="Sign in with your UCSD Google account to see the events you've attended."
+      />
+    );
 
   return (
-    <div className="p-10 max-w-[1400px] mx-auto">
+    <div>
+      <PageHeader
+        eyebrow="Profile"
+        title="Attendance History"
+        subtitle="Every event you've checked in to, newest first."
+        actions={
+          <span className="rounded-full bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 ring-1 ring-inset ring-brand-600/10">
+            {allEvents.length} {allEvents.length === 1 ? "event" : "events"} attended
+          </span>
+        }
+      />
+
       {/* Search Bar */}
       {allEvents.length > 0 && (
         <div className="mb-6">
-          <input
-            type="text"
-            placeholder="Search events by title, location, category..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+          <div className="relative w-full max-w-md">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
+            <input
+              type="text"
+              placeholder="Search events by title, location, category..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-11 w-full rounded-xl border border-line bg-white pl-10 pr-4 text-sm text-ink placeholder:text-ink-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+            />
+          </div>
           {searchQuery && (
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-2 text-sm text-ink-secondary">
               Showing {filteredEvents.length} of {allEvents.length} events
             </p>
           )}
@@ -96,11 +132,19 @@ const PageAllAttendEvents: React.FC = () => {
       )}
 
       {allEvents.length === 0 ? (
-        <p>No past event history found.</p>
+        <EmptyState
+          icon={<CalendarCheck className="h-6 w-6" />}
+          title="No past event history found."
+          description="Events you check in to will show up here once you've attended one."
+        />
       ) : filteredEvents.length === 0 ? (
-        <p className="text-gray-500">No events match your search "{searchQuery}"</p>
+        <EmptyState
+          icon={<Search className="h-6 w-6" />}
+          title={`No events match your search "${searchQuery}"`}
+          description="Try a different title, location, or category."
+        />
       ) : (
-        <div className="grid grid-flow-col auto-cols-auto gap-6 w-full overflow-x-auto">
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {filteredEvents.map((event) => (
             <EventCard key={event.id} event={event} onViewDetails={handleViewDetails} />
           ))}

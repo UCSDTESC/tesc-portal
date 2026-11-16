@@ -118,23 +118,23 @@ export default function QrSlotPickerModal({
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
-      <div className="relative z-10 w-full max-w-md rounded-xl bg-white p-5 shadow-xl">
-        <h2 className="font-DM text-xl font-bold text-navy">
+      <div className="card-shadow relative z-10 w-full max-w-md rounded-2xl border border-line bg-white p-6">
+        <h2 className="font-DM text-xl font-bold tracking-tight text-navy-900">
           {step === "questions"
             ? "Registration questions"
             : registeredOnly
               ? "You're registered"
               : "Choose a time slot"}
         </h2>
-        <p className="mt-1 text-sm text-gray-600">{eventTitle}</p>
+        <p className="mt-1 text-sm text-ink-secondary">{eventTitle}</p>
 
         {step === "slot" && registeredOnly && ownSlot ? (
-          <p className="mt-4 text-sm text-gray-700">
+          <p className="mt-4 text-sm leading-relaxed text-ink-secondary">
             You're registered for {DateParser(ownSlot.starts_at)} – {DateParser(ownSlot.ends_at)}.
             This time can't be changed today. Check-in opens closer to the start.
           </p>
         ) : step === "slot" && rsvpRequired && !initialSlotId && visibleSlots.length === 0 ? (
-          <p className="mt-4 text-sm text-gray-700">
+          <p className="mt-4 text-sm leading-relaxed text-ink-secondary">
             RSVP was required before today, so check-in isn't available.
           </p>
         ) : step === "slot" ? (
@@ -150,23 +150,23 @@ export default function QrSlotPickerModal({
               return (
                 <label
                   key={slot.id}
-                  className={`flex cursor-pointer items-start gap-2 rounded-md border p-3 text-sm ${
-                    isSelected ? "border-blue bg-blue/10" : "border-gray-200"
+                  className={`flex cursor-pointer items-start gap-2 rounded-xl border p-3 text-sm transition-colors ${
+                    isSelected ? "border-brand-500 bg-brand-50" : "border-line bg-white hover:border-brand-400"
                   } ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
                 >
                   <input
                     type="radio"
                     name="qr-slot"
-                    className="mt-1"
+                    className="mt-1 h-4 w-4 shrink-0 accent-brand-600"
                     checked={isSelected}
                     disabled={disabled}
                     onChange={() => setSelectedSlotId(slot.id)}
                   />
                   <span>
-                    <span className="block font-medium">
+                    <span className="block font-medium text-ink">
                       {DateParser(slot.starts_at)} – {DateParser(slot.ends_at)}
                     </span>
-                    <span className="text-xs text-gray-600">
+                    <span className="text-xs text-ink-secondary">
                       {slotStatusLabel(slot, now)}
                       {slot.capacity != null
                         ? ` · ${seatsTaken(slot)}/${slot.capacity} spots`
@@ -188,7 +188,7 @@ export default function QrSlotPickerModal({
           <button
             type="button"
             onClick={step === "questions" ? () => setStep("slot") : onClose}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700"
+            className="rounded-xl border border-line bg-white px-4 py-2 text-sm font-semibold text-ink shadow-sm transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
           >
             {step === "questions" ? "Back" : "Cancel"}
           </button>
@@ -196,7 +196,7 @@ export default function QrSlotPickerModal({
             type="button"
             disabled={submitDisabled || registeredOnly || visibleSlots.length === 0}
             onClick={handleSubmit}
-            className="rounded-lg bg-blue px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            className="rounded-xl bg-navy-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-navy-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? "Please wait…" : submitLabel}
           </button>

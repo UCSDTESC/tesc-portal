@@ -1,5 +1,6 @@
 import supabase from "@server/supabase";
 import { forwardRef, useContext, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { FileText, Image as ImageIcon, Plus, X } from "lucide-react";
 import UserContext from "@lib/UserContext";
 import Editor from "../Form/Editor";
 
@@ -118,50 +119,47 @@ const ProfilePicUploader = forwardRef<ProfilePicUploaderHandle>(function Profile
 
   return (
     <div className="w-full">
-      <h3 className="text-lg font-semibold text-navy mb-3">Org Picture</h3>
+      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-ink">
+        <ImageIcon className="h-4 w-4 text-brand-500" />
+        Org Picture
+      </h3>
 
       <div
         className="relative flex flex-col items-center justify-center"
         onMouseEnter={() => setHovering(true)}
         onMouseLeave={() => setHovering(false)}
       >
-        <label htmlFor="profilePic" className="cursor-pointer group relative">
+        <label htmlFor="profilePic" className="group relative cursor-pointer">
           {loadingInitial ? (
-            <div className="w-36 h-36 rounded-full bg-gray-100 animate-pulse" />
+            <div className="h-36 w-36 animate-pulse rounded-full bg-surface" />
           ) : imagePreview ? (
             <div className="relative">
-              <div className="relative w-36 h-36 rounded-full overflow-hidden">
+              <div className="relative h-36 w-36 overflow-hidden rounded-full ring-1 ring-line">
                 <img
                   src={imagePreview}
                   alt="Profile Preview"
-                  className="w-full h-full object-cover"
+                  className="h-full w-full object-cover"
                 />
 
                 {/* Edit+ strip INSIDE the circle */}
-                <div className="absolute bottom-0 left-0 w-full flex justify-center bg-black/35 text-white text-xs font-semibold py-1">
+                <div className="absolute bottom-0 left-0 flex w-full justify-center bg-black/35 py-1 text-xs font-semibold text-white">
                   Edit +
                 </div>
 
                 {/* Optional hover overlay */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-white text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300">
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-sm font-medium text-white opacity-0 transition-all duration-300 group-hover:opacity-100">
                   <span className="mb-1">Change</span>
                   <span className="text-xs">(click to replace)</span>
                 </div>
               </div>
-
-
-              <div className="absolute inset-0 rounded-full flex flex-col items-center justify-center bg-black/40 text-white text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300">
-                <span className="mb-1">Change</span>
-                <span className="text-xs">(click to replace)</span>
-              </div>
             </div>
           ) : (
             <div
-              className={`flex flex-col items-center justify-center w-36 h-36 rounded-full border-2 border-dashed ${
-                hovering ? "border-blue-400 bg-blue-50/50" : "border-gray-300 bg-white/40"
-              } text-gray-500 hover:text-blue-600 transition-all duration-300`}
+              className={`flex h-36 w-36 flex-col items-center justify-center rounded-full border-2 border-dashed ${
+                hovering ? "border-brand-500 bg-brand-50" : "border-line bg-white"
+              } text-ink-muted transition-all duration-300 hover:text-brand-600`}
             >
-              <span className="text-3xl font-bold mb-1">+</span>
+              <Plus className="mb-1 h-7 w-7" />
               <span className="text-xs font-medium">Add Photo</span>
             </div>
           )}
@@ -175,10 +173,10 @@ const ProfilePicUploader = forwardRef<ProfilePicUploaderHandle>(function Profile
               setImagePreview(null);
               if (picInput.current) picInput.current.value = "";
             }}
-            className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-white text-gray-600 border border-gray-300 shadow-sm flex items-center justify-center font-bold hover:bg-gray-100 transition"
+            className="absolute -top-2 -right-2 flex h-7 w-7 items-center justify-center rounded-full border border-line bg-white text-ink-secondary shadow-sm transition hover:bg-surface"
             title="Remove image"
           >
-            ×
+            <X className="h-4 w-4" />
           </button>
         )}
 
@@ -272,11 +270,14 @@ const OrgProfileEditor = forwardRef<OrgProfileEditorHandle, { orgUuid: number }>
 
   useImperativeHandle(ref, () => ({ save, hasPending }));
 
-  if (loading) return <div className="text-gray-500">Loading…</div>;
+  if (loading) return <div className="text-sm text-ink-muted">Loading…</div>;
 
   return (
     <div className="w-full">
-      <h3 className="text-lg font-semibold text-navy mb-3">TESC Profile</h3>
+      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-ink">
+        <FileText className="h-4 w-4 text-brand-500" />
+        TESC Profile
+      </h3>
 
       {/* TipTap */}
       <Editor content={editorContent} setEditorContent={setEditorContent} />
@@ -319,20 +320,26 @@ export default function EditOrgModal({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 w-[min(980px,92vw)] p-6">
-      <div className="flex items-start justify-between gap-4 mb-4">
-        <h2 className="text-2xl font-bold text-navy">Edit Organization</h2>
+    <div className="card-shadow w-[min(980px,92vw)] rounded-2xl border border-line bg-white p-6">
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-ink">Edit Organization</h2>
+          <p className="mt-0.5 text-sm text-ink-secondary">
+            Update the organization picture and public profile.
+          </p>
+        </div>
         <button
           type="button"
           onClick={controlModal}
-          className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+          aria-label="Close"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-line text-ink-secondary transition-colors hover:bg-surface hover:text-ink"
         >
-          Close
+          <X className="h-4 w-4" />
         </button>
       </div>
 
       {/* Layout: left = image, right = editor */}
-      <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[260px_1fr]">
         <div className="lg:sticky lg:top-6">
           <ProfilePicUploader ref={picRef} />
         </div>
@@ -342,13 +349,23 @@ export default function EditOrgModal({
         </div>
       </div>
 
-      <div className="flex justify-end mt-6">
+      <div className="mt-6 flex justify-end gap-2 border-t border-line pt-5">
+        <button
+          type="button"
+          onClick={controlModal}
+          className="rounded-xl border border-line px-4 py-2.5 text-sm font-semibold text-ink-secondary transition-colors hover:bg-surface"
+        >
+          Cancel
+        </button>
         <button
           type="button"
           onClick={onSaveAll}
           disabled={saving}
-          className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm border border-gray-200
-            ${saving ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-blue text-white hover:opacity-90"}`}
+          className={`rounded-xl px-6 py-2.5 text-sm font-semibold transition-colors ${
+            saving
+              ? "cursor-not-allowed bg-surface text-ink-muted"
+              : "bg-navy-900 text-white hover:bg-navy-800"
+          }`}
         >
           {saving ? "Saving..." : "Save Changes"}
         </button>

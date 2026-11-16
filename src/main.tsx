@@ -6,6 +6,8 @@ import Form from "@components/adminUser/Form/Form.tsx";
 import Bulletin from "@components/Bulletin/Bulletin.tsx";
 import Profile from "@components/adminUser/Profile/Profile.tsx";
 import OrgManagement from "@components/adminUser/Profile/OrgManagement.tsx";
+import MyEventsPage from "@components/User/MyEventsPage.tsx";
+import PageAllAttendEvents from "@components/User/PageAllAttendEvents.tsx";
 import { Toaster } from "react-hot-toast";
 
 import { oauthLandingLocation } from "@lib/eventLinks";
@@ -19,7 +21,7 @@ function RedirectWithSearch({ to }: { to: string }) {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <Toaster toastOptions={{ className: "mt-[calc(10vh+3.5rem)] " }} gutter={1} />
+    <Toaster toastOptions={{ className: "mt-20" }} gutter={1} />
     <BrowserRouter>
       <Routes>
         <Route element={<Page />}>
@@ -33,9 +35,13 @@ createRoot(document.getElementById("root")!).render(
           </Route>
           <Route path="profile">
             <Route path="" element={<Profile />} />
-            <Route path="all-attended-events" element={<Navigate to="/profile" replace />} />
+            <Route path="attendance-history" element={<PageAllAttendEvents />} />
+            <Route
+              path="all-attended-events"
+              element={<Navigate to="/profile/attendance-history" replace />}
+            />
           </Route>
-          <Route path="my-events" element={<Navigate to="/profile" replace />} />
+          <Route path="my-events" element={<MyEventsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -3,7 +3,9 @@ import { canManageOrgMembers, canManageOrgProfile, canManageUsers } from "@lib/c
 import supabase from "@server/supabase";
 import { useContext, useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router";
+import { Pencil, Users } from "lucide-react";
 import Modal from "@mui/material/Modal";
+import PageHeader from "@components/shell/PageHeader";
 import EditOrgModal from "./EditOrgModal";
 import ProfileAdminTables from "./ProfileAdminTables";
 import OrgAttendanceInsights from "./OrgAttendanceInsights";
@@ -66,63 +68,84 @@ export default function OrgManagement() {
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col gap-10 px-[min(15px,2vw)] pb-12 mt-8">
-      <section className="flex w-full flex-col items-start gap-6 lg:flex-row lg:flex-nowrap">
-        <div className="flex w-[max(30vw,300px)] max-w-full shrink-0 flex-col items-center justify-center gap-2 self-center px-1 min-w-0 lg:w-full lg:flex-[0_0_10%] lg:self-start">
-          <div className="relative aspect-square w-full overflow-hidden rounded-full border border-slate-400">
-            {imageUrl ? (
-              <img src={imageUrl} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <div className="h-full w-full bg-slate-100" />
-            )}
-            {canManageOrg && (
-              <button
-                onClick={controlEditModal}
-                className="absolute bottom-0 flex h-fit w-full cursor-pointer justify-center bg-black/30 py-0.5 text-[clamp(0.5rem,2vw,0.75rem)] text-white"
-              >
-                Edit +
-              </button>
-            )}
-          </div>
-          <h1 className="w-full break-words text-center text-[clamp(0.875rem,2.5vw,1.25rem)] font-bold leading-tight text-blue">
-            {activeOrgName}
-          </h1>
-        </div>
-        <div className="flex min-w-0 flex-[1_1_90%] flex-col gap-10">
-          {canManageOrg ? (
-            <>
-              <ProfileAdminTables
-                orgName={activeOrgName === "super_org" ? undefined : activeOrgName}
-                orgId={activeOrgId}
-                showUserAdmin={showUserAdmin}
-                showOrgMembers={showOrgMembers}
-              />
-              <OrgAttendanceInsights
-                isSuperOrg={activeOrgName === "super_org"}
-                orgId={activeOrgId}
-                orgName={activeOrgName === "super_org" ? undefined : activeOrgName}
-              />
-            </>
+    <div className="flex w-full flex-col gap-6 pb-12">
+      <div className="flex items-start gap-4">
+        <div className="relative aspect-square w-20 shrink-0 overflow-hidden rounded-2xl bg-surface ring-1 ring-line sm:w-24">
+          {imageUrl ? (
+            <img src={imageUrl} alt="" className="h-full w-full object-cover" />
           ) : (
-            <p className="px-4 text-sm text-slate-600">
-              You are a member of this organization. Board or org leader access is required to
-              manage events, members, and attendance insights.
-            </p>
+            <div className="flex h-full w-full items-center justify-center bg-navy-900 text-2xl font-bold text-white">
+              {activeOrgName?.[0]?.toUpperCase() ?? "?"}
+            </div>
+          )}
+          {canManageOrg && (
+            <button
+              onClick={controlEditModal}
+              className="absolute bottom-0 flex w-full cursor-pointer justify-center bg-black/40 py-1 text-xs font-semibold text-white transition-colors hover:bg-black/55"
+            >
+              Edit +
+            </button>
           )}
         </div>
-        {canManageOrg && activeOrgId && (
-          <Modal
-            open={editModal}
-            onClose={controlEditModal}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
-          >
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-              <EditOrgModal orgUuid={Number(activeOrgId)} controlModal={controlEditModal} />
-            </div>
-          </Modal>
-        )}
-      </section>
+        <div className="min-w-0 flex-1">
+          <PageHeader
+            eyebrow="Organization"
+            title={activeOrgName}
+            subtitle="Manage this organization's events, members, and attendance insights."
+            actions={
+              canManageOrg ? (
+                <button
+                  type="button"
+                  onClick={controlEditModal}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-white px-3 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface"
+                >
+                  <Pencil className="h-4 w-4" />
+                  Edit organization
+                </button>
+              ) : undefined
+            }
+          />
+        </div>
+      </div>
+
+      {canManageOrg ? (
+        <div className="flex flex-col gap-8">
+          <ProfileAdminTables
+            orgName={activeOrgName === "super_org" ? undefined : activeOrgName}
+            orgId={activeOrgId}
+            showUserAdmin={showUserAdmin}
+            showOrgMembers={showOrgMembers}
+          />
+          <OrgAttendanceInsights
+            isSuperOrg={activeOrgName === "super_org"}
+            orgId={activeOrgId}
+            orgName={activeOrgName === "super_org" ? undefined : activeOrgName}
+          />
+        </div>
+      ) : (
+        <div className="card-shadow flex items-start gap-3 rounded-2xl border border-line bg-white p-5">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+            <Users className="h-5 w-5" />
+          </span>
+          <p className="text-sm leading-relaxed text-ink-secondary">
+            You are a member of this organization. Board or org leader access is required to
+            manage events, members, and attendance insights.
+          </p>
+        </div>
+      )}
+
+      {canManageOrg && activeOrgId && (
+        <Modal
+          open={editModal}
+          onClose={controlEditModal}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+            <EditOrgModal orgUuid={Number(activeOrgId)} controlModal={controlEditModal} />
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

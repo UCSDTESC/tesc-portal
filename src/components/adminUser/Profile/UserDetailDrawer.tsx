@@ -1,7 +1,6 @@
 import Modal from "@mui/material/Modal";
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@components/components/ui/card";
-import { Button } from "@components/components/ui/button";
+import { FileText, User as UserIcon, X } from "lucide-react";
 import DisplayToast from "@lib/hooks/useToast";
 import { getPdfPreviewUrl, isValidUrl } from "@lib/utils";
 import { getResumeSignedUrl } from "@services/resume";
@@ -18,10 +17,17 @@ type Props = {
 function ProfileField({ label, value }: { label: string; value: string | number | null | undefined }) {
   return (
     <div className="grid gap-1">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="text-sm">{value || "—"}</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{label}</p>
+      <p className="text-sm text-ink">{value || "—"}</p>
     </div>
   );
+}
+
+function initialsFor(user: AdminUserDetail) {
+  const first = user.first_name?.trim()?.[0] ?? "";
+  const last = user.last_name?.trim()?.[0] ?? "";
+  const initials = `${first}${last}`.toUpperCase();
+  return initials || user.email?.[0]?.toUpperCase() || "?";
 }
 
 export default function UserDetailDrawer({ userId, onClose, onRolesChanged }: Props) {
@@ -95,29 +101,40 @@ export default function UserDetailDrawer({ userId, onClose, onRolesChanged }: Pr
 
   return (
     <Modal open={Boolean(userId)} onClose={onClose} aria-labelledby="user-admin-detail">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(96vw,900px)] max-h-[90vh] overflow-y-auto rounded-xl bg-white p-4 md:p-6 shadow-xl">
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <div>
-            <h2 id="user-admin-detail" className="text-xl font-semibold">
-              {displayName}
-            </h2>
-            {user?.email && <p className="text-sm text-muted-foreground">{user.email}</p>}
+      <div className="absolute top-0 right-0 h-full w-[min(96vw,760px)] overflow-y-auto border-l border-line bg-white shadow-2xl">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-line bg-white/95 px-6 py-4 backdrop-blur">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-navy-900 text-sm font-bold text-white">
+              {user ? initialsFor(user) : "?"}
+            </div>
+            <div className="min-w-0">
+              <h2 id="user-admin-detail" className="truncate text-lg font-semibold tracking-tight text-ink">
+                {displayName}
+              </h2>
+              {user?.email && <p className="truncate text-sm text-ink-secondary">{user.email}</p>}
+            </div>
           </div>
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Close
-          </Button>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-line text-ink-secondary transition-colors hover:bg-surface hover:text-ink"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
-        {loading && <p className="text-sm text-muted-foreground">Loading user…</p>}
+        <div className="flex flex-col gap-6 px-6 py-6">
+          {loading && <p className="text-sm text-ink-muted">Loading user…</p>}
 
-        {!loading && user && (
-          <div className="flex flex-col gap-6">
-            <div className="grid gap-4 lg:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Profile</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-3 sm:grid-cols-2">
+          {!loading && user && (
+            <>
+              <section>
+                <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-ink">
+                  <UserIcon className="h-4 w-4 text-brand-500" />
+                  Profile
+                </h3>
+                <div className="card-shadow grid gap-4 rounded-2xl border border-line bg-white p-5 sm:grid-cols-2">
                   <ProfileField label="First name" value={user.first_name} />
                   <ProfileField label="Last name" value={user.last_name} />
                   <ProfileField label="Major" value={user.major} />
@@ -130,45 +147,50 @@ export default function UserDetailDrawer({ userId, onClose, onRolesChanged }: Pr
                     value={user.resume_visible ? "Yes" : "No"}
                   />
                   {user.resume_link && (
-                    <div className="sm:col-span-2 grid gap-1">
-                      <p className="text-xs font-medium text-muted-foreground">Resume link</p>
+                    <div className="grid gap-1 sm:col-span-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                        Resume link
+                      </p>
                       <a
                         href={user.resume_link}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-sm text-blue underline break-all"
+                        className="break-all text-sm text-brand-600 underline"
                       >
                         {user.resume_link}
                       </a>
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </section>
 
               {previewUrl && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Resume preview</CardTitle>
-                  </CardHeader>
-                  <CardContent>
+                <section>
+                  <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-ink">
+                    <FileText className="h-4 w-4 text-brand-500" />
+                    Resume preview
+                  </h3>
+                  <div className="card-shadow rounded-2xl border border-line bg-white p-5">
                     <iframe
                       src={previewUrl}
                       title="Resume preview"
-                      className="w-full h-[420px] border rounded-md"
+                      className="h-[420px] w-full rounded-xl border border-line"
                     />
-                  </CardContent>
-                </Card>
+                  </div>
+                </section>
               )}
-            </div>
 
-            <UserRolesEditor
-              user={user}
-              roles={roles}
-              orgs={orgs}
-              onUpdated={handleRolesUpdated}
-            />
-          </div>
-        )}
+              <section>
+                <UserRolesEditor
+                  user={user}
+                  roles={roles}
+                  orgs={orgs}
+                  onUpdated={handleRolesUpdated}
+                />
+              </section>
+            </>
+          )}
+        </div>
       </div>
     </Modal>
   );

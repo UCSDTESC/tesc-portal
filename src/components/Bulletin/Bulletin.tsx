@@ -2,6 +2,7 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useParams } from "react-router";
 import { AnimatePresence, motion } from "motion/react";
+import { ArrowLeft, Compass, MessagesSquare, Plus, Sparkles } from "lucide-react";
 
 import UserContext from "@lib/UserContext";
 
@@ -11,11 +12,11 @@ import { useEditModal } from "@lib/hooks/useEditModal";
 import { formdata, PortalMode, type EventQuestion } from "@lib/constants";
 import { compareEventsByRecency, parseEventTime } from "@lib/eventListOrder";
 import type { EventQuestionAnswers } from "@lib/eventQuestions";
-import { FaArrowRightToBracket } from "react-icons/fa6";
-import { FaArrowRightFromBracket } from "react-icons/fa6";
+import PageHeader from "@components/shell/PageHeader";
 import CheckBoxes from "./CheckBoxes";
 import PortalToggle from "./PortalToggle";
 import { EventsList } from "./EventsList";
+import { SidebarClub } from "./SidebarItem";
 import BulletinDisplay from "./BulletinDisplay";
 import QrSlotPickerModal from "./QrSlotPickerModal";
 import RegistrationQuestionsModal from "./RegistrationQuestionsModal";
@@ -28,7 +29,6 @@ export default function Bulletin() {
   const postId = useParams();
   const navigate = useNavigate();
   const [selection, setSelection] = useState<string>(String(postId.postId));
-  const [displaysideBar, setDisplaySideBar] = useState(true);
   const [eventTimeFilter, setEventTimeFilter] = useState<EventTimeFilter>("current");
   const [forumMode, setForumMode] = useState(false);
   const [portalMode, setPortalMode] = useState<PortalMode>("events");
@@ -174,6 +174,17 @@ export default function Bulletin() {
     return [...base, qrFlow.activeEvent];
   }, [filteredData, qrFlow.activeEvent, selection]);
 
+  // Featured card: the next upcoming event (soonest first in the sorted list).
+  const featuredEvent = useMemo(() => {
+    if (isRecruiterPortal || forumMode || eventTimeFilter !== "current") return undefined;
+    return filteredData?.[0];
+  }, [filteredData, forumMode, eventTimeFilter, isRecruiterPortal]);
+
+  const goBackToDiscover = () => {
+    setSelection("-1");
+    navigate("/bulletin/-1");
+  };
+
   return (
     <BulletinContext.Provider
       value={{
@@ -218,23 +229,36 @@ export default function Bulletin() {
         qrBanner: qrFlow.banner,
       }}
     >
-      <div className="grid w-full  h-[calc(100vh-3.5rem)] grid-rows-[3.5rem_1fr] font-DM">
-        <div className="relative z-3 bg-linear-to-r from-0% from-blue via-70% via-[#3B7DB6] to-blue flex min-h-[2.25rem] items-center gap-3 px-2 [&>*]:min-h-[2.25rem]">
-          <CheckBoxes />
-          <PortalToggle portalMode={portalMode} onChange={handlePortalChange} />
-        </div>
-        <div className="flex w-full h-full flex-row relative">
-          <div
-            className={`flex w-[300px] min-h-0 flex-col overflow-hidden h-[calc(90vh-3.5rem)] bg-gray-200 absolute z-2 opacity-95 md:relative ${
-              displaysideBar == true ? "block" : "hidden"
-            }`}
-          >
-            <FaArrowRightFromBracket
-              className="rotate-180 ml-auto w-[3.5rem] text-[20px] mr-2 mt-2 text-gray shrink-0 md:hidden"
-              onClick={() => setDisplaySideBar(false)}
+      <div className="font-DM">
+        {selection !== "-1" ? (
+          <div className="space-y-4">
+            <button
+              type="button"
+              onClick={goBackToDiscover}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-white px-3 py-2 text-sm font-medium text-ink-secondary shadow-sm transition-colors hover:bg-surface hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              {isRecruiterPortal ? "Back to candidates" : "Back to Discover"}
+            </button>
+            <BulletinDisplay selection={selection} />
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <PageHeader
+              eyebrow="TESC Portal"
+              title={isRecruiterPortal ? "Recruiter Portal" : "Discover"}
+              subtitle={
+                isRecruiterPortal
+                  ? "Browse candidates from the TESC member resume bank."
+                  : forumMode
+                    ? "Discussions and announcements from the engineering community."
+                    : "Find events, announcements, and opportunities from engineering orgs across campus."
+              }
+              actions={<PortalToggle portalMode={portalMode} onChange={handlePortalChange} />}
             />
+
             {!isRecruiterPortal && (
-              <div className="relative isolate flex shrink-0 items-center justify-center p-2 gap-2">
+              <div className="flex flex-wrap items-center gap-3">
                 <AnimatePresence mode="wait">
                   {!forumMode ? (
                     <motion.div
@@ -243,13 +267,13 @@ export default function Bulletin() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -6 }}
                       transition={{ duration: 0.25 }}
-                      className="relative z-40 flex w-full max-w-[200px] items-center rounded-full bg-white/80 p-0.5 shadow-sm"
+                      className="relative flex w-full max-w-[240px] items-center rounded-full border border-line bg-white p-1 shadow-sm"
                     >
                       <div
-                        className="absolute top-0.5 bottom-0.5 rounded-full bg-blue shadow-sm transition-transform duration-200 ease-out"
+                        className="absolute bottom-1 top-1 rounded-full bg-navy-900 shadow-sm transition-transform duration-200 ease-out"
                         style={{
                           width: "calc(50% - 4px)",
-                          left: "2px",
+                          left: "4px",
                           transform:
                             eventTimeFilter === "current" ? "translateX(0)" : "translateX(100%)",
                         }}
@@ -263,9 +287,9 @@ export default function Bulletin() {
                             navigate("/bulletin/-1");
                           }
                         }}
-                        className="relative z-10 flex flex-1 items-center justify-center rounded-full py-1.5 text-sm font-medium transition-colors duration-200 text-slate-600 hover:text-slate-900"
+                        className="relative z-10 flex flex-1 items-center justify-center rounded-full py-1.5 text-sm font-medium transition-colors duration-200"
                         style={{
-                          color: eventTimeFilter === "current" ? "white" : undefined,
+                          color: eventTimeFilter === "current" ? "white" : "#5b6b80",
                         }}
                       >
                         Upcoming
@@ -279,9 +303,9 @@ export default function Bulletin() {
                             navigate("/bulletin/-1");
                           }
                         }}
-                        className="relative z-10 flex flex-1 items-center justify-center rounded-full py-1.5 text-sm font-medium transition-colors duration-200 text-slate-600 hover:text-slate-900"
+                        className="relative z-10 flex flex-1 items-center justify-center rounded-full py-1.5 text-sm font-medium transition-colors duration-200"
                         style={{
-                          color: eventTimeFilter === "past" ? "white" : undefined,
+                          color: eventTimeFilter === "past" ? "white" : "#5b6b80",
                         }}
                       >
                         Past
@@ -294,17 +318,13 @@ export default function Bulletin() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 6 }}
                       transition={{ duration: 0.25 }}
-                      className="relative z-40 flex w-full max-w-[200px] items-center rounded-full bg-white/80 p-0.5 shadow-sm border border-white/30"
+                      className="relative flex w-full max-w-[240px] items-center rounded-full bg-navy-900 p-1 shadow-sm"
                       role="status"
                       aria-label="Forum"
                     >
-                      <div
-                        className="absolute inset-y-0 left-0 right-0 rounded-full bg-blue"
-                        aria-hidden="true"
-                      />
                       <button
                         type="button"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white text-navy flex items-center justify-center shadow-sm hover:opacity-90 cursor-pointer"
+                        className="absolute right-2 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-white text-navy-900 shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                         onClick={() => {
                           setSelection("-1");
                           openCreateForumPostModal();
@@ -312,30 +332,25 @@ export default function Bulletin() {
                         }}
                         aria-label="Create forum post"
                       >
-                        +
+                        <Plus className="h-4 w-4" />
                       </button>
-                      <div className="relative flex flex-1 items-center justify-center rounded-full py-1.5 text-sm font-medium text-white">
+                      <div className="relative flex flex-1 items-center justify-center gap-1.5 rounded-full py-1.5 text-sm font-medium text-white">
+                        <MessagesSquare className="h-4 w-4" />
                         Forum
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
 
-                {/* Three-cell vertical navigation: active dot expands into middle cell */}
-                <div className="relative z-0 grid h-10 w-3 grid-rows-3 items-center justify-items-center">
-                  <div
-                    aria-hidden="true"
-                    className="absolute left-0 w-3 rounded-full bg-blue transition-all duration-300 ease-in-out z-0"
-                    style={{
-                      top: forumMode ? "33.3333%" : "0%",
-                      height: "66.6667%",
-                    }}
-                  />
-
-                  {/* Top dot: Upcoming/Past */}
+                <div
+                  className="flex items-center rounded-full border border-line bg-white p-1 shadow-sm"
+                  role="tablist"
+                  aria-label="Bulletin mode"
+                >
                   <button
                     type="button"
-                    aria-label="Upcoming/Past mode"
+                    role="tab"
+                    aria-selected={!forumMode}
                     onClick={() => {
                       if (forumMode) {
                         setForumMode(false);
@@ -344,21 +359,19 @@ export default function Bulletin() {
                         navigate("/bulletin/-1");
                       }
                     }}
-                    className="relative w-2 h-2 rounded-full bg-white/40 hover:bg-white/80 shadow-sm border border-white/30 transition-colors duration-200 ease-in-out z-0"
+                    className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
+                      !forumMode
+                        ? "bg-brand-50 text-brand-700"
+                        : "text-ink-secondary hover:text-ink"
+                    }`}
                   >
-                    <span className="sr-only">Upcoming/Past</span>
+                    <Compass className="h-4 w-4" />
+                    Events
                   </button>
-
-                  {/* Middle dot (purely visual / selection extension) */}
-                  <div
-                    aria-hidden="true"
-                    className="relative w-2 h-2 rounded-full bg-blue border border-blue transition-colors duration-200 ease-in-out z-0"
-                  />
-
-                  {/* Bottom dot: Forum */}
                   <button
                     type="button"
-                    aria-label="Forum mode"
+                    role="tab"
+                    aria-selected={forumMode}
                     onClick={() => {
                       if (!forumMode) {
                         setForumMode(true);
@@ -367,31 +380,39 @@ export default function Bulletin() {
                         navigate("/bulletin/-1");
                       }
                     }}
-                    className="relative w-2 h-2 rounded-full bg-white/40 hover:bg-white/80 shadow-sm border border-white/30 transition-colors duration-200 ease-in-out z-0"
-                    style={{
-                      backgroundColor: forumMode ? "#114675" : undefined,
-                      borderColor: forumMode ? "#114675" : undefined,
-                    }}
+                    className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
+                      forumMode
+                        ? "bg-brand-50 text-brand-700"
+                        : "text-ink-secondary hover:text-ink"
+                    }`}
                   >
-                    <span className="sr-only">Forum</span>
+                    <MessagesSquare className="h-4 w-4" />
+                    Forum
                   </button>
                 </div>
               </div>
             )}
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              <EventsList {...{ setSelection, selection }} />
-            </div>
+
+            {featuredEvent && (
+              <section aria-label="Featured event">
+                <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-brand-500">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Featured · Up next
+                </p>
+                <SidebarClub
+                  daton={featuredEvent}
+                  setSelection={setSelection}
+                  selection={selection}
+                  featured
+                />
+              </section>
+            )}
+
+            <CheckBoxes />
+
+            <EventsList {...{ setSelection, selection }} />
           </div>
-          {!displaysideBar && (
-            <FaArrowRightToBracket
-              className="text-[20px] absolute top-1/2 left-2 text-black opacity-80"
-              onClick={() => setDisplaySideBar(true)}
-            />
-          )}
-          <div className="flex w-full justify-center p-2 overflow-y-scroll h-[calc(100vh-7rem)]">
-            <BulletinDisplay selection={selection} />
-          </div>
-        </div>
+        )}
       </div>
       <QrSlotPickerModal
         open={qrFlow.showPicker}
@@ -441,8 +462,20 @@ function BulletinEditModal({
   currEdit: formdata;
   curID: string;
 }) {
+  // This modal is portaled to document.body, outside the AppShell, so the
+  // overlay must account for the desktop sidebar (264px expanded, 76px
+  // collapsed) or the panel centers on the full viewport and slides
+  // underneath the sidebar. items-start (not center) keeps the top of a
+  // tall form reachable by scrolling.
+  const sidebarCollapsed =
+    typeof window !== "undefined" &&
+    window.localStorage.getItem("tesc-sidebar-collapsed") === "true";
   return (
-    <div className="w-screen h-screen fixed top-0 flex justify-center items-center z-100 overflow-scroll">
+    <div
+      className={`fixed inset-0 z-100 flex items-start justify-center overflow-y-auto py-5 ${
+        sidebarCollapsed ? "lg:pl-[76px]" : "lg:pl-[264px]"
+      }`}
+    >
       <div
         className="fixed top-0 w-full h-full bg-black opacity-35 cursor-pointer"
         onClick={() => setShowEditModal(false)}
@@ -455,6 +488,7 @@ function BulletinEditModal({
           fetchData();
         }}
         editEvent={curID !== ""}
+        inModal
       />
     </div>
   );

@@ -6,6 +6,7 @@ import { Card, CardContent } from "@mui/material";
 import { motion } from "motion/react";
 import { useContext, useEffect, useState } from "react";
 import { FaDiamond } from "react-icons/fa6";
+import { FileText } from "lucide-react";
 import UserContext from "@lib/UserContext";
 import ListAttendedEvents from "@components/ui/ListAttendedEvents";
 import { WelcomePageCompany } from "./WelcomePage";
@@ -38,14 +39,15 @@ function CandidateResumePreview({
 
   if (!previewUrl) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-600">
+      <div className="rounded-2xl border border-line bg-surface px-4 py-10 text-center text-sm text-ink-secondary">
+        <FileText className="mx-auto mb-2 h-6 w-6 text-ink-muted" />
         <p>This resume can’t be previewed here.</p>
         {openUrl && (
           <a
             href={openUrl}
             target="_blank"
             rel="noreferrer"
-            className="mt-2 inline-block font-medium text-blue underline"
+            className="mt-2 inline-block font-medium text-brand-600 underline"
           >
             Open resume
           </a>
@@ -55,12 +57,12 @@ function CandidateResumePreview({
   }
 
   return (
-    <Card className="flex-1 shadow-lg h-fit">
+    <Card className="card-shadow flex-1 rounded-2xl border border-line bg-white">
       <CardContent className="h-full">
         <iframe
           src={previewUrl}
           title="Resume PDF preview"
-          className="w-full aspect-[1/1.2] border rounded-md"
+          className="aspect-[1/1.2] w-full rounded-xl border border-line"
         />
       </CardContent>
     </Card>
@@ -104,45 +106,49 @@ export default function MemberResume({ selection }: { selection: string }) {
   }
 
   if (!selectedCandidate) {
-    return <p className="text-sm text-muted-foreground">Candidate not found.</p>;
+    return <p className="text-sm text-ink-secondary">Candidate not found.</p>;
   }
 
   return (
-    <motion.span
-      className="w-full grid grid-cols-[70px_1fr] items-start gap-4"
+    <motion.div
+      className="mx-auto flex w-full max-w-4xl flex-col gap-6"
       variants={container}
       initial="hidden"
       animate="show"
     >
-      <motion.img
+      <motion.div
         variants={item}
-        src={profile_picture_src}
-        alt=""
-        className="h-[70px] w-[70px] shrink-0 rounded-full object-cover"
-      />
-      <motion.div className="flex min-w-0 flex-col justify-center" variants={item}>
-        <div className="flex gap-1 flex-wrap items-center">
-          <h1 className="font-bold text-4xl">
-            {selectedCandidate.first_name && selectedCandidate.last_name
-              ? `${selectedCandidate.first_name} ${selectedCandidate.last_name}`
-              : "Unknown"}
-          </h1>
-          <div className="w-fit flex items-center h-full p-1 rounded-2xl font-bold gap-1 px-4 text-navy text-xl">
-            <FaDiamond className="text-lightBlue text-2xl" />
-            {selectedCandidate.points ?? 0}
+        className="card-shadow flex items-start gap-4 rounded-2xl border border-line bg-white p-5 sm:p-6"
+      >
+        <img
+          src={profile_picture_src}
+          alt=""
+          className="h-[72px] w-[72px] shrink-0 rounded-full object-cover ring-1 ring-line"
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+              {selectedCandidate.first_name && selectedCandidate.last_name
+                ? `${selectedCandidate.first_name} ${selectedCandidate.last_name}`
+                : "Unknown"}
+            </h1>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1 text-sm font-bold text-navy-900">
+              <FaDiamond className="text-sm text-brand-500" />
+              {selectedCandidate.points ?? 0}
+            </span>
           </div>
+          <p className="mt-1 text-[15px] text-ink-secondary">
+            {selectedCandidate.major || "Major not listed"}
+            {selectedCandidate.expected_grad
+              ? ` · Class of ${selectedCandidate.expected_grad}`
+              : ""}
+          </p>
+          <p className="mt-0.5 text-sm text-ink-muted">
+            {selectedCandidate.points ?? 0} TESC events attended
+          </p>
         </div>
-        <p className="text-lg text-[#898989]">
-          {selectedCandidate.major || "Major not listed"}
-          {selectedCandidate.expected_grad
-            ? ` · Class of ${selectedCandidate.expected_grad}`
-            : ""}
-        </p>
-        <p className="text-sm text-[#898989]">
-          {selectedCandidate.points ?? 0} TESC events attended
-        </p>
       </motion.div>
-      <motion.div className="col-span-2 w-[95%] max-w-[800px] mx-auto space-y-8" variants={item}>
+      <motion.div variants={item} className="space-y-8">
         <CandidateResumePreview
           resumeLink={selectedCandidate.resume_link}
           resumeStoragePath={selectedCandidate.resume_storage_path}
@@ -154,6 +160,6 @@ export default function MemberResume({ selection }: { selection: string }) {
           />
         )}
       </motion.div>
-    </motion.span>
+    </motion.div>
   );
 }

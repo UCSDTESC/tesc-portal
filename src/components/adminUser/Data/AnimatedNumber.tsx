@@ -47,14 +47,14 @@ export default function AnimatedNumber({
   const hourLabel = hourDelta > 0 ? `+${hourDelta}` : hourDelta < 0 ? `${hourDelta}` : null;
 
   return (
-    <span className="inline-flex items-baseline gap-1 whitespace-nowrap">
+    <span className="inline-flex items-baseline gap-1.5 whitespace-nowrap">
       <span className={`inline-block tabular-nums transition-colors duration-500 ${color}`}>
         {display}
       </span>
       {hourLabel && (
         <span
-          className={`text-xs font-semibold tabular-nums ${
-            hourDelta > 0 ? "text-emerald-600" : "text-rose-600"
+          className={`rounded-full px-1.5 py-0.5 text-[11px] font-semibold tabular-nums ${
+            hourDelta > 0 ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
           }`}
           title="Change in the last hour"
         >
